@@ -158,10 +158,12 @@ Implementation notes (where the code differs from or adds to the list above):
 
 ## Phase 3 — Tuning
 
+- [ ] Re-record the Phase 0 baseline's production figures with the Phase 2 measure (output into full storage no longer counts), so the baseline-vs-final comparison uses the same figure
 - [ ] New base delays and timers in `challenges.json`: Σ(delay + timer) about 6,600–7,000 s; longer early delays for the Camp start; late timers around 600–900 s
 - [ ] `SIM_CALIBRATE=1` mode: for each challenge, print the amount the average bot's countdown-start colony would meet at the target share
 - [ ] New base requirements from calibration, rounded to nice numbers, keeping each challenge's theme and kinds and asking only for content the average bot has unlocked by then
 - [ ] Generate the reference table from the average bot, paste it into `CHALLENGE_REFERENCE_STATS`, rerun; repeat until rows change by less than about 10%
+- [ ] Cap the worker requirement at a share of the colony's workers at countdown start (new `balancing.js` constant, start about 0.5): winning sacrifices the required workers, while failing costs at most `CHALLENGE_PUNISHMENT_MAX_WORKER_SHARE` (0.25); unit test it and check it in the simulation
 - [ ] Tune the scaling constants until every done criterion passes with `SIM_ASSERT=1` on about 30 seeds per bot (fill in `DONE_CRITERIA` in `report.js`)
 - [ ] Revisit blessing and punishment base values now that durations are no longer tied to the old no-stacking timing
 - [ ] Record baseline vs final tables, seed count and changed constants in `docs/simulation.md`
