@@ -382,8 +382,9 @@ export function formatReport(report) {
   } = report
   const names = Object.keys(bots)
   const sections = []
-  const scaling = options.scaling === false ? ' · scaling off' : ''
-  sections.push(`Simulation: bots ${names.join(', ')} · ${options.runs} runs each · seed ${options.seed} · cap ${options.maxHours} h · step ${options.step} s${scaling}`)
+  const scalingOff = options.scaling === false
+  const scalingSuffix = scalingOff ? ' · scaling off' : ''
+  sections.push(`Simulation: bots ${names.join(', ')} · ${options.runs} runs each · seed ${options.seed} · cap ${options.maxHours} h · step ${options.step} s${scalingSuffix}`)
 
   sections.push('Runs per bot\n' + formatTable([
     'Bot',
@@ -493,7 +494,8 @@ export function formatReport(report) {
     row.ordered === null ? 'n/a' : (row.ordered ? 'yes' : 'NO'),
   ])))
 
-  if (reference.length > 0) {
+  // The reference table must come from scaled runs: without scaling the colonies face other challenges
+  if (reference.length > 0 && !scalingOff) {
     sections.push(referenceSnippet(reference, options.runs))
   }
   return sections.join('\n\n')

@@ -180,7 +180,7 @@ Implementation notes (where the code differs from or adds to the list above):
 
 ## Phase 5 — Docs and Final Verification
 
-- [ ] `docs/architecture.md`: Challenges System (base vs adjusted values, failures, mood, refresh rule, save version 2 and migration), new modules (`challenge_scaling.js`, `save_migration.js`), Save/Load, the `createInitialColony` note
+- [ ] `docs/architecture.md`: Challenges System (base vs adjusted values, failures, mood, refresh rule, save version 2 and migration), new modules (`challenge_scaling.js`, `save_migration.js`), Save/Load, the `createInitialColony` note; fix the line saying `colony_stats.js` is imported only by the simulation and tests (`state.js` imports it too)
 - [ ] `docs/specs.md`: challenge lifecycle (delay at activation; requirements, timer, blessings and punishment at countdown start; retries ease), scaling of requirements, blessings and punishments, losses relative to colony size, no-stacking now enforced by refreshing, starting colony, `challenges.json` holds base values and `balancing.js` the scaling constants and reference table
 - [ ] `docs/testing.md`: rows for the new test files
 - [ ] `todo/todo.md`: remove the "make blessings and punishments dynamic" item
