@@ -10,7 +10,7 @@ SIM_BOTS=strong SIM_RUNS=5 npm run simulate
 SIM_SEED=100 SIM_MAX_HOURS=3 npm run simulate
 ```
 
-It runs through Vitest (`vitest.simulation.config.js`, which merges the Vite config for the `@` alias and uses the same setup file as the tests) and is not part of `npm test`. The text report is printed to the terminal and the full data (report plus every run) is written to `scripts/simulation/reports/report_<bots>_seed<seed>_runs<runs>.json` (git-ignored, overwritten by the same options).
+It runs through Vitest (`vitest.simulation.config.js`, which merges the Vite config for the `@` alias and uses the same setup file as the tests) and is not part of `npm test`. The text report is printed to the terminal and the full data (report plus every run) is written to `scripts/simulation/reports/report_<bots>_seed<seed>_runs<runs>.json`, with `_noscaling` added when scaling is off (git-ignored, overwritten by the same options).
 
 | Variable        | Default | Meaning                                                                                      |
 |-----------------|---------|----------------------------------------------------------------------------------------------|
@@ -20,6 +20,7 @@ It runs through Vitest (`vitest.simulation.config.js`, which merges the Vite con
 | `SIM_MAX_HOURS` | 5       | Game hours before a run stops as did-not-finish                                               |
 | `SIM_STEP`      | 1       | Game seconds per simulation step                                                              |
 | `SIM_ASSERT`    | off     | `1` or `true`: fail when a done criterion is unmet (`DONE_CRITERIA` in `report.js`)           |
+| `SIM_SCALING`   | on      | `0` or `false`: the engine does not scale the challenges; they keep the fixed values of `challenges.json` (the harness drops each challenge's definition) |
 
 The default (3 bots × 20 seeds × 5 hours, 1-second steps) takes about 55 seconds. The same options always produce a byte-identical JSON file.
 
@@ -30,7 +31,7 @@ The default (3 bots × 20 seeds × 5 hours, 1-second steps) takes about 55 secon
 | File                                       | Role                                                                                                   |
 |--------------------------------------------|--------------------------------------------------------------------------------------------------------|
 | `scripts/simulation/simulate.sim.js`       | Entry: reads the options, mocks analytics, audio, storage and `t()` like the state tests, runs every bot on every seed, prints and saves the report |
-| `scripts/simulation/harness.js`            | `runGame({profile, seed, maxSeconds, step})`: one game                                                 |
+| `scripts/simulation/harness.js`            | `runGame({profile, seed, maxSeconds, step, scaling})`: one game (`scaling` false keeps the fixed challenge values) |
 | `scripts/simulation/seeded_random.js`      | `createSeededRandom(seed)` (mulberry32)                                                                |
 | `scripts/simulation/run_recorder.js`       | `RunRecorder`: watches a game and keeps what the report needs                                          |
 | `scripts/simulation/report.js`             | Aggregates the runs, sanity check, done criteria, text tables and the reference snippet               |
@@ -93,15 +94,15 @@ Each attempt in the JSON also keeps its activation time, delay, countdown start,
 
 ## Baseline
 
-Current `src/data/challenges.json`, no scaling. 20 seeds per bot (seeds 1–20), 5-hour cap, 1-second steps.
+Current `src/data/challenges.json`, no scaling (`SIM_SCALING=0 npm run simulate`). 20 seeds per bot (seeds 1–20), 5-hour cap, 1-second steps. Re-recorded once production value stopped counting output into full storage: only the production figures changed, and raids by at most 0.1 per run.
 
 ### Runs per bot
 
-| Bot     | Finished | Failures/run | Max attempts | Challenges done (median) | End HQ tier | Time in shortage | Stopped at        | Raids won/lost/delays per run |
-|---------|----------|--------------|--------------|--------------------------|-------------|------------------|-------------------|-------------------------------|
-| weak    | 0 / 20   | 26.6         | 25           | 4                        | Town        | 32%              | #5 ×11, #8 ×9     | 0 / 39.2 / 0                  |
-| average | 0 / 20   | 24.0         | 24           | 7                        | City        | 0%               | #8 ×20            | 19.6 / 17.5 / 29.7            |
-| strong  | 0 / 20   | 22.0         | 14           | 9                        | City        | 6%               | #10 ×20           | 33.6 / 9.1 / 2.0              |
+| Bot     | Finished | Failures/run | Max attempts | Challenges done (median) | End HQ tier | Time in shortage | Stopped at        | Raids won/lost/called off/delays per run |
+|---------|----------|--------------|--------------|--------------------------|-------------|------------------|-------------------|------------------------------------------|
+| weak    | 0 / 20   | 26.6         | 25           | 4                        | Town        | 32%              | #5 ×11, #8 ×9     | 0 / 39.1 / 0.2 / 0                       |
+| average | 0 / 20   | 24.0         | 24           | 7                        | City        | 0%               | #8 ×20            | 19.6 / 17.4 / 0 / 29.7                   |
+| strong  | 0 / 20   | 22.0         | 14           | 9                        | City        | 6%               | #10 ×20           | 33.5 / 9.1 / 0.1 / 1.9                   |
 
 No bot reaches the win screen, so there is no run length yet.
 
@@ -126,19 +127,19 @@ First-try success / runs that completed it / median spare share, and the median 
 
 | Bot     | Minute | HQ tier    | Research | Production value/s | Workers | Building levels |
 |---------|--------|------------|----------|--------------------|---------|-----------------|
-| weak    | 30     | Settlement | 0        | 39.9               | 120     | 48              |
-| weak    | 60     | Town       | 0        | 36.5               | 120     | 55              |
-| weak    | 90     | Town       | 0        | 9.7                | 50      | 39              |
-| average | 30     | Town       | 5        | 29.1               | 130     | 77              |
-| average | 60     | City       | 11       | 34.0               | 165     | 100             |
+| weak    | 30     | Settlement | 0        | 12.5               | 120     | 48              |
+| weak    | 60     | Town       | 0        | 13.7               | 120     | 55              |
+| weak    | 90     | Town       | 0        | 6.1                | 50      | 39              |
+| average | 30     | Town       | 5        | 19.5               | 130     | 77              |
+| average | 60     | City       | 11       | 30.8               | 165     | 100             |
 | average | 90     | City       | 14       | 43.4               | 180     | 114             |
-| strong  | 30     | Town       | 8        | 29.5               | 130     | 76              |
+| strong  | 30     | Town       | 8        | 28.2               | 130     | 76              |
 | strong  | 60     | City       | 18       | 47.8               | 165     | 107             |
 | strong  | 90     | City       | 25       | 63.1               | 165     | 128             |
 
 ### Sanity Check
 
-HQ tier and research order the bots weak < average < strong at 30, 60 and 90 minutes. Production value does only at 90 minutes (weak 39.9 / 36.5 / 9.7, average 29.1 / 34.0 / 43.4, strong 29.5 / 47.8 / 63.1), so `SIM_ASSERT=1` fails at baseline. The cause is the measure, not the bots' growth: `productionValue` counts production that flows into full storage, and the weak bot's fixed 60/40 split piles food at the cap (59–65% of its value early on). Counting only resources below the cap, the order holds at every milestone (weak 12.5 / 13.7 / 6.1, average 19.5 / 26.9 / 43.4, strong 28.2 / 47.8 / 63.1). Worker counts converge around 120–130 at 30 minutes because house and producer levels cost 1.4× more per level.
+HQ tier, research and production value order the bots weak < average < strong at 30, 60 and 90 minutes, so the sanity check passes. Production value first counted output flowing into full storage, and the order then held only at 90 minutes (weak 39.9 / 36.5 / 9.7, average 29.1 / 34.0 / 43.4, strong 29.5 / 47.8 / 63.1): the weak bot's fixed 60/40 split piles food at the cap (59–65% of its value early on). Worker counts converge around 120–130 at 30 minutes because house and producer levels cost 1.4× more per level.
 
 ### Where the Bots Get Stuck
 

@@ -8,6 +8,7 @@
 //   SIM_MAX_HOURS  game hours before a run ends unfinished (default 5)
 //   SIM_STEP       game seconds per simulation step (default 1)
 //   SIM_ASSERT     1 or true: fail when a done criterion (report.js DONE_CRITERIA) is unmet
+//   SIM_SCALING    0 or false: challenges keep the fixed values of challenges.json (default: scaled)
 
 import {mkdirSync, writeFileSync} from 'node:fs'
 import {dirname, join} from 'node:path'
@@ -69,7 +70,7 @@ function readNumber(name, fallback, integer) {
 
 /**
  * Reads the simulation options from the environment.
- * @returns {{profiles: Object[], runs: number, seed: number, maxHours: number, step: number, assert: boolean}} Options
+ * @returns {{profiles: Object[], runs: number, seed: number, maxHours: number, step: number, assert: boolean, scaling: boolean}} Options
  */
 function readOptions() {
   const names = (process.env.SIM_BOTS ?? '').split(',').map(name => name.trim()).filter(Boolean)
@@ -90,6 +91,10 @@ function readOptions() {
       '1',
       'true',
     ].includes(process.env.SIM_ASSERT ?? ''),
+    scaling: ![
+      '0',
+      'false',
+    ].includes(process.env.SIM_SCALING ?? ''),
   }
 }
 
@@ -111,6 +116,7 @@ describe('simulation', () => {
             seed: seed,
             maxSeconds: options.maxHours * SECONDS_PER_HOUR,
             step: options.step,
+            scaling: options.scaling,
           }),
         })
       }
@@ -121,6 +127,7 @@ describe('simulation', () => {
       seed: options.seed,
       maxHours: options.maxHours,
       step: options.step,
+      scaling: options.scaling,
     }
     const report = buildReport(runsByBot, reportOptions)
     console.log('\n' + formatReport(report))
@@ -128,7 +135,8 @@ describe('simulation', () => {
     mkdirSync(REPORTS_DIRECTORY, {
       recursive: true,
     })
-    const file = join(REPORTS_DIRECTORY, `report_${reportOptions.bots.join('-')}_seed${options.seed}_runs${options.runs}.json`)
+    const scalingSuffix = options.scaling ? '' : '_noscaling'
+    const file = join(REPORTS_DIRECTORY, `report_${reportOptions.bots.join('-')}_seed${options.seed}_runs${options.runs}${scalingSuffix}.json`)
     writeFileSync(file, JSON.stringify({
       report: report,
       runs: runsByBot,

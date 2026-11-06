@@ -158,7 +158,7 @@ Implementation notes (where the code differs from or adds to the list above):
 
 ## Phase 3 — Tuning
 
-- [ ] Re-record the Phase 0 baseline's production figures with the Phase 2 measure (output into full storage no longer counts), so the baseline-vs-final comparison uses the same figure
+- [x] Re-record the Phase 0 baseline's production figures with the Phase 2 measure (output into full storage no longer counts), so the baseline-vs-final comparison uses the same figure — new `SIM_SCALING=0` switch; challenge results unchanged, raids within 0.1 per run, the sanity check now passes
 - [ ] New base delays and timers in `challenges.json`: Σ(delay + timer) about 6,600–7,000 s; longer early delays for the Camp start; late timers around 600–900 s
 - [ ] `SIM_CALIBRATE=1` mode: for each challenge, print the amount the average bot's countdown-start colony would meet at the target share
 - [ ] New base requirements from calibration, rounded to nice numbers, keeping each challenge's theme and kinds and asking only for content the average bot has unlocked by then

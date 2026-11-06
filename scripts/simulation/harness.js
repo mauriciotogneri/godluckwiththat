@@ -23,16 +23,23 @@ const PAST_EVENTS_CLEAR_INTERVAL = 600 // Game seconds between clearing the past
  * @param {number} options.seed - Seed of the run
  * @param {number} options.maxSeconds - Game seconds before the run ends unfinished
  * @param {number} options.step - Game seconds per simulation step
+ * @param {boolean} [options.scaling=true] - Whether the engine scales the challenges (false keeps the fixed values of challenges.json)
  * @returns {Object} Run result (RunRecorder.finish)
  */
 export function runGame({
-  profile, seed, maxSeconds, step,
+  profile, seed, maxSeconds, step, scaling = true,
 }) {
   const originalRandom = Math.random
   Math.random = createSeededRandom(seed)
   try {
     // Always the Camp start, whatever createInitialColony currently returns
     const state = new State(createInitialMeta(), createInitialColonyBasic())
+    if (!scaling) {
+      // The engine leaves a challenge without its definition at its fixed values
+      for (const challenge of state.meta.challenges.pending) {
+        challenge.base = null
+      }
+    }
     state.update(0)
     const bot = new Bot(profile, createSeededRandom(seed + BOT_SEED_OFFSET))
     const recorder = new RunRecorder()

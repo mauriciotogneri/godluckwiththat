@@ -382,7 +382,8 @@ export function formatReport(report) {
   } = report
   const names = Object.keys(bots)
   const sections = []
-  sections.push(`Simulation: bots ${names.join(', ')} · ${options.runs} runs each · seed ${options.seed} · cap ${options.maxHours} h · step ${options.step} s`)
+  const scaling = options.scaling === false ? ' · scaling off' : ''
+  sections.push(`Simulation: bots ${names.join(', ')} · ${options.runs} runs each · seed ${options.seed} · cap ${options.maxHours} h · step ${options.step} s${scaling}`)
 
   sections.push('Runs per bot\n' + formatTable([
     'Bot',
