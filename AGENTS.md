@@ -16,4 +16,5 @@ A hybrid incremental strategy game (Vite + Vue 3, JavaScript, Composition API wi
 ## Rules
 
 - **After completing code changes**: Run `npm run lint:fix` and fix remaining errors, run `npm test` and fix any failures.
+- **Browser Testing**: After changing the app, start it with `npm run dev` and test the change in the browser using the Claude in Chrome tools; check the console for errors.
 - **Doc Maintenance**: After changes, check if `AGENTS.md`, `docs/architecture.md`, and `docs/specs.md` need updating.
