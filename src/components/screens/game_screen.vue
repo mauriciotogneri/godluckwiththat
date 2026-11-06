@@ -274,6 +274,7 @@ const state = props.initialState
 const showClearConfirm = ref(false)
 const showConfirmQuit = ref(false)
 const showConfirmRestart = ref(false)
+const showConfirmLoad = ref(false)
 const showSettingsModal = ref(false)
 const showResearchModal = ref(false)
 const showMarketModal = ref(false)
@@ -1178,19 +1179,31 @@ function closeSettings() {
   }
 }
 
+/** Shows the confirm load modal from the pause menu. */
+function handleLoadRequest() {
+  showModal.value = false
+  showConfirmLoad.value = true
+}
+
+/** Cancels load and returns to the pause modal. */
+function cancelLoad() {
+  showConfirmLoad.value = false
+  showModal.value = true
+}
+
 /**
  * Restores the saved game from localStorage and restarts with it. A missing or unreadable save
- * (e.g. overwritten from another tab since the menu opened) keeps the current game and the pause
- * menu, and flashes "Load Failed".
+ * (e.g. overwritten from another tab since the menu opened) keeps the current game, returns to the
+ * pause menu, and flashes "Load Failed".
  */
-function loadGame() {
+function confirmLoad() {
   const savedData = storage.savedGame
   const restoredState = savedData ? State.fromJSON(savedData) : null
   if (!restoredState) {
+    cancelLoad()
     flashSaveIndicator('notifications.loadFailed', true)
     return
   }
-  showModal.value = false
   emit(EMIT_RESTART, restoredState)
 }
 
@@ -1560,7 +1573,7 @@ watch(showModal, (isOpen) => {
     cancelAnimationFrame(progressAnimFrame)
     progressAnimFrame = null
     stopAutosave()
-  } else if (!showConfirmQuit.value && !showConfirmRestart.value) {
+  } else if (!showConfirmQuit.value && !showConfirmRestart.value && !showConfirmLoad.value) {
     // A tutorial, challenge or raid result modal still on screen keeps the game paused; dismissing it unpauses.
     // Only values that render a modal count, so a hand-edited save can't leave the game paused with nothing to dismiss
     const challengeModalShown = [
@@ -1896,7 +1909,7 @@ onUnmounted(() => {
       :has-saved-game="hasSavedGame"
       @close="showModal = false"
       @save="saveGame"
-      @load="loadGame"
+      @load="handleLoadRequest"
       @settings="openSettings"
       @restart="handleRestartRequest"
       @quit="handleQuitRequest"
@@ -1923,6 +1936,15 @@ onUnmounted(() => {
       confirm-key="modal.confirmRestart.restart"
       @confirm="confirmRestart"
       @close="cancelRestart"
+    />
+
+    <ConfirmModal
+      v-if="showConfirmLoad"
+      title-key="modal.confirmLoad.title"
+      description-key="modal.confirmLoad.message"
+      confirm-key="modal.confirmLoad.load"
+      @confirm="confirmLoad"
+      @close="cancelLoad"
     />
 
     <ConfirmModal

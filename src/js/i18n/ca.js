@@ -72,6 +72,11 @@ export const LOCALIZED_CA = {
   'modal.confirmQuit.message': 'Qualsevol progrés no desat es perdrà.',
   'modal.confirmQuit.quit': 'Sortir',
 
+  // Confirm load modal
+  'modal.confirmLoad.title': 'Carregar partida',
+  'modal.confirmLoad.message': "La teva partida actual serà substituïda per l'última partida desada. Qualsevol progrés no desat es perdrà.",
+  'modal.confirmLoad.load': 'Carregar',
+
   // Confirm clear events modal
   'modal.confirmClearEvents.title': 'Esborrar historial',
   'modal.confirmClearEvents.message': 'Esteu segur que voleu esborrar tots els esdeveniments passats?',

@@ -72,6 +72,11 @@ export const LOCALIZED_EN = {
   'modal.confirmQuit.message': 'Any unsaved progress will be lost.',
   'modal.confirmQuit.quit': 'Quit',
 
+  // Confirm load modal
+  'modal.confirmLoad.title': 'Load Game',
+  'modal.confirmLoad.message': 'Your current game will be replaced by your last save. Any unsaved progress will be lost.',
+  'modal.confirmLoad.load': 'Load',
+
   // Confirm clear events modal
   'modal.confirmClearEvents.title': 'Clear history',
   'modal.confirmClearEvents.message': 'Are you sure you want to clear all past events?',

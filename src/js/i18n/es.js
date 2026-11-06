@@ -72,6 +72,11 @@ export const LOCALIZED_ES = {
   'modal.confirmQuit.message': 'Se perderá cualquier progreso no guardado.',
   'modal.confirmQuit.quit': 'Salir',
 
+  // Confirm load modal
+  'modal.confirmLoad.title': 'Cargar partida',
+  'modal.confirmLoad.message': 'Tu partida actual será reemplazada por tu última partida guardada. Se perderá cualquier progreso no guardado.',
+  'modal.confirmLoad.load': 'Cargar',
+
   // Confirm clear events modal
   'modal.confirmClearEvents.title': 'Borrar historial',
   'modal.confirmClearEvents.message': '¿Estás seguro de que quieres borrar todos los eventos pasados?',

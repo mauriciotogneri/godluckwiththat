@@ -72,6 +72,11 @@ export const LOCALIZED_FR = {
   'modal.confirmQuit.message': 'Tout progrès non sauvegardé sera perdu.',
   'modal.confirmQuit.quit': 'Quitter',
 
+  // Confirm load modal
+  'modal.confirmLoad.title': 'Charger la partie',
+  'modal.confirmLoad.message': 'Votre partie actuelle sera remplacée par votre dernière sauvegarde. Tout progrès non sauvegardé sera perdu.',
+  'modal.confirmLoad.load': 'Charger',
+
   // Confirm clear events modal
   'modal.confirmClearEvents.title': 'Effacer l\'historique',
   'modal.confirmClearEvents.message': 'Êtes-vous sûr de vouloir effacer tous les événements passés ?',

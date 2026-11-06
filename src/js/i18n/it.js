@@ -72,6 +72,11 @@ export const LOCALIZED_IT = {
   'modal.confirmQuit.message': 'Qualsiasi progresso non salvato andrà perso.',
   'modal.confirmQuit.quit': 'Esci',
 
+  // Confirm load modal
+  'modal.confirmLoad.title': 'Carica partita',
+  'modal.confirmLoad.message': "La tua partita attuale sarà sostituita dall'ultimo salvataggio. Qualsiasi progresso non salvato andrà perso.",
+  'modal.confirmLoad.load': 'Carica',
+
   // Confirm clear events modal
   'modal.confirmClearEvents.title': 'Cancella cronologia',
   'modal.confirmClearEvents.message': 'Sei sicuro di voler cancellare tutti gli eventi passati?',

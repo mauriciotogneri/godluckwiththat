@@ -14,7 +14,7 @@ Vite + Vue 3 single-page application using Composition API (`<script setup>`). N
 Centered overlay with "PAUSED" title, decorative rule, and six stacked buttons:
 - **Resume** — emits `close`, resumes the game
 - **Save** — emits `save`, triggers `saveGame()` in `game_screen.vue` which calls `persistGame()` and closes the modal
-- **Load** — emits `load`; `loadGame()` in `game_screen.vue` restores the save with `State.fromJSON()` first and restarts with the restored state, or, when the save is missing or cannot be restored, keeps the current game and the pause menu open and flashes a red "Load Failed" indicator (disabled when no saved game exists)
+- **Load** — emits `load`, opens a confirm modal (does not load directly; the game stays paused and cancelling returns to the pause menu); confirming runs `confirmLoad()` in `game_screen.vue`, which restores the save with `State.fromJSON()` first and restarts with the restored state, or, when the save is missing or cannot be restored, keeps the current game, returns to the pause menu and flashes a red "Load Failed" indicator (disabled when no saved game exists)
 - **Settings** — emits `settings`, opens `SettingsModal`
 - *(decorative rule separator)*
 - **Restart** — emits `restart`, opens a confirm modal (does not restart directly); confirming deletes the saved game and starts a new one; danger-styled
