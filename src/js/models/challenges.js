@@ -6,13 +6,13 @@ import Punishment from '@/js/models/punishment.js'
 /**
  * Container for the challenge system state.
  * Lives on Meta. Tracks pending, active, and completed challenges
- * plus accumulated blessings and punishments.
+ * plus the timed blessings and punishments currently in effect.
  *
  * @property {Challenge[]} pending - Challenges not yet activated
  * @property {Challenge|null} active - Currently active challenge (or null)
  * @property {Challenge[]} completed - Successfully completed challenges
- * @property {Blessing[]} activeBlessings - Blessings earned from completed challenges
- * @property {Punishment[]} activePunishments - Punishments from failed challenges
+ * @property {Blessing[]} activeBlessings - Timed blessings currently in effect
+ * @property {Punishment[]} activePunishments - Timed punishments currently in effect
  */
 class Challenges {
   /**
@@ -22,8 +22,8 @@ class Challenges {
     this.pending = data.pending // Challenges not yet activated
     this.active = data.active // Currently active challenge (or null)
     this.completed = data.completed // Successfully completed challenges
-    this.activeBlessings = data.activeBlessings // Blessings earned from completions
-    this.activePunishments = data.activePunishments // Punishments from failures
+    this.activeBlessings = data.activeBlessings // Timed blessings currently in effect
+    this.activePunishments = data.activePunishments // Timed punishments currently in effect
   }
   /** @returns {number} Total number of challenges across all states */
   get totalCount() {
@@ -59,6 +59,7 @@ class Challenges {
   /**
    * Completes the active challenge: moves it to completed, stores a copy of the chosen blessing.
    * A copy is stored so the timeout countdown does not drain the challenge's own blessing.
+   * Instant blessings (null timeout) are not stored: their effect is applied once and never expires.
    * @param {Blessing} blessing - The blessing the player chose as reward
    */
   complete(blessing) {
@@ -67,7 +68,9 @@ class Challenges {
     }
     this.active.status = CHALLENGE_STATUS_COMPLETED
     this.completed.push(this.active)
-    this.activeBlessings.push(Blessing.fromJSON(blessing.toJSON()))
+    if (blessing.timeout !== null) {
+      this.activeBlessings.push(Blessing.fromJSON(blessing.toJSON()))
+    }
     this.active = null
   }
 
@@ -75,6 +78,7 @@ class Challenges {
    * Fails the active challenge: resets timers, stores a copy of the punishment.
    * A copy is stored so the timeout countdown does not drain the challenge's own punishment,
    * which is reused if the challenge is failed again.
+   * Instant punishments (null timeout) are not stored: their effect is applied once and never expires.
    * @param {Punishment} punishment - The punishment applied
    */
   fail(punishment) {
@@ -82,7 +86,9 @@ class Challenges {
       return
     }
     this.active.reset()
-    this.activePunishments.push(Punishment.fromJSON(punishment.toJSON()))
+    if (punishment.timeout !== null) {
+      this.activePunishments.push(Punishment.fromJSON(punishment.toJSON()))
+    }
   }
 
   /**
@@ -102,6 +108,7 @@ class Challenges {
 
   /**
    * Reconstructs a Challenges instance from serialized data.
+   * Drops instant blessings/punishments (null timeout) that older saves stored and never removed.
    * @param {Object} data - Serialized challenges data
    * @returns {Challenges} Restored Challenges instance
    */
@@ -110,8 +117,8 @@ class Challenges {
       pending: (data.pending ?? []).map(challenge => Challenge.fromJSON(challenge)),
       active: data.active ? Challenge.fromJSON(data.active) : null,
       completed: (data.completed ?? []).map(challenge => Challenge.fromJSON(challenge)),
-      activeBlessings: (data.activeBlessings ?? []).map(blessing => Blessing.fromJSON(blessing)),
-      activePunishments: (data.activePunishments ?? []).map(punishment => Punishment.fromJSON(punishment)),
+      activeBlessings: (data.activeBlessings ?? []).map(blessing => Blessing.fromJSON(blessing)).filter(blessing => blessing.timeout !== null),
+      activePunishments: (data.activePunishments ?? []).map(punishment => Punishment.fromJSON(punishment)).filter(punishment => punishment.timeout !== null),
     })
   }
 

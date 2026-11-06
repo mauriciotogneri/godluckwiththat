@@ -310,8 +310,16 @@ describe('Serialization robustness', () => {
           status: CHALLENGE_STATUS_STARTED,
         }),
         completed: [minimalChallengeData()],
-        activeBlessings: [minimalBlessingData()],
-        activePunishments: [minimalPunishmentData()],
+        activeBlessings: [
+          minimalBlessingData({
+            timeout: 60,
+          }),
+        ],
+        activePunishments: [
+          minimalPunishmentData({
+            timeout: 60,
+          }),
+        ],
       })
       expect(challenges.pending[0]).toBeInstanceOf(Challenge)
       expect(challenges.active).toBeInstanceOf(Challenge)

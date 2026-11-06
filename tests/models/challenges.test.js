@@ -115,12 +115,27 @@ describe('Challenges', () => {
       const challenges = createChallenges({
         active: challenge,
       })
-      const blessing = createBlessing()
+      const blessing = createBlessing({
+        timeout: 120,
+      })
       challenges.complete(blessing)
       expect(challenges.active).toBeNull()
       expect(challenges.completed).toHaveLength(1)
       expect(challenges.completed[0].status).toBe(CHALLENGE_STATUS_COMPLETED)
       expect(challenges.activeBlessings).toHaveLength(1)
+    })
+
+    it('should not store an instant blessing', () => {
+      const challenges = createChallenges({
+        active: createChallenge({
+          status: CHALLENGE_STATUS_STARTED,
+        }),
+      })
+      challenges.complete(createBlessing({
+        timeout: null,
+      }))
+      expect(challenges.completed).toHaveLength(1)
+      expect(challenges.activeBlessings).toHaveLength(0)
     })
 
     it('should store a copy so the challenge blessing is not drained', () => {
@@ -158,11 +173,26 @@ describe('Challenges', () => {
       const challenges = createChallenges({
         active: challenge,
       })
-      const punishment = createPunishment()
+      const punishment = createPunishment({
+        timeout: 120,
+      })
       challenges.fail(punishment)
       expect(challenges.active.status).toBe(CHALLENGE_STATUS_ACTIVATED)
       expect(challenges.active.delayElapsed).toBe(0)
       expect(challenges.activePunishments).toHaveLength(1)
+    })
+
+    it('should not store an instant punishment', () => {
+      const challenges = createChallenges({
+        active: createChallenge({
+          status: CHALLENGE_STATUS_STARTED,
+        }),
+      })
+      challenges.fail(createPunishment({
+        timeout: null,
+      }))
+      expect(challenges.active.status).toBe(CHALLENGE_STATUS_ACTIVATED)
+      expect(challenges.activePunishments).toHaveLength(0)
     })
 
     it('should store a copy so the challenge punishment is not drained', () => {
@@ -254,14 +284,44 @@ describe('Challenges', () => {
       })
       const original = createChallenges({
         active: challenge,
-        activeBlessings: [createBlessing()],
-        activePunishments: [createPunishment()],
+        activeBlessings: [
+          createBlessing({
+            timeout: 60,
+          }),
+        ],
+        activePunishments: [
+          createPunishment({
+            timeout: 60,
+          }),
+        ],
       })
       const json = original.toJSON()
       const restored = Challenges.fromJSON(json)
       expect(restored.active.delayElapsed).toBe(20)
       expect(restored.activeBlessings).toHaveLength(1)
       expect(restored.activePunishments).toHaveLength(1)
+    })
+
+    it('should drop instant effects left in older saves', () => {
+      const original = createChallenges({
+        activeBlessings: [
+          createBlessing({
+            timeout: null,
+          }),
+          createBlessing({
+            timeout: 60,
+          }),
+        ],
+        activePunishments: [
+          createPunishment({
+            timeout: null,
+          }),
+        ],
+      })
+      const restored = Challenges.fromJSON(original.toJSON())
+      expect(restored.activeBlessings).toHaveLength(1)
+      expect(restored.activeBlessings[0].timeout).toBe(60)
+      expect(restored.activePunishments).toHaveLength(0)
     })
   })
 })
