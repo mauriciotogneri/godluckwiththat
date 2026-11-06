@@ -1,10 +1,10 @@
 [
   {
     "index": 1,
-    "delay": 30,
+    "delay": 240,
     "timeout": 300,
     "requirements": {
-      "altar": 5
+      "altar": 9
     },
     "blessings": [
       {
@@ -30,10 +30,10 @@
   },
   {
     "index": 2,
-    "delay": 30,
-    "timeout": 300,
+    "delay": 120,
+    "timeout": 360,
     "requirements": {
-      "faith": 500
+      "faith": 650
     },
     "blessings": [
       {
@@ -58,10 +58,10 @@
   },
   {
     "index": 3,
-    "delay": 30,
-    "timeout": 300,
+    "delay": 120,
+    "timeout": 420,
     "requirements": {
-      "temple": 5
+      "temple": 10
     },
     "blessings": [
       {
@@ -84,10 +84,10 @@
   },
   {
     "index": 4,
-    "delay": 30,
-    "timeout": 300,
+    "delay": 60,
+    "timeout": 480,
     "requirements": {
-      "faith": 2000
+      "faith": 4100
     },
     "blessings": [
       {
@@ -112,10 +112,10 @@
   },
   {
     "index": 5,
-    "delay": 30,
-    "timeout": 600,
+    "delay": 60,
+    "timeout": 540,
     "requirements": {
-      "monument": 5
+      "monument": 7
     },
     "blessings": [
       {
@@ -140,10 +140,10 @@
   },
   {
     "index": 6,
-    "delay": 30,
-    "timeout": 300,
+    "delay": 60,
+    "timeout": 600,
     "requirements": {
-      "faith": 3000
+      "faith": 10500
     },
     "blessings": [
       {
@@ -166,13 +166,13 @@
   },
   {
     "index": 7,
-    "delay": 30,
-    "timeout": 600,
+    "delay": 60,
+    "timeout": 660,
     "requirements": {
       "resources": {
-        "food": 2000,
-        "wood": 1000,
-        "stone": 500
+        "food": 6000,
+        "wood": 3700,
+        "stone": 3300
       },
       "workers": 20
     },
@@ -199,17 +199,17 @@
   },
   {
     "index": 8,
-    "delay": 30,
-    "timeout": 600,
+    "delay": 60,
+    "timeout": 720,
     "requirements": {
-      "faith": 5000,
-      "altar": 30,
-      "temple": 15,
+      "faith": 4900,
+      "altar": 18,
+      "temple": 10,
       "resources": {
-        "food": 3000,
-        "wood": 2000,
-        "stone": 1000,
-        "copper": 500
+        "food": 4600,
+        "wood": 3200,
+        "stone": 1800,
+        "copper": 1500
       }
     },
     "blessings": [
@@ -232,17 +232,17 @@
   },
   {
     "index": 9,
-    "delay": 30,
-    "timeout": 600,
+    "delay": 60,
+    "timeout": 780,
     "requirements": {
-      "faith": 8000,
-      "monument": 10,
+      "faith": 7500,
+      "monument": 9,
       "resources": {
-        "food": 5000,
-        "wood": 3000,
-        "stone": 2000,
-        "copper": 1000,
-        "iron": 500
+        "food": 8500,
+        "wood": 5500,
+        "stone": 4000,
+        "copper": 2200,
+        "iron": 1700
       },
       "workers": 50
     },
@@ -269,20 +269,20 @@
   },
   {
     "index": 10,
-    "delay": 30,
-    "timeout": 600,
+    "delay": 60,
+    "timeout": 900,
     "requirements": {
-      "faith": 10000,
-      "altar": 50,
-      "temple": 30,
-      "monument": 20,
+      "faith": 5500,
+      "altar": 21,
+      "temple": 10,
+      "monument": 8,
       "resources": {
-        "food": 7500,
-        "wood": 5000,
-        "stone": 3000,
-        "copper": 2000,
-        "iron": 1000,
-        "gold": 500
+        "food": 5500,
+        "wood": 4200,
+        "stone": 2600,
+        "copper": 1200,
+        "iron": 650,
+        "gold": 350
       },
       "workers": 100
     },

@@ -1,5 +1,5 @@
 import {describe, it, expect} from 'vitest'
-import {CHALLENGE_AMOUNT_ROUNDING, CHALLENGE_EFFECT_CAPS, CHALLENGE_FAILURE_DELAY_BONUS, CHALLENGE_HEALTH_RATIO_MAX, CHALLENGE_HEALTH_RATIO_MIN, CHALLENGE_HEALTH_WEIGHTS, CHALLENGE_MAX_HARDEN_SCALE, CHALLENGE_MAX_LEVEL_CUT, CHALLENGE_MAX_TIMEOUT_SCALE, CHALLENGE_MIN_AMOUNT_SCALE, CHALLENGE_MOOD_THRESHOLDS, CHALLENGE_TARGET_TIME_SHARE, CHALLENGE_TIMEOUT_ROUNDING, PRODUCTION_RATES, WORKER_RECRUIT_COST} from '@/js/engine/balancing.js'
+import {CHALLENGE_AMOUNT_ROUNDING, CHALLENGE_EFFECT_CAPS, CHALLENGE_FAILURE_DELAY_BONUS, CHALLENGE_HEALTH_RATIO_MAX, CHALLENGE_HEALTH_RATIO_MIN, CHALLENGE_HEALTH_WEIGHTS, CHALLENGE_MAX_HARDEN_SCALE, CHALLENGE_MAX_LEVEL_CUT, CHALLENGE_MAX_TIMEOUT_SCALE, CHALLENGE_MAX_WORKER_REQUIREMENT_SHARE, CHALLENGE_MIN_AMOUNT_SCALE, CHALLENGE_MOOD_THRESHOLDS, CHALLENGE_TARGET_TIME_SHARE, CHALLENGE_TIMEOUT_ROUNDING, CHALLENGE_UNSTAFFED_RATE_SHARE, PRODUCTION_RATES, WORKER_RECRUIT_COST} from '@/js/engine/balancing.js'
 import {adjustBlessing, adjustChallenge, adjustDelay, adjustPunishment, challengeDifficulty, challengeMood, estimateCompletionTime, fitRequirements, healthScore} from '@/js/engine/challenge_scaling.js'
 import {CHALLENGE_MOODS} from '@/js/engine/constants.js'
 import {BLESSING_FERTILE_SOIL, BLESSING_GIFT_FROM_THE_HEAVENS, BLESSING_HOLY_EXPANSION, BLESSING_RAPID_CONSTRUCTION, BUILDING_TEMPLE, CHALLENGE_MOOD_DEMANDING, CHALLENGE_MOOD_MERCIFUL, CHALLENGE_MOOD_WATCHFUL, PUNISHMENT_CROP_FAILURE, RESOURCE_COPPER, RESOURCE_FAITH, RESOURCE_FOOD, RESOURCE_KNOWLEDGE, RESOURCE_STONE, RESOURCE_WOOD} from '@/js/engine/enums.js'
@@ -237,6 +237,42 @@ describe('challenge_scaling', () => {
         },
       })
       expect(estimateCompletionTime(requirements, stats)).toBe(Infinity)
+    })
+
+    it('should count a resource whose producers stand idle at their staffed rate', () => {
+      const requirements = requirementsOf({
+        resources: {
+          copper: 400,
+        },
+      })
+      const stats = createStats({
+        netRates: {
+          copper: 0,
+        },
+        staffedRates: {
+          copper: 4,
+        },
+      })
+      expect(estimateCompletionTime(requirements, stats)).toBeCloseTo((400 - 200) / 4)
+    })
+
+    it('should keep the net rate of a resource made at the unstaffed share of its staffed rate or more', () => {
+      const requirements = requirementsOf({
+        resources: {
+          copper: 400,
+        },
+      })
+      const staffed = 4
+      const net = staffed * CHALLENGE_UNSTAFFED_RATE_SHARE
+      const stats = createStats({
+        netRates: {
+          copper: net,
+        },
+        staffedRates: {
+          copper: staffed,
+        },
+      })
+      expect(estimateCompletionTime(requirements, stats)).toBeCloseTo((400 - 200) / net)
     })
 
     it('should take the build time of the missing levels when resources are in stock', () => {
@@ -557,7 +593,7 @@ describe('challenge_scaling', () => {
       expect(estimateCompletionTime(fitted.requirements, stats)).toBe(0)
     })
 
-    it('should drop a worker requirement the colony cannot grow toward instead of asking for all its workers', () => {
+    it('should cap the worker requirement at a share of the colony\'s workers instead of asking for all of them', () => {
       const definition = definitionWith({
         workers: 150,
       })
@@ -570,8 +606,84 @@ describe('challenge_scaling', () => {
         },
       })
       const fitted = fitRequirements(definition, stats, 0)
-      expect(fitted.backstop).toBe(true)
+      expect(fitted.requirements.workers).toBe(Math.floor(stats.workers * CHALLENGE_MAX_WORKER_REQUIREMENT_SHARE))
+      expect(fitted.requirements.workers).toBeLessThan(stats.workers)
+      expect(fitted.backstop).toBe(false)
+    })
+
+    it('should keep a worker requirement below the cap unchanged', () => {
+      const definition = definitionWith({
+        workers: 20,
+      })
+      const fitted = fitRequirements(definition, createStats(), 0)
+      expect(fitted.requirements.workers).toBeGreaterThanOrEqual(20)
+      expect(fitted.requirements.workers).toBeLessThanOrEqual(Math.floor(20 * CHALLENGE_MAX_HARDEN_SCALE))
+    })
+
+    it('should drop the worker requirement of a colony too small to give a worker and flag the backstop', () => {
+      const definition = definitionWith({
+        workers: 10,
+      })
+      const fitted = fitRequirements(definition, createStats({
+        workers: 1,
+      }), 0)
       expect(fitted.requirements.workers).toBeNull()
+      expect(fitted.backstop).toBe(true)
+    })
+
+    it('should never ask a retry for more than the attempt it follows', () => {
+      const definition = definitionWith({
+        faith: 100,
+        altar: 10,
+        resources: {
+          food: 200,
+        },
+      })
+      const previous = requirementsOf({
+        faith: 110,
+        altar: 9,
+        resources: {
+          food: 150,
+        },
+      })
+      const fitted = fitRequirements(definition, createRichStats(), 1, previous)
+      expect(fitted.requirements.faith).toBe(110)
+      expect(fitted.requirements.altar).toBe(9)
+      expect(fitted.requirements.resources).toEqual({
+        food: 150,
+      })
+    })
+
+    it('should leave out on a retry a part the previous attempt did not ask for', () => {
+      const definition = definitionWith({
+        faith: 100,
+        altar: 10,
+        resources: {
+          food: 200,
+          wood: 100,
+        },
+      })
+      const previous = requirementsOf({
+        faith: 100,
+        resources: {
+          food: 200,
+        },
+      })
+      const fitted = fitRequirements(definition, createRichStats(), 1, previous)
+      expect(fitted.requirements.altar).toBeNull()
+      expect(fitted.requirements.resources).toEqual({
+        food: 200,
+      })
+    })
+
+    it('should cap nothing with previous values that are not numbers', () => {
+      const definition = definitionWith({
+        faith: 100,
+      })
+      const expected = fitRequirements(definition, createRichStats(), 1)
+      expect(fitRequirements(definition, createRichStats(), 1, {
+        faith: 'x',
+      })).toEqual(expected)
     })
 
     it('should count a saved failure count that is not a whole number as 0', () => {

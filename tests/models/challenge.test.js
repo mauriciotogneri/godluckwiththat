@@ -175,8 +175,31 @@ describe('Challenge', () => {
         status: CHALLENGE_STATUS_ACTIVATED,
         delay: 90,
         delayElapsed: 30,
+        failures: 0,
+        mood: 'lenient',
+      })
+      expect(challenge.toJSON()).toEqual({
+        index: 2,
+        status: CHALLENGE_STATUS_ACTIVATED,
+        delay: 90,
+        delayElapsed: 30,
+        timeoutElapsed: 0,
+        failures: 0,
+        mood: 'lenient',
+      })
+    })
+
+    it('should add the failed attempt\'s requirements while a retry waits', () => {
+      const challenge = createChallenge({
+        index: 2,
+        status: CHALLENGE_STATUS_ACTIVATED,
+        delay: 90,
+        delayElapsed: 30,
         failures: 1,
         mood: 'lenient',
+        requirements: {
+          altar: 7,
+        },
       })
       expect(challenge.toJSON()).toEqual({
         index: 2,
@@ -186,6 +209,9 @@ describe('Challenge', () => {
         timeoutElapsed: 0,
         failures: 1,
         mood: 'lenient',
+        requirements: {
+          altar: 7,
+        },
       })
     })
 
@@ -240,6 +266,21 @@ describe('Challenge', () => {
       expect(restored.blessings).toHaveLength(2)
       expect(restored.blessings[0]).toBeInstanceOf(Blessing)
       expect(restored.punishment.toJSON()).toEqual(definition.punishment)
+      expect(restored.base).toBe(definition)
+    })
+
+    it('should keep the failed attempt\'s requirements of a waiting retry over the definition', () => {
+      const definition = createChallengeDefinition()
+      const original = Challenge.fromDefinition(definition)
+      original.status = CHALLENGE_STATUS_ACTIVATED
+      original.failures = 1
+      original.requirements = {
+        ...original.requirements,
+        faith: 150,
+      }
+      const restored = Challenge.fromJSON(original.toJSON(), definition)
+      expect(restored.requirements.faith).toBe(150)
+      expect(restored.timeout).toBe(definition.timeout)
       expect(restored.base).toBe(definition)
     })
 

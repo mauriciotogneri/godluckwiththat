@@ -99,7 +99,7 @@ class Challenge {
 
   /**
    * Reconstructs a Challenge instance from serialized data.
-   * Values the save leaves out (all but progress, unless the countdown had started) come from the definition.
+   * Values the save leaves out (all but progress, unless the countdown had started or a retry is waiting) come from the definition.
    * @param {Object} data - Serialized challenge data
    * @param {Object|null} [definition] - Frozen definition with the same index (null keeps `base` empty)
    * @returns {Challenge} Restored Challenge instance
@@ -124,8 +124,8 @@ class Challenge {
 
   /**
    * Serializable snapshot for save/load.
-   * Saves only progress; the values in effect are added while the countdown runs,
-   * since the base values cannot rebuild them.
+   * Saves only progress; the values in effect are added while the countdown runs, since the base
+   * values cannot rebuild them, and the requirements while a failed challenge waits for its retry.
    * @returns {Object} Plain object snapshot for serialization
    */
   toJSON() {
@@ -137,6 +137,13 @@ class Challenge {
       timeoutElapsed: this.timeoutElapsed,
       failures: this.failures,
       mood: this.mood,
+    }
+    // A retry is capped at the failed attempt's requirements, so they are kept until its countdown starts
+    if (this.status === CHALLENGE_STATUS_ACTIVATED && this.failures > 0) {
+      return {
+        ...progress,
+        requirements: this.requirements,
+      }
     }
     if (this.status !== CHALLENGE_STATUS_STARTED) {
       return progress

@@ -4,6 +4,7 @@
 import {MARKET_TRADE_AMOUNT, PRODUCTION_RATES, TRIBUTE_RESOURCE_VALUES, WORKER_RECRUIT_COST, WORKERS_PER_LEVEL} from '@/js/engine/balancing.js'
 import {BOUNDED_RESOURCES, HEADER_RESOURCES, HQ_RESOURCE_UNLOCKS, HQ_TYPES, RESEARCH_COSTS, RESEARCH_MODAL_TREE, RESEARCH_PREREQUISITES, RESEARCH_TREE, TRADEABLE_RESOURCES} from '@/js/engine/constants.js'
 import {BONUS_STORAGE_CAPACITY, BUILDING_ACADEMY, BUILDING_ALTAR, BUILDING_COPPER_MINE, BUILDING_FARM, BUILDING_GOLD_MINE, BUILDING_HOUSE, BUILDING_IRON_MINE, BUILDING_MARKET, BUILDING_QUARRY, BUILDING_STOREHOUSE, BUILDING_TEMPLE, BUILDING_WOODCUTTER, RESOURCE_FAITH, RESOURCE_FOOD, RESOURCE_GOLD, RESOURCE_KNOWLEDGE, RESOURCE_WOOD, TRADE_BUY, TRADE_SELL} from '@/js/engine/enums.js'
+import {marketTradeQuote} from '@/js/engine/utils.js'
 import {WORKER_SPLIT_BALANCED, WORKER_SPLIT_FIXED} from './bot_profiles.js'
 
 // Worker-staffed producers, in tier order (the order also breaks ties)
@@ -684,7 +685,8 @@ export function researchItems(state, profile) {
 
 /**
  * Market trades for the profiles that use it: buys one lot of each resource the bot is missing with
- * spare gold, and sells one lot of each resource sitting at the cap that it does not need.
+ * spare gold (never paying into the gold it must keep), and sells one lot of each resource sitting at
+ * the cap that it does not need.
  * @param {State} state - Game state
  * @param {Object} profile - Bot profile
  * @param {Object<string, number>} shortfall - Missing amount by resource
@@ -698,8 +700,10 @@ export function tradeAtMarket(state, profile, shortfall, reserve) {
     return
   }
   const cap = storageCapOf(state)
+  const market = buildings.market
   for (const resource of TRADEABLE_RESOURCES) {
-    if ((shortfall[resource] ?? 0) > 0 && resources[RESOURCE_GOLD] > (reserve[RESOURCE_GOLD] ?? 0) + (shortfall[RESOURCE_GOLD] ?? 0)) {
+    const price = marketTradeQuote(market[resource], TRADE_BUY, 1, market.effectiveTradeFee).gold
+    if ((shortfall[resource] ?? 0) > 0 && resources[RESOURCE_GOLD] - price >= (reserve[RESOURCE_GOLD] ?? 0) + (shortfall[RESOURCE_GOLD] ?? 0)) {
       state.executeTrade(resource, TRADE_BUY, MARKET_TRADE_AMOUNT)
     } else if ((shortfall[resource] ?? 0) <= 0 && resources[resource] >= cap * MARKET_SELL_FILL
       && resources[resource] - MARKET_TRADE_AMOUNT >= (reserve[resource] ?? 0)) {

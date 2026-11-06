@@ -2,7 +2,7 @@
 // challenge activates, and the requirements, timer, blessings and punishment when its countdown starts.
 // Pure functions on colonyStats snapshots; every tuning number lives in balancing.js.
 
-import {CHALLENGE_AMOUNT_ROUNDING, CHALLENGE_BLESSING_DURATION_RANGE, CHALLENGE_BLESSING_MAGNITUDE_RANGE, CHALLENGE_DELAY_ROUNDING, CHALLENGE_DELAY_SCALE_MAX, CHALLENGE_DELAY_SCALE_MIN, CHALLENGE_DURATION_ROUNDING, CHALLENGE_EFFECT_CAPS, CHALLENGE_FAILURE_DELAY_BONUS, CHALLENGE_FAILURE_EASE, CHALLENGE_FAILURE_TIMEOUT_BONUS, CHALLENGE_GIFT_ROUNDING, CHALLENGE_HEALTH_MIN_REFERENCE, CHALLENGE_HEALTH_RATIO_MAX, CHALLENGE_HEALTH_RATIO_MIN, CHALLENGE_HEALTH_WEIGHTS, CHALLENGE_MAX_HARDEN_SCALE, CHALLENGE_MAX_LEVEL_CUT, CHALLENGE_MAX_TIMEOUT_SCALE, CHALLENGE_MIN_AMOUNT_SCALE, CHALLENGE_MOOD_THRESHOLDS, CHALLENGE_PUNISHMENT_MAX_LEVEL_SHARE, CHALLENGE_PUNISHMENT_MAX_WORKER_SHARE, CHALLENGE_PUNISHMENT_SEVERITY_RANGE, CHALLENGE_TARGET_TIME_SHARE, CHALLENGE_TIMEOUT_ROUNDING, HOUSE_POPULATION_PER_LEVEL, HQ_TERRITORY_PER_LEVEL, HQ_UPGRADE_COSTS, MONUMENT_FAITH_PER_LEVEL, PRODUCTION_RATES, STOREHOUSE_CAPACITY_MULTIPLIER, WORKER_RECRUIT_COST, WORKERS_PER_LEVEL} from '@/js/engine/balancing.js'
+import {CHALLENGE_AMOUNT_ROUNDING, CHALLENGE_BLESSING_DURATION_RANGE, CHALLENGE_BLESSING_MAGNITUDE_RANGE, CHALLENGE_DELAY_ROUNDING, CHALLENGE_DELAY_SCALE_MAX, CHALLENGE_DELAY_SCALE_MIN, CHALLENGE_DURATION_ROUNDING, CHALLENGE_EFFECT_CAPS, CHALLENGE_FAILURE_DELAY_BONUS, CHALLENGE_FAILURE_EASE, CHALLENGE_FAILURE_TIMEOUT_BONUS, CHALLENGE_GIFT_ROUNDING, CHALLENGE_HEALTH_MIN_REFERENCE, CHALLENGE_HEALTH_RATIO_MAX, CHALLENGE_HEALTH_RATIO_MIN, CHALLENGE_HEALTH_WEIGHTS, CHALLENGE_MAX_HARDEN_SCALE, CHALLENGE_MAX_LEVEL_CUT, CHALLENGE_MAX_TIMEOUT_SCALE, CHALLENGE_MAX_WORKER_REQUIREMENT_SHARE, CHALLENGE_MIN_AMOUNT_SCALE, CHALLENGE_MOOD_THRESHOLDS, CHALLENGE_PUNISHMENT_MAX_LEVEL_SHARE, CHALLENGE_PUNISHMENT_MAX_WORKER_SHARE, CHALLENGE_PUNISHMENT_SEVERITY_RANGE, CHALLENGE_TARGET_TIME_SHARE, CHALLENGE_TIMEOUT_ROUNDING, CHALLENGE_UNSTAFFED_RATE_SHARE, HOUSE_POPULATION_PER_LEVEL, HQ_TERRITORY_PER_LEVEL, HQ_UPGRADE_COSTS, MONUMENT_FAITH_PER_LEVEL, PRODUCTION_RATES, STOREHOUSE_CAPACITY_MULTIPLIER, WORKER_RECRUIT_COST, WORKERS_PER_LEVEL} from '@/js/engine/balancing.js'
 import {BOUNDED_RESOURCES, BUILDING_CLASS_MAP, CHALLENGE_MOODS, HQ_BUILDING_UNLOCKS, HQ_TYPES} from '@/js/engine/constants.js'
 import {BUILDING_ALTAR, BUILDING_HEADQUARTERS, BUILDING_HOUSE, BUILDING_MONUMENT, BUILDING_STOREHOUSE, BUILDING_TEMPLE, RESOURCE_FAITH} from '@/js/engine/enums.js'
 import {floorWithTolerance} from '@/js/engine/utils.js'
@@ -377,7 +377,20 @@ function potentialFaithRate(stats) {
 }
 
 /**
- * Seconds a plan takes: the larger of the time to gather every missing resource at its net rate
+ * Per-second rate the colony could gather a bounded resource at: its net rate, or its fully staffed rate
+ * when it makes less than CHALLENGE_UNSTAFFED_RATE_SHARE of that (idle producers, workers can be moved).
+ * @param {string} resource - Bounded resource key
+ * @param {Object} stats - colonyStats snapshot
+ * @returns {number} Rate per second
+ */
+function gatherRate(resource, stats) {
+  const net = stats.netRates[resource]
+  const staffed = stats.staffedRates?.[resource] ?? net
+  return net < staffed * CHALLENGE_UNSTAFFED_RATE_SHARE ? staffed : net
+}
+
+/**
+ * Seconds a plan takes: the larger of the time to gather every missing resource at its gather rate
  * and the time to build (HQ work first, then the longest building chain).
  * @param {Object} plan - Plan from planRequirements
  * @param {Object} stats - colonyStats snapshot
@@ -397,7 +410,7 @@ function planSeconds(plan, stats) {
     if (missing <= 0) {
       continue
     }
-    const rate = isFaith ? potentialFaithRate(stats) : stats.netRates[resource]
+    const rate = isFaith ? potentialFaithRate(stats) : gatherRate(resource, stats)
     if (!(rate > 0)) {
       return Infinity
     }
@@ -409,7 +422,8 @@ function planSeconds(plan, stats) {
 
 /**
  * Estimated seconds for the colony to meet the requirements from now, as a straight line from its
- * stock and current net rates (ignores growth, seasons, raids and other spending). Counts the held
+ * stock and current net rates (ignores growth, seasons, raids and other spending; a resource whose
+ * producers stand idle counts at their fully staffed rate). Counts the held
  * amounts, building level costs, recruit food, HQ tier upgrades for locked buildings, HQ expansions
  * when territory is short, houses for extra workers and storehouse levels when one amount does not
  * fit in storage; faith also counts free temple slots idle workers could fill and the one-time faith
@@ -483,6 +497,65 @@ function scaleRequirements(requirements, amountScale, levelScale) {
     monument: scaleCount(requirements.monument, levelScale),
     resources: requirements.resources === null ? null : mapValues(requirements.resources, amount => scaleAmount(amount, amountScale)),
     workers: scaleCount(requirements.workers, levelScale),
+  }
+}
+
+/**
+ * Requirements with the worker requirement at most the given cap, or without one when the cap is under one worker.
+ * @param {Object} requirements - Requirements
+ * @param {number} workerCap - Most workers a challenge may ask for
+ * @returns {Object} Capped requirements
+ */
+function withWorkerCap(requirements, workerCap) {
+  if (requirements.workers === null || requirements.workers <= workerCap) {
+    return requirements
+  }
+  return {
+    ...requirements,
+    workers: workerCap >= 1 ? workerCap : null,
+  }
+}
+
+/**
+ * Requirements no higher than a previous attempt's: each part at most its previous value, and a part
+ * the previous attempt did not ask for (null) left out. A previous value that is not a number caps nothing.
+ * @param {Object} requirements - Requirements
+ * @param {Object|null} previous - Previous attempt's requirements, or null for no cap
+ * @returns {Object} Capped requirements
+ */
+function withinPrevious(requirements, previous) {
+  if (!previous) {
+    return requirements
+  }
+  const lower = (value, before) => {
+    if (value === null || before === undefined) {
+      return value
+    }
+    if (before === null) {
+      return null
+    }
+    return Number.isFinite(before) ? Math.min(value, before) : value
+  }
+  let resources = requirements.resources
+  if (resources !== null && previous.resources !== undefined) {
+    const kept = Object.entries(resources)
+      .map(([
+        resource,
+        amount,
+      ]) => [
+        resource,
+        lower(amount, previous.resources === null ? null : previous.resources[resource] ?? null),
+      ])
+      .filter(entry => entry[1] !== null)
+    resources = kept.length > 0 ? Object.fromEntries(kept) : null
+  }
+  return {
+    faith: lower(requirements.faith, previous.faith),
+    altar: lower(requirements.altar, previous.altar),
+    temple: lower(requirements.temple, previous.temple),
+    monument: lower(requirements.monument, previous.monument),
+    resources: resources,
+    workers: lower(requirements.workers, previous.workers),
   }
 }
 
@@ -641,7 +714,9 @@ function failureCount(failures) {
 /**
  * Fits a challenge's requirements and timer to the colony. The target is the timer ×
  * CHALLENGE_TARGET_TIME_SHARE, eased by CHALLENGE_FAILURE_EASE per failure (each failure also adds
- * CHALLENGE_FAILURE_TIMEOUT_BONUS to the timer). Resources the colony has not unlocked are dropped first.
+ * CHALLENGE_FAILURE_TIMEOUT_BONUS to the timer). Resources the colony has not unlocked are dropped first,
+ * and the worker requirement never exceeds CHALLENGE_MAX_WORKER_REQUIREMENT_SHARE of the colony's workers.
+ * A retry never asks for more of any part than the attempt it follows (previousRequirements).
  * - A (time to spare): every value is raised, up to CHALLENGE_MAX_HARDEN_SCALE
  * - B1 (too hard): faith and resource amounts shrink, down to CHALLENGE_MIN_AMOUNT_SCALE
  * - B2 (still too hard): the timer grows (up to CHALLENGE_MAX_TIMEOUT_SCALE) while building levels and
@@ -651,12 +726,15 @@ function failureCount(failures) {
  * @param {Object} definition - Challenge definition (CHALLENGE_DEFINITIONS entry)
  * @param {Object} stats - colonyStats snapshot
  * @param {number} failures - Times this challenge has been failed
+ * @param {Object|null} [previousRequirements=null] - Requirements of the failed attempt a retry follows (null: no cap)
  * @returns {{requirements: Object, timeout: number, scales: Object, backstop: boolean}} Fitted values; backstop is
- *   true when a resource was dropped or stage C ran
+ *   true when a resource or the worker requirement was dropped, or stage C ran
  */
-export function fitRequirements(definition, stats, failures) {
+export function fitRequirements(definition, stats, failures, previousRequirements = null) {
   const reachable = withoutLockedResources(definition.requirements, stats)
   const base = reachable.requirements
+  const workerCap = floorWithTolerance(Math.max(0, stats.workers) * CHALLENGE_MAX_WORKER_REQUIREMENT_SHARE)
+  const scaled = (amountScale, levelScale) => withinPrevious(withWorkerCap(scaleRequirements(base, amountScale, levelScale), workerCap), previousRequirements)
   const failed = failureCount(failures)
   const startTimeoutScale = Math.min(CHALLENGE_MAX_TIMEOUT_SCALE, 1 + CHALLENGE_FAILURE_TIMEOUT_BONUS * failed)
   const targetShare = CHALLENGE_TARGET_TIME_SHARE * Math.pow(1 - CHALLENGE_FAILURE_EASE, failed)
@@ -671,21 +749,21 @@ export function fitRequirements(definition, stats, failures) {
 
   let requirements
   let timeoutScale = startTimeoutScale
-  let backstop = reachable.dropped
-  if (fits(scaleRequirements(base, 1, 1), startTimeoutScale)) {
-    const scale = largestFitting(1, CHALLENGE_MAX_HARDEN_SCALE, value => fits(scaleRequirements(base, value, value), startTimeoutScale))
-    requirements = scaleRequirements(base, scale, scale)
-  } else if (fits(scaleRequirements(base, CHALLENGE_MIN_AMOUNT_SCALE, 1), startTimeoutScale)) {
-    const amountScale = largestFitting(CHALLENGE_MIN_AMOUNT_SCALE, 1, value => fits(scaleRequirements(base, value, 1), startTimeoutScale))
-    requirements = scaleRequirements(base, amountScale, 1)
-  } else if (fits(scaleRequirements(base, CHALLENGE_MIN_AMOUNT_SCALE, levelsAt(1)), timeoutAt(1))) {
-    const progress = smallestFitting(0, 1, value => fits(scaleRequirements(base, CHALLENGE_MIN_AMOUNT_SCALE, levelsAt(value)), timeoutAt(value)))
+  let backstop = reachable.dropped || (base.workers !== null && workerCap < 1)
+  if (fits(scaled(1, 1), startTimeoutScale)) {
+    const scale = largestFitting(1, CHALLENGE_MAX_HARDEN_SCALE, value => fits(scaled(value, value), startTimeoutScale))
+    requirements = scaled(scale, scale)
+  } else if (fits(scaled(CHALLENGE_MIN_AMOUNT_SCALE, 1), startTimeoutScale)) {
+    const amountScale = largestFitting(CHALLENGE_MIN_AMOUNT_SCALE, 1, value => fits(scaled(value, 1), startTimeoutScale))
+    requirements = scaled(amountScale, 1)
+  } else if (fits(scaled(CHALLENGE_MIN_AMOUNT_SCALE, levelsAt(1)), timeoutAt(1))) {
+    const progress = smallestFitting(0, 1, value => fits(scaled(CHALLENGE_MIN_AMOUNT_SCALE, levelsAt(value)), timeoutAt(value)))
     timeoutScale = timeoutAt(progress)
-    const amountScale = largestFitting(CHALLENGE_MIN_AMOUNT_SCALE, 1, value => fits(scaleRequirements(base, value, levelsAt(progress)), timeoutScale))
-    requirements = scaleRequirements(base, amountScale, levelsAt(progress))
+    const amountScale = largestFitting(CHALLENGE_MIN_AMOUNT_SCALE, 1, value => fits(scaled(value, levelsAt(progress)), timeoutScale))
+    requirements = scaled(amountScale, levelsAt(progress))
   } else {
     timeoutScale = timeoutAt(1)
-    requirements = backstopRequirements(scaleRequirements(base, 1, levelsAt(1)), stats, value => fits(value, timeoutScale))
+    requirements = backstopRequirements(scaled(1, levelsAt(1)), stats, value => fits(value, timeoutScale))
     backstop = true
   }
   const timeout = timeoutFor(timeoutScale)
@@ -837,11 +915,12 @@ export function challengeMood(difficulty) {
  * @param {Object} stats - colonyStats snapshot
  * @param {Object|null} referenceRow - CHALLENGE_REFERENCE_STATS row for this challenge, or null
  * @param {number} failures - Times this challenge has been failed
+ * @param {Object|null} [previousRequirements=null] - Requirements of the failed attempt a retry follows (null: no cap)
  * @returns {{timeout: number, requirements: Object, blessings: Blessing[], punishment: Punishment, mood: string, scales: Object, backstop: boolean}}
  *   Adjusted values
  */
-export function adjustChallenge(definition, stats, referenceRow, failures) {
-  const fitted = fitRequirements(definition, stats, failures)
+export function adjustChallenge(definition, stats, referenceRow, failures, previousRequirements = null) {
+  const fitted = fitRequirements(definition, stats, failures, previousRequirements)
   const difficulty = challengeDifficulty(fitted.scales)
   const reference = referenceRow?.countdownStart ?? null
   return {

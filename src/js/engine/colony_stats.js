@@ -1,6 +1,6 @@
 // Colony statistics — one plain snapshot of how far a colony has progressed (used by the balance simulation).
 
-import {SEASON_DURATION, TRIBUTE_RESOURCE_VALUES} from '@/js/engine/balancing.js'
+import {PRODUCTION_RATES, SEASON_DURATION, TRIBUTE_RESOURCE_VALUES} from '@/js/engine/balancing.js'
 import {BOUNDED_RESOURCES, HEADER_RESOURCES, HQ_RESOURCE_UNLOCKS, HQ_TYPES, RESEARCH_TREE} from '@/js/engine/constants.js'
 import {BONUS_STORAGE_CAPACITY, RESOURCE_FAITH} from '@/js/engine/enums.js'
 
@@ -12,6 +12,8 @@ import {BONUS_STORAGE_CAPACITY, RESOURCE_FAITH} from '@/js/engine/enums.js'
  * - hqTier / hqLevel: headquarters type index in HQ_TYPES and its territory level
  * - workers / workersCap / idleWorkers: population
  * - stock / netRates: amount and net per-second rate of every resource
+ * - staffedRates: net rate of every resource if each worker-run producer of a bounded resource had
+ *   all its worker slots filled (the output of its free slots added, at the current multipliers)
  * - storageCap: shared cap of the bounded resources, with the Storage research bonus
  * - productionValue: net production of the bounded resources weighted by TRIBUTE_RESOURCE_VALUES;
  *   output into full storage is lost, so a resource at the cap adds no gain (a loss still counts)
@@ -46,6 +48,21 @@ export function colonyStats(state) {
     netRates[resource] = state.netProduction(resource)
   }
 
+  const staffedRates = {
+    ...netRates,
+  }
+  for (const [
+    key,
+    entry,
+  ] of Object.entries(PRODUCTION_RATES)) {
+    const building = buildings[key]
+    if (!BOUNDED_RESOURCES.includes(entry.resource) || building.maxWorkers === undefined) {
+      continue
+    }
+    const freeSlots = Math.max(0, building.maxWorkers - building.workers)
+    staffedRates[entry.resource] += freeSlots * entry.rate * state.productionMultipliers[entry.resource] * state.productivity
+  }
+
   const storageCap = buildings.storehouse.storageCap(bonuses[BONUS_STORAGE_CAPACITY] ?? 0)
   let productionValue = 0
   for (const resource of BOUNDED_RESOURCES) {
@@ -67,6 +84,7 @@ export function colonyStats(state) {
     idleWorkers: colony.idleWorkers,
     stock: stock,
     netRates: netRates,
+    staffedRates: staffedRates,
     storageCap: storageCap,
     productionValue: productionValue,
     faithRate: netRates[RESOURCE_FAITH],

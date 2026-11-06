@@ -13,6 +13,10 @@ export const ARMY_NONE = 'none'
 export const ARMY_FORECAST = 'forecast'
 export const ARMY_COUNTER = 'counter'
 
+// Challenge hold: keep a faith or resource amount once it is met, or also while the income can still reach it in time
+export const HOLD_MET = 'met'
+export const HOLD_REACHABLE = 'reachable'
+
 // Blessing choice: always the first option, the productivity blessing for the weakest resource, or the highest estimated value
 export const BLESSING_CHOICE_FIRST = 'first'
 export const BLESSING_CHOICE_WEAKEST_RESOURCE = 'weakestResource'
@@ -24,7 +28,7 @@ export const WEAK_BOT = {
   decisionInterval: 20, // Game seconds between decisions
   reactionDelay: 90, // Seconds after a countdown starts before the bot works on it
   skipChance: 0.2, // Chance that a decision is skipped
-  holdsRequirements: false, // Keeps met challenge requirements instead of spending them
+  challengeHold: HOLD_MET, // Which challenge amounts it keeps instead of spending them
   workerSplit: WORKER_SPLIT_FIXED, // How spare workers are split between producers
   foodWoodMargin: 0, // Food and wood production kept above upkeep (0.1 = +10%)
   storehouseFill: 1, // Share of the storage cap a needed resource reaches before a storehouse level
@@ -51,7 +55,7 @@ export const AVERAGE_BOT = {
   decisionInterval: 5,
   reactionDelay: 15,
   skipChance: 0,
-  holdsRequirements: true,
+  challengeHold: HOLD_REACHABLE,
   workerSplit: WORKER_SPLIT_BALANCED,
   foodWoodMargin: 0.1,
   storehouseFill: 0.8,
@@ -85,7 +89,7 @@ export const STRONG_BOT = {
   decisionInterval: 2,
   reactionDelay: 0,
   skipChance: 0,
-  holdsRequirements: true,
+  challengeHold: HOLD_REACHABLE,
   workerSplit: WORKER_SPLIT_MARGINAL,
   foodWoodMargin: 0.05,
   storehouseFill: 0.6,

@@ -1,13 +1,13 @@
 // Heuristic player for the balance simulation, driven by a profile (bot_profiles.js).
 
-import {BUILDING_STOREHOUSE, CHALLENGE_MODAL_FAILURE, CHALLENGE_MODAL_REWARD, RESOURCE_FOOD} from '@/js/engine/enums.js'
+import {BUILDING_STOREHOUSE, CHALLENGE_MODAL_FAILURE, CHALLENGE_MODAL_REWARD, RESOURCE_FOOD, RESOURCE_GOLD} from '@/js/engine/enums.js'
 import {challengeFocus, challengeItems, challengeRates, challengeReserve, chooseBlessing} from './challenge_planner.js'
 import {addAmounts, applyWorkerTargets, buildingItem, dismissIdleWhenShort, emptyAmounts, exceedsCap, fitsReserve, foodWoodItems, growthItems, planWorkers, populationItems, producerCapacity, recruitFoodNeed, recruitWorkers, researchItems, storageCapOf, storehouseItems, territoryItems, tradeAtMarket} from './economy_planner.js'
 import {militaryItems, respondToRaid} from './military_planner.js'
 
 const SAVED_ITEMS = 3 // Unaffordable items whose costs steer the worker split
 const GOAL_HOLD_SECONDS = 60 // The first of them is held back from cheaper wishes once the income covers it this soon
-const NOTHING_HELD = emptyAmounts() // Reserve for items that may use every held amount
+const RECOVERY_SHARE = 0.7 // A challenge item may use held amounts the income earns back within this share of the time left
 
 // Blocking windows the bot closes (reported to the run recorder)
 export const RESOLUTION_TUTORIAL = 'tutorial'
@@ -21,10 +21,10 @@ export const RESOLUTION_RAID = 'raid'
  * building unlocks and the hidden research category itself, since the engine does not check them.
  *
  * Each decision: recruit and split workers (dismissing idle ones while food or wood runs at a loss),
- * answer an announced raid, then walk a wish list in priority order — (1) food/wood, (2) population,
- * (3) the running challenge, (4) storage, (5) territory and headquarters tier, (6) economy,
+ * answer an announced raid, then walk a wish list in priority order — (1) food/wood, (2) the running
+ * challenge, (3) population, (4) storage, (5) territory and headquarters tier, (6) economy,
  * (7) research, (8) military — starting what it can pay for and saving for what it cannot yet.
- * A wish item is {label, cost, save, urgent?, ignoresHold?, run}; run() starts it and returns whether it did.
+ * A wish item is {label, cost, save, urgent?, challenge?, ignoresHold?, run}; run() starts it and returns whether it did.
  */
 class Bot {
   /**
@@ -88,7 +88,7 @@ class Bot {
       return
     }
     const focus = challengeFocus(state, profile)
-    const reserve = focus && profile.holdsRequirements ? challengeReserve(state, focus) : emptyAmounts()
+    const reserve = focus ? challengeReserve(state, focus, profile.challengeHold) : emptyAmounts()
     const rates = focus ? challengeRates(state, focus) : {}
 
     recruitWorkers(state, reserve, Math.max(producerCapacity(state), focus?.requirements.workers ?? 0))
@@ -99,16 +99,21 @@ class Bot {
 
     const items = [
       ...foodWoodItems(state, workerPlan),
-      ...populationItems(state, profile, workerPlan),
       ...(focus ? challengeItems(state, focus, rates) : []),
+      ...populationItems(state, profile, workerPlan),
       ...storehouseItems(state, profile),
       ...territoryItems(state, profile),
       ...growthItems(state, profile),
       ...researchItems(state, profile),
       ...militaryItems(state, profile),
     ]
-    this.goal = this._spend(state, items, reserve)
-    tradeAtMarket(state, profile, this._shortfall(state, reserve), reserve)
+    this.goal = this._spend(state, items, reserve, focus?.timeLeft ?? 0)
+    // The market pays in gold: never below the gold the running challenge asks for, even out of reach
+    const marketReserve = {
+      ...reserve,
+      [RESOURCE_GOLD]: Math.max(reserve[RESOURCE_GOLD] ?? 0, focus?.requirements.resources?.[RESOURCE_GOLD] ?? 0),
+    }
+    tradeAtMarket(state, profile, this._shortfall(state, reserve), marketReserve)
   }
 
   /**
@@ -132,22 +137,28 @@ class Bot {
 
   /**
    * Walks the wish list in order, starting every item it can pay for (up to the profile's budget per
-   * decision) without touching the held amounts: the challenge hold, plus the cost of the first
-   * unaffordable item marked to save for (the goal) once the income covers it within
-   * GOAL_HOLD_SECONDS. Urgent items (headquarters tier upgrades) only respect the challenge hold,
-   * and the challenge's own items respect neither. An item whose cost cannot fit in storage is replaced by a storehouse level, and
-   * items needing a resource the colony does not produce are not saved for.
+   * decision) without touching the held amounts: the challenge hold, the cost of the first challenge
+   * item it cannot pay for yet while the income covers it before the countdown ends, plus the cost of
+   * the first unaffordable item marked to save for (the goal) once the income covers it within
+   * GOAL_HOLD_SECONDS. Urgent items (headquarters tier upgrades, the challenge's items) only respect the
+   * challenge hold and the saved-for challenge item; the challenge's own buildings may also use the held
+   * amounts the income earns back within RECOVERY_SHARE of the time left.
+   * An item whose cost cannot fit in storage is replaced by a storehouse level, and items needing a
+   * resource the colony does not produce are not saved for.
    * @param {State} state - Game state
    * @param {Array<Object|null>} items - Wish items in priority order (null entries are skipped)
    * @param {Object<string, number>} reserve - Challenge hold
+   * @param {number} challengeTimeLeft - Seconds left on the countdown the bot works on (0 without one)
    * @returns {Object<string, number>} Summed cost of the first unaffordable items to save for (drives the worker split)
    */
-  _spend(state, items, reserve) {
+  _spend(state, items, reserve, challengeTimeLeft) {
     const cap = storageCapOf(state)
     const held = addAmounts(emptyAmounts(), reserve)
+    const urgentHeld = addAmounts(emptyAmounts(), reserve)
     const wanted = emptyAmounts()
     let saved = 0
     let spends = 0
+    let challengeSaved = false
     for (const wish of items) {
       if (spends >= this.profile.spendsPerDecision) {
         break
@@ -156,12 +167,18 @@ class Bot {
       if (!item || exceedsCap(item.cost, cap)) {
         continue
       }
-      if (fitsReserve(state, item.cost, item.ignoresHold ? NOTHING_HELD : (item.urgent ? reserve : held))) {
+      const fits = item.ignoresHold ? this._fitsRecoverably(state, item.cost, urgentHeld, challengeTimeLeft) : fitsReserve(state, item.cost, item.urgent ? urgentHeld : held)
+      if (fits) {
         if (item.run()) {
           spends += 1
         }
       } else if (item.save && saved < SAVED_ITEMS && this._canProgress(state, item.cost)) {
-        if (saved === 0 && this._secondsToAfford(state, item.cost, held) <= GOAL_HOLD_SECONDS) {
+        if (item.challenge && !challengeSaved && this._secondsToAfford(state, item.cost, held) <= challengeTimeLeft) {
+          // The countdown cannot wait: its item is saved for even against urgent wishes
+          addAmounts(held, item.cost)
+          addAmounts(urgentHeld, item.cost)
+          challengeSaved = true
+        } else if (saved === 0 && this._secondsToAfford(state, item.cost, held) <= GOAL_HOLD_SECONDS) {
           addAmounts(held, item.cost)
         }
         addAmounts(wanted, item.cost)
@@ -169,6 +186,29 @@ class Bot {
       }
     }
     return wanted
+  }
+
+  /**
+   * Whether a cost can be paid now, with every held amount it dips into earned back by the income
+   * within RECOVERY_SHARE of the time left.
+   * @param {State} state - Game state
+   * @param {Cost} cost - Cost to pay
+   * @param {Object<string, number>} reserve - Held amounts (the challenge hold and the saved-for challenge item)
+   * @param {number} timeLeft - Seconds left on the countdown
+   * @returns {boolean} True when it can be paid and the hold restored in time
+   */
+  _fitsRecoverably(state, cost, reserve, timeLeft) {
+    for (const [
+      resource,
+      amount,
+    ] of cost.entries) {
+      const left = state.colony.resources[resource] - amount
+      const missing = (reserve[resource] ?? 0) - left
+      if (left < 0 || (missing > 0 && missing > Math.max(0, state.netProduction(resource)) * timeLeft * RECOVERY_SHARE)) {
+        return false
+      }
+    }
+    return true
   }
 
   /**

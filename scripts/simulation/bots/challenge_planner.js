@@ -4,7 +4,7 @@
 import {HQ_TERRITORY_PER_LEVEL, PRODUCTION_RATES} from '@/js/engine/balancing.js'
 import {BOUNDED_RESOURCES, HEADER_RESOURCES, HQ_RESOURCE_UNLOCKS} from '@/js/engine/constants.js'
 import {BLESSING_BLESSED_MARKETS, BLESSING_CELESTIAL_FORTIFICATION, BLESSING_CELESTIAL_PROSPERITY, BLESSING_FAVORABLE_WEATHER, BLESSING_FERTILE_SOIL, BLESSING_FOREST_BLOOM, BLESSING_GIFT_FROM_THE_HEAVENS, BLESSING_HOLY_EXPANSION, BLESSING_RAPID_CONSTRUCTION, BLESSING_RICH_MINES, BLESSING_TEMPORARY_PEACE, BLESSING_WISDOM_OF_THE_GODS, BUILDING_ALTAR, BUILDING_HOUSE, BUILDING_MONUMENT, BUILDING_STOREHOUSE, BUILDING_TEMPLE, CHALLENGE_STATUS_STARTED, HQ_TYPE_CAMP, RESOURCE_COPPER, RESOURCE_FAITH, RESOURCE_FOOD, RESOURCE_GOLD, RESOURCE_IRON, RESOURCE_KNOWLEDGE, RESOURCE_STONE, RESOURCE_WOOD} from '@/js/engine/enums.js'
-import {BLESSING_CHOICE_FIRST, BLESSING_CHOICE_WEAKEST_RESOURCE} from './bot_profiles.js'
+import {BLESSING_CHOICE_FIRST, BLESSING_CHOICE_WEAKEST_RESOURCE, HOLD_REACHABLE} from './bot_profiles.js'
 import {buildingItem, emptyAmounts, expansionItem, freeTerritory, headquartersUpgradeItem, PRODUCER_KEYS, PRODUCER_RESOURCES, plannedLevel, resourceValue, storageCapOf} from './economy_planner.js'
 
 const RATE_SAFETY = 1.15 // Production planned above the bare rate a gap needs, so the bot finishes with time to spare
@@ -61,13 +61,15 @@ export function challengeFocus(state, profile) {
 
 /**
  * Amounts the bot keeps in stock while working on a challenge: each faith or resource amount it asks
- * for, once met (hold it) or while the income can still reach it before the countdown ends (pause
- * other spending of it). An amount out of reach is not held, so a hopeless attempt does not freeze the colony.
+ * for, once met (hold it) and, with HOLD_REACHABLE, while the income can still reach it before the
+ * countdown ends (pause other spending of it). An amount out of reach is not held, so a hopeless
+ * attempt does not freeze the colony.
  * @param {State} state - Game state
  * @param {Object} focus - Result of challengeFocus
+ * @param {string} hold - Profile's challenge hold (HOLD_MET or HOLD_REACHABLE)
  * @returns {Object<string, number>} Held amount by resource
  */
-export function challengeReserve(state, focus) {
+export function challengeReserve(state, focus, hold) {
   const reserve = emptyAmounts()
   const {
     requirements, timeLeft,
@@ -83,7 +85,8 @@ export function challengeReserve(state, focus) {
     amount,
   ] of Object.entries(amounts)) {
     const missing = amount - state.colony.resources[resource]
-    if (missing <= Math.max(0, state.netProduction(resource)) * timeLeft) {
+    const reachable = hold === HOLD_REACHABLE ? Math.max(0, state.netProduction(resource)) * timeLeft : 0
+    if (missing <= reachable) {
       reserve[resource] = amount
     }
   }
@@ -121,14 +124,19 @@ export function challengeRates(state, focus) {
 }
 
 /**
- * Priority 3 — challenge: wish items that close the running challenge's gaps. Religious levels
+ * Priority 2 — challenge: wish items that close the running challenge's gaps. Religious levels
  * (upgrading the headquarters when the building is still locked, expanding when territory is full),
  * temple and altar levels when faith comes too slowly, producers and storehouse levels for
- * resources, houses for workers.
+ * resources, houses for workers. All are urgent (the countdown cannot wait for the bot's other
+ * savings) and marked as challenge items (the bot saves for the first one it cannot pay for yet).
+ * The religious levels, the storehouse levels an amount needs to fit and the territory for them are
+ * kept for good and the challenge cannot be met without them, so they may use the amounts the
+ * challenge holds (as long as the income can earn them back in time, see Bot._spend); the other
+ * items leave them alone, since spending them would undo the challenge's own stock.
  * @param {State} state - Game state
  * @param {Object} focus - Result of challengeFocus
  * @param {Object<string, number>} rates - Result of challengeRates
- * @returns {Array<Object|null>} Wish items
+ * @returns {Object[]} Wish items
  */
 export function challengeItems(state, focus, rates) {
   const {
@@ -138,49 +146,48 @@ export function challengeItems(state, focus, rates) {
     requirements,
   } = focus
   const items = []
-  if (freeTerritory(state) <= 0) {
-    items.push(expansionItem(state))
-  }
-  for (const key of RELIGIOUS_BUILDINGS) {
-    const required = requirements[key]
-    if (required === null || plannedLevel(buildings[key]) >= required) {
-      continue
+  const add = (item, usesHeld) => {
+    if (item) {
+      item.urgent = true
+      item.challenge = true
+      item.ignoresHold = usesHeld
+      items.push(item)
     }
-    items.push(state.unlockedBuildings.has(key) ? buildingItem(state, key, true, 'challenge') : headquartersUpgradeItem(state, ALWAYS_SAVE))
+  }
+  const missingLevels = RELIGIOUS_BUILDINGS.filter(key => requirements[key] !== null && plannedLevel(buildings[key]) < requirements[key])
+  const cap = storageCapOf(state)
+  const needsStorage = Object.values(requirements.resources ?? {}).some(amount => amount > cap)
+  if (freeTerritory(state) <= 0) {
+    add(expansionItem(state), missingLevels.length > 0 || needsStorage)
+  }
+  for (const key of missingLevels) {
+    add(state.unlockedBuildings.has(key) ? buildingItem(state, key, true, 'challenge') : headquartersUpgradeItem(state, ALWAYS_SAVE), true)
   }
   if ((rates[RESOURCE_FAITH] ?? 0) > 0) {
     const temple = buildings.temple
     if (temple.workers >= temple.maxWorkers) {
-      items.push(buildingItem(state, BUILDING_TEMPLE, true, 'challenge'))
+      add(buildingItem(state, BUILDING_TEMPLE, true, 'challenge'), false)
     }
-    items.push(buildingItem(state, BUILDING_ALTAR, true, 'challenge'))
+    add(buildingItem(state, BUILDING_ALTAR, true, 'challenge'), false)
     // Workers can only make faith in the temple, which needs the next headquarters tier at Camp
     if (!state.unlockedBuildings.has(BUILDING_TEMPLE)) {
-      items.push(headquartersUpgradeItem(state, ALWAYS_SAVE))
+      add(headquartersUpgradeItem(state, ALWAYS_SAVE), false)
     }
   }
-  const cap = storageCapOf(state)
   for (const [
     resource,
     amount,
   ] of Object.entries(requirements.resources ?? {})) {
     if (amount > cap) {
-      items.push(buildingItem(state, BUILDING_STOREHOUSE, true, 'challenge'))
+      add(buildingItem(state, BUILDING_STOREHOUSE, true, 'challenge'), true)
     }
     const producer = PRODUCER_KEYS.find(key => PRODUCER_RESOURCES[key] === resource)
     if (rates[resource] > 0 && producer && buildings[producer].workers >= buildings[producer].maxWorkers) {
-      items.push(buildingItem(state, producer, true, 'challenge'))
+      add(buildingItem(state, producer, true, 'challenge'), false)
     }
   }
   if (requirements.workers !== null && buildings.house.workersCap < requirements.workers && resources.workers < requirements.workers) {
-    items.push(buildingItem(state, BUILDING_HOUSE, true, 'challenge'))
-  }
-  // The countdown cannot wait for the bot's other savings, and its levels are kept for good, so they may use held amounts
-  for (const item of items) {
-    if (item) {
-      item.urgent = true
-      item.ignoresHold = true
-    }
+    add(buildingItem(state, BUILDING_HOUSE, true, 'challenge'), false)
   }
   return items
 }

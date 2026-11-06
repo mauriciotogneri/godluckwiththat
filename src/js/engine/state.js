@@ -1073,8 +1073,9 @@ class State {
 
   /**
    * Decides the active challenge's timer, requirements, blessings, punishment and mood from the colony,
-   * as its countdown starts; they stay fixed until it ends. Assigns new objects (the definition is
-   * never changed). Challenges built without a definition keep their values.
+   * as its countdown starts; they stay fixed until it ends. A retry never asks for more than the failed
+   * attempt. Assigns new objects (the definition is never changed). Challenges built without a definition
+   * keep their values.
    */
   _decideChallengeCountdown() {
     const challenge = this.meta.challenges.active
@@ -1082,7 +1083,9 @@ class State {
     if (!challenge?.base) {
       return
     }
-    const adjusted = adjustChallenge(challenge.base, colonyStats(this), this._challengeReference(challenge.index), challenge.failures)
+    // A retry is capped at the failed attempt's requirements, still in effect until now
+    const previousRequirements = challenge.failures > 0 ? challenge.requirements : null
+    const adjusted = adjustChallenge(challenge.base, colonyStats(this), this._challengeReference(challenge.index), challenge.failures, previousRequirements)
     challenge.timeout = adjusted.timeout
     challenge.requirements = adjusted.requirements
     challenge.blessings = adjusted.blessings

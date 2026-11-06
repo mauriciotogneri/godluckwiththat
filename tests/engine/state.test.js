@@ -2252,6 +2252,69 @@ describe('State', () => {
       expect(active.requirements).not.toBe(firstRequirements)
     })
 
+    // Fails the active challenge's countdown and leaves it waiting for its retry, with a colony that
+    // has grown rich in faith meanwhile (a refit without the cap would ask for more faith)
+    function failAndEnrich(state) {
+      state.paused = true
+      state.challengeModal = CHALLENGE_MODAL_FAILURE
+      state.acknowledgePunishment()
+      state.colony.resources.faith = 100000
+      state.update(0)
+    }
+
+    it('should never ask a retry for more than the failed attempt', async () => {
+      // A colony without faith income is asked for at most the faith it has
+      const state = await createReadyState()
+      state.colony.resources.faith = 50
+      state.update(0)
+      state.advanceChallenges(0)
+      const active = state.meta.challenges.active
+      const first = active.requirements
+      failAndEnrich(state)
+      const uncapped = adjustChallenge(active.base, colonyStats(state), CHALLENGE_REFERENCE_STATS[0], 1)
+      expect(uncapped.requirements.faith).toBeGreaterThan(first.faith)
+      state.advanceChallenges(active.delay)
+      expect(active.status).toBe(CHALLENGE_STATUS_STARTED)
+      expect(active.requirements.faith).toBeLessThanOrEqual(first.faith)
+      expect(active.requirements.resources.food).toBeLessThanOrEqual(first.resources.food)
+    })
+
+    it('should keep the failed attempt\'s requirements through a save and load before the retry', async () => {
+      // The real definitions, which a load re-attaches by index
+      const state = await createState({
+        metaOverrides: {
+          challenges: createInitialChallenges(),
+        },
+      })
+      state.update(0)
+      state.advanceChallenges(0)
+      const active = state.meta.challenges.active
+      state.advanceChallenges(active.delay)
+      const first = active.requirements
+      failAndEnrich(state)
+      const {
+        default: State,
+      } = await import('@/js/engine/state.js')
+      const restored = State.fromJSON(state.toJSON())
+      const restoredActive = restored.meta.challenges.active
+      expect(restoredActive.requirements).toEqual(first)
+      restored.advanceChallenges(restoredActive.delay)
+      expect(restoredActive.status).toBe(CHALLENGE_STATUS_STARTED)
+      for (const key of [
+        'faith',
+        'altar',
+        'temple',
+        'monument',
+        'workers',
+      ]) {
+        if (first[key] === null) {
+          expect(restoredActive.requirements[key]).toBeNull()
+        } else {
+          expect(restoredActive.requirements[key]).toBeLessThanOrEqual(first[key])
+        }
+      }
+    })
+
     it('should keep the decided values through a save and load', async () => {
       const state = await createState({
         metaOverrides: {
@@ -3725,7 +3788,7 @@ describe('State', () => {
       expect(restoredActive.toJSON()).toEqual(active.toJSON())
     })
 
-    it('should rebuild the values in effect of an activated challenge from its definition after a save and load', async () => {
+    it('should keep a waiting retry\'s requirements and rebuild its other values from the definition after a save and load', async () => {
       const state = await createState({
         metaOverrides: {
           challenges: createInitialChallenges(),
@@ -3750,7 +3813,8 @@ describe('State', () => {
       const definition = CHALLENGE_DEFINITIONS[0]
       expect(restoredActive.status).toBe(CHALLENGE_STATUS_ACTIVATED)
       expect(restoredActive.timeout).toBe(definition.timeout)
-      expect(restoredActive.requirements).toEqual(definition.requirements)
+      expect(restoredActive.requirements).toEqual(active.requirements)
+      expect(restoredActive.blessings.map(blessing => blessing.toJSON())).toEqual(definition.blessings)
       expect(restoredActive.delay).toBe(45)
       expect(restoredActive.delayElapsed).toBe(12)
       expect(restoredActive.failures).toBe(2)

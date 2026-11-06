@@ -1,6 +1,7 @@
 // Report for the balance simulation: aggregates the run results per bot and formats them as text.
 
-import {CHALLENGE_MOODS, HEADER_RESOURCES, HQ_TYPES} from '@/js/engine/constants.js'
+import {CHALLENGE_DEFINITIONS, CHALLENGE_MOODS, HEADER_RESOURCES, HQ_TYPES} from '@/js/engine/constants.js'
+import {calibrateChallenge} from './calibration.js'
 import {MILESTONE_SECONDS, RESULT_SUCCESS} from './run_recorder.js'
 
 const SECONDS_PER_MINUTE = 60
@@ -34,11 +35,77 @@ const SANITY_FIELDS = [
   'productionValue',
 ]
 
-// Done criteria checked with SIM_ASSERT. Phase 0 only has the bot sanity check; the challenge criteria come with the rebalancing.
+// Done criteria thresholds (todo/dynamic_challenges.md)
+const WEAK_MAX_ATTEMPTS = 2 // Weak bot: attempts per challenge, on every seed
+const AVERAGE_RUN_MINUTES = [
+  105,
+  135,
+] // Average bot: median run length range
+const AVERAGE_MAX_FAILURES = 2 // Average bot: failures per run allowed on most seeds…
+const AVERAGE_FAILURE_SEED_SHARE = 0.9 // …on at least this share of the seeds
+const AVERAGE_SPARE_SHARE = [
+  0.2,
+  0.4,
+] // Average bot: median time left on the timer per challenge (successful attempts)
+const STRONG_MIN_MET_SHARE = 0.5 // Strong bot: median time to first meet the requirements, as a share of the timer
+
+/**
+ * Challenge rows of a bot whose median spare share is outside a range.
+ * @param {Object} report - Report from buildReport
+ * @param {string} name - Bot name
+ * @param {number} min - Lowest median spare share
+ * @param {number} max - Highest median spare share
+ * @returns {number[]} Challenge indexes outside the range (missing ones included)
+ */
+function spareShareOutliers(report, name, min, max) {
+  return report.bots[name].challenges
+    .filter(row => row.medianSpareShare === null || row.medianSpareShare < min || row.medianSpareShare > max)
+    .map(row => row.index)
+}
+
+// Done criteria checked with SIM_ASSERT; each needs every bot it names in the run (unmet otherwise)
 export const DONE_CRITERIA = [
   {
+    description: `Weak bot: finishes every seed with at most ${WEAK_MAX_ATTEMPTS} attempts per challenge`,
+    check: report => Boolean(report.bots.weak) && report.bots.weak.finished === report.bots.weak.runs && report.bots.weak.maxAttempts <= WEAK_MAX_ATTEMPTS,
+  },
+  {
+    description: `Average bot: median run length ${AVERAGE_RUN_MINUTES[0]}–${AVERAGE_RUN_MINUTES[1]} minutes`,
+    check: report => {
+      const length = report.bots.average?.runLength.median
+      return typeof length === 'number' && length >= AVERAGE_RUN_MINUTES[0] * SECONDS_PER_MINUTE && length <= AVERAGE_RUN_MINUTES[1] * SECONDS_PER_MINUTE
+    },
+  },
+  {
+    description: `Average bot: at most ${AVERAGE_MAX_FAILURES} failures on ${AVERAGE_FAILURE_SEED_SHARE * 100}% of the seeds`,
+    check: report => {
+      const bot = report.bots.average
+      if (!bot) {
+        return false
+      }
+      const runs = Object.entries(bot.failureCounts).filter(([failures]) => Number(failures) <= AVERAGE_MAX_FAILURES).reduce((sum, [
+        , count,
+      ]) => sum + count, 0)
+      return runs >= bot.runs * AVERAGE_FAILURE_SEED_SHARE
+    },
+  },
+  {
+    description: `Average bot: median time left on the timer ${AVERAGE_SPARE_SHARE[0] * 100}–${AVERAGE_SPARE_SHARE[1] * 100}% on every challenge`,
+    check: report => Boolean(report.bots.average) && report.bots.average.challenges.length === CHALLENGE_DEFINITIONS.length
+      && spareShareOutliers(report, 'average', ...AVERAGE_SPARE_SHARE).length === 0,
+  },
+  {
+    description: 'Strong bot: finishes every seed without a failure',
+    check: report => Boolean(report.bots.strong) && report.bots.strong.finished === report.bots.strong.runs && report.bots.strong.failuresPerRun === 0,
+  },
+  {
+    description: `Strong bot: median time to first meet the requirements at least ${STRONG_MIN_MET_SHARE * 100}% of the timer on every challenge`,
+    check: report => Boolean(report.bots.strong) && report.bots.strong.challenges.length === CHALLENGE_DEFINITIONS.length
+      && spareShareOutliers(report, 'strong', 0, 1 - STRONG_MIN_MET_SHARE).length === 0,
+  },
+  {
     description: 'HQ tier, research and production at 30/60/90 min order the bots weak < average < strong',
-    check: report => report.sanity.every(row => row.ordered !== false),
+    check: report => report.sanity.length > 0 && report.sanity.every(row => row.ordered === true),
   },
 ]
 
@@ -79,7 +146,8 @@ function mean(values) {
 
 /**
  * Per-challenge figures for one bot: how many runs reached it, attempts, first-try success,
- * completions, median time from countdown start to requirements met, median spare share, and how
+ * completions, median time from countdown start to requirements met, median spare share of the
+ * successful attempts, and how
  * the engine scaled the countdowns: median amount, level and timer scales, attempts per mood and
  * backstopped attempts.
  * @param {Object[]} runs - Run results
@@ -91,6 +159,7 @@ function challengeRows(runs) {
     const attempts = runs.flatMap(run => run.attempts.filter(attempt => attempt.index === index))
     const resolvedFirst = attempts.filter(attempt => attempt.attempt === 1 && attempt.result)
     const met = attempts.filter(attempt => attempt.firstMetSeconds !== null)
+    const succeeded = attempts.filter(attempt => attempt.result === RESULT_SUCCESS)
     // Countdowns the engine scaled (challenges without a definition have no scales)
     const scaled = attempts.filter(attempt => attempt.countdownStartTime !== null && attempt.scales)
     const scaleMedian = kind => median(scaled.map(attempt => attempt.scales[kind]).filter(value => value !== null))
@@ -108,8 +177,8 @@ function challengeRows(runs) {
       firstTrySuccessRate: resolvedFirst.length === 0 ? null : resolvedFirst.filter(attempt => attempt.result === RESULT_SUCCESS).length / resolvedFirst.length,
       completedRuns: runs.filter(run => run.attempts.some(attempt => attempt.index === index && attempt.result === RESULT_SUCCESS)).length,
       medianTimeToMeet: median(met.map(attempt => attempt.firstMetSeconds)),
-      // An attempt cut off by the time cap has a met time but no spare share yet
-      medianSpareShare: median(met.filter(attempt => attempt.spareShare !== null).map(attempt => attempt.spareShare)),
+      // Successful attempts only: a failed one that met the requirements and lost them again left no time to spare
+      medianSpareShare: median(succeeded.map(attempt => attempt.spareShare)),
       medianAmountScale: scaleMedian('amounts'),
       medianLevelScale: scaleMedian('levels'),
       medianTimeoutScale: scaleMedian('timeout'),
@@ -141,6 +210,19 @@ function milestoneRows(runs) {
 }
 
 /**
+ * Runs per failure count.
+ * @param {Object[]} runs - Run results
+ * @returns {Object<string, number>} Number of runs by failures per run
+ */
+function failureCounts(runs) {
+  const counts = {}
+  for (const run of runs) {
+    counts[run.failures] = (counts[run.failures] ?? 0) + 1
+  }
+  return counts
+}
+
+/**
  * Aggregates one bot's runs.
  * @param {Object[]} runs - Run results
  * @returns {Object} Bot summary
@@ -162,6 +244,7 @@ function summarizeBot(runs) {
       p90: percentile(lengths, 0.9),
     },
     failuresPerRun: mean(runs.map(run => run.failures)),
+    failureCounts: failureCounts(runs),
     maxAttempts: Math.max(0, ...runs.flatMap(run => run.attempts.map(attempt => attempt.attempt))),
     medianChallengesCompleted: median(runs.map(run => run.challengesCompleted)),
     stuckAt: stuckAt,
@@ -223,6 +306,37 @@ function referenceRows(runs) {
 }
 
 /**
+ * Calibration table: per challenge, the median over the reference bot's first attempts of what its
+ * colony could meet in the target share of the base timer when the countdown started (calibration.js).
+ * @param {Object[]} runs - Reference bot's run results
+ * @returns {Object[]} One entry per challenge the reference bot started a countdown for
+ */
+function calibrationRows(runs) {
+  const firstAttempts = runs.flatMap(run => run.attempts.filter(attempt => attempt.attempt === 1 && attempt.statsAtCountdownStart))
+  const rows = []
+  for (const definition of CHALLENGE_DEFINITIONS) {
+    const attempts = firstAttempts.filter(attempt => attempt.index === definition.index)
+    if (attempts.length === 0) {
+      continue
+    }
+    const results = attempts.map(attempt => calibrateChallenge(definition, attempt.statsAtCountdownStart))
+    rows.push({
+      index: definition.index,
+      runs: attempts.length,
+      countdownStartTime: median(attempts.map(attempt => attempt.countdownStartTime)),
+      share: median(results.map(result => result.share)),
+      parts: results[0].parts.map((entry, i) => ({
+        part: entry.part,
+        base: entry.base,
+        alone: median(results.map(result => result.parts[i].alone)),
+        together: median(results.map(result => result.parts[i].together)),
+      })),
+    })
+  }
+  return rows
+}
+
+/**
  * Sanity check: median HQ tier, research count and production value per bot at each milestone, and
  * whether each orders the bots weak ≤ average ≤ strong with weak below strong (production strictly increasing).
  * @param {Object<string, Object>} bots - Bot summaries by name
@@ -275,11 +389,13 @@ export function buildReport(runsByBot, options) {
   ] of Object.entries(runsByBot)) {
     bots[name] = summarizeBot(runs)
   }
+  const referenceRuns = runsByBot[REFERENCE_BOT]
   return {
     options: options,
     bots: bots,
     sanity: sanityRows(bots),
-    reference: runsByBot[REFERENCE_BOT] ? referenceRows(runsByBot[REFERENCE_BOT]) : [],
+    reference: referenceRuns ? referenceRows(referenceRuns) : [],
+    calibration: options.calibrate && referenceRuns ? calibrationRows(referenceRuns) : [],
   }
 }
 
@@ -378,7 +494,7 @@ export function referenceSnippet(reference, runs) {
  */
 export function formatReport(report) {
   const {
-    options, bots, sanity, reference,
+    options, bots, sanity, reference, calibration,
   } = report
   const names = Object.keys(bots)
   const sections = []
@@ -493,6 +609,38 @@ export function formatReport(report) {
     ...names.map(name => formatValue(row.values[name], row.field === 'productionValue' ? 1 : 0)),
     row.ordered === null ? 'n/a' : (row.ordered ? 'yes' : 'NO'),
   ])))
+
+  sections.push('Done criteria\n' + formatTable([
+    'Criterion',
+    'Result',
+  ], DONE_CRITERIA.map(criterion => [
+    criterion.description,
+    criterion.check(report) ? 'PASS' : 'FAIL',
+  ])))
+
+  if (calibration.length > 0) {
+    sections.push(`Calibration — what the ${REFERENCE_BOT} bot's colony could meet in the target share of the base timer at countdown start (medians, first attempts)\n` + formatTable([
+      'Challenge',
+      'Runs',
+      'Countdown start',
+      'Share together',
+      'Part',
+      'Base',
+      'Alone',
+      'Together',
+      'Together ÷ base',
+    ], calibration.flatMap(row => row.parts.map(entry => [
+      String(row.index),
+      String(row.runs),
+      formatMinutes(row.countdownStartTime),
+      formatPercent(row.share),
+      entry.part,
+      String(entry.base),
+      formatValue(entry.alone, Number.isInteger(entry.alone) ? 0 : 1),
+      formatValue(entry.together, Number.isInteger(entry.together) ? 0 : 1),
+      formatValue(entry.together / entry.base, 2),
+    ]))))
+  }
 
   // The reference table must come from scaled runs: without scaling the colonies face other challenges
   if (reference.length > 0 && !scalingOff) {

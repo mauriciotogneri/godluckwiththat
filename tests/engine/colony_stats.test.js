@@ -211,6 +211,25 @@ describe('colonyStats', () => {
       expect(colonyStats(state).productionValue).toBeCloseTo(state.netProduction(RESOURCE_WOOD) * TRIBUTE_RESOURCE_VALUES[RESOURCE_WOOD])
     })
 
+    it('should add the output of free producer slots to the staffed rates of bounded resources', async () => {
+      const state = await createState(colony => {
+        colony.buildings.farm.level = 1
+        colony.buildings.farm.workers = 5
+        colony.buildings.woodcutter.level = 1
+        colony.buildings.woodcutter.workers = 0
+        colony.buildings.altar.level = 2
+        colony.resources.workers = 5
+      })
+      const stats = colonyStats(state)
+      const {
+        farm, woodcutter,
+      } = state.colony.buildings
+      const perWorker = (key, resource) => PRODUCTION_RATES[key].rate * state.productionMultipliers[resource] * state.productivity
+      expect(stats.staffedRates[RESOURCE_FOOD]).toBeCloseTo(stats.netRates[RESOURCE_FOOD] + (farm.maxWorkers - 5) * perWorker(BUILDING_FARM, RESOURCE_FOOD))
+      expect(stats.staffedRates[RESOURCE_WOOD]).toBeCloseTo(stats.netRates[RESOURCE_WOOD] + woodcutter.maxWorkers * perWorker(BUILDING_WOODCUTTER, RESOURCE_WOOD))
+      expect(stats.staffedRates[RESOURCE_FAITH]).toBe(stats.netRates[RESOURCE_FAITH])
+    })
+
     it('should report the faith rate from the altar', async () => {
       const state = await createState(colony => {
         colony.buildings.altar.level = 3

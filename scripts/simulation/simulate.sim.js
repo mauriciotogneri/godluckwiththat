@@ -9,6 +9,7 @@
 //   SIM_STEP       game seconds per simulation step (default 1)
 //   SIM_ASSERT     1 or true: fail when a done criterion (report.js DONE_CRITERIA) is unmet
 //   SIM_SCALING    0 or false: challenges keep the fixed values of challenges.json (default: scaled)
+//   SIM_CALIBRATE  1 or true: add what the average bot's colony could meet of each challenge (calibration.js)
 
 import {mkdirSync, writeFileSync} from 'node:fs'
 import {dirname, join} from 'node:path'
@@ -70,7 +71,7 @@ function readNumber(name, fallback, integer) {
 
 /**
  * Reads the simulation options from the environment.
- * @returns {{profiles: Object[], runs: number, seed: number, maxHours: number, step: number, assert: boolean, scaling: boolean}} Options
+ * @returns {{profiles: Object[], runs: number, seed: number, maxHours: number, step: number, assert: boolean, scaling: boolean, calibrate: boolean}} Options
  */
 function readOptions() {
   const names = (process.env.SIM_BOTS ?? '').split(',').map(name => name.trim()).filter(Boolean)
@@ -95,6 +96,10 @@ function readOptions() {
       '0',
       'false',
     ].includes(process.env.SIM_SCALING ?? ''),
+    calibrate: [
+      '1',
+      'true',
+    ].includes(process.env.SIM_CALIBRATE ?? ''),
   }
 }
 
@@ -128,6 +133,7 @@ describe('simulation', () => {
       maxHours: options.maxHours,
       step: options.step,
       scaling: options.scaling,
+      calibrate: options.calibrate,
     }
     const report = buildReport(runsByBot, reportOptions)
     console.log('\n' + formatReport(report))
