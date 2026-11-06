@@ -137,4 +137,13 @@ export default [
       'vue/multi-word-component-names': 'off',
     },
   },
+  {
+    // Node globals for the headless balance simulation (run by Vitest under Node)
+    files: ['scripts/simulation/**'],
+    languageOptions: {
+      globals: {
+        process: 'readonly',
+      },
+    },
+  },
 ]

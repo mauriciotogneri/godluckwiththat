@@ -555,6 +555,21 @@ class State {
   }
 
   /**
+   * Advances season, construction, research, challenge, event, and raid timers by one step.
+   * Raids run last so they can correct the raid event after advanceEvents, and so a challenge
+   * result and a raid result never land in the same step (a paused game skips the raid step).
+   * @param {number} delta - Game seconds to advance
+   */
+  advanceProgress(delta) {
+    this.advanceSeason(delta)
+    this.advanceConstruction(delta)
+    this.advanceResearch(delta)
+    this.advanceChallenges(delta)
+    this.advanceEvents(delta)
+    this.advanceRaids(delta)
+  }
+
+  /**
    * Advances the season elapsed timer and flips season when duration is reached.
    * Driven by requestAnimationFrame for smooth visual progress.
    * @param {number} delta - Seconds since last season tick
@@ -1280,6 +1295,19 @@ class State {
   _unlockedByHeadquarters(unlocks) {
     const typeIndex = HQ_TYPES.indexOf(this.colony.buildings.headquarters.type)
     return HQ_TYPES.slice(0, typeIndex + 1).flatMap(type => unlocks[type])
+  }
+
+  /**
+   * Buildings the player can build: the headquarters plus every building unlocked by the
+   * headquarters types up to the current one. The building grid locks the others;
+   * levelUpBuilding does not check this.
+   * @returns {Set<string>} Unlocked building keys
+   */
+  get unlockedBuildings() {
+    return new Set([
+      BUILDING_HEADQUARTERS,
+      ...this._unlockedByHeadquarters(HQ_BUILDING_UNLOCKS),
+    ])
   }
 
   /**

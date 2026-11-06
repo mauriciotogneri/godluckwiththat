@@ -1,5 +1,5 @@
 import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest'
-import {BLESSING_BLESSED_MARKETS, BLESSING_CELESTIAL_FORTIFICATION, BLESSING_CELESTIAL_PROSPERITY, BLESSING_FAVORABLE_WEATHER, BLESSING_FERTILE_SOIL, BLESSING_FOREST_BLOOM, BLESSING_GIFT_FROM_THE_HEAVENS, BLESSING_HOLY_EXPANSION, BLESSING_RAPID_CONSTRUCTION, BLESSING_RICH_MINES, BLESSING_TEMPORARY_PEACE, BLESSING_WISDOM_OF_THE_GODS, BUILDING_ACADEMY, BUILDING_ALTAR, BUILDING_COPPER_MINE, BUILDING_FARM, BUILDING_GOLD_MINE, BUILDING_HEADQUARTERS, BUILDING_HOUSE, BUILDING_IRON_MINE, BUILDING_QUARRY, BUILDING_STOREHOUSE, BUILDING_TEMPLE, BUILDING_WOODCUTTER, CHALLENGE_MODAL_FAILURE, CHALLENGE_MODAL_REWARD, CHALLENGE_MODAL_WIN, CHALLENGE_STATUS_ACTIVATED, CHALLENGE_STATUS_PENDING, CHALLENGE_STATUS_STARTED, EVENT_TYPE_BUILDING_UPGRADE, EVENT_TYPE_CHALLENGE_STARTED, EVENT_TYPE_POPULATION_LIMIT_REACHED, EVENT_TYPE_RAID_INCOMING, EVENT_TYPE_RAID_RESULT, EVENT_TYPE_RESEARCH_COMPLETE, EVENT_TYPE_RESOURCE_LIMIT_REACHED, EVENT_TYPE_TERRITORY_LIMIT_REACHED, HQ_TYPE_CAMP, HQ_TYPE_CITY, HQ_TYPE_SETTLEMENT, HQ_TYPE_TOWN, HQ_TYPE_VILLAGE, PUNISHMENT_CROP_FAILURE, PUNISHMENT_LANDSLIDE, PUNISHMENT_PLAGUE, PUNISHMENT_VOLCANO, PUNISHMENT_WILDFIRES, RAID_PHASE_INCOMING, RAID_PHASE_WAITING, RESEARCH_ATTACK_1, RESEARCH_DEFENSE_1, RESEARCH_FOOD_PRODUCTION_1, RESEARCH_WARNING_1, RESEARCH_WARNING_2, RESOURCE_COPPER, RESOURCE_FOOD, RESOURCE_GOLD, RESOURCE_IRON, RESOURCE_STONE, RESOURCE_WOOD, SEASON_COLD, SEASON_WARM, TRADE_BUY, TRADE_SELL, TRIBUTE_CANCEL, TRIBUTE_DELAY, TUTORIAL_MODAL_CHALLENGE_STARTED, TUTORIAL_MODAL_HQ_UPGRADE, TUTORIAL_MODAL_NEGATIVE_PRODUCTION, TUTORIAL_MODAL_RAID_INCOMING, TUTORIAL_MODAL_SEASON_CHANGED, UNIT_ARCHER, UNIT_CAVALRY, UNIT_INFANTRY} from '@/js/engine/enums.js'
+import {BLESSING_BLESSED_MARKETS, BLESSING_CELESTIAL_FORTIFICATION, BLESSING_CELESTIAL_PROSPERITY, BLESSING_FAVORABLE_WEATHER, BLESSING_FERTILE_SOIL, BLESSING_FOREST_BLOOM, BLESSING_GIFT_FROM_THE_HEAVENS, BLESSING_HOLY_EXPANSION, BLESSING_RAPID_CONSTRUCTION, BLESSING_RICH_MINES, BLESSING_TEMPORARY_PEACE, BLESSING_WISDOM_OF_THE_GODS, BUILDING_ACADEMY, BUILDING_ALTAR, BUILDING_ARCHERY, BUILDING_BARRACKS, BUILDING_COPPER_MINE, BUILDING_FARM, BUILDING_GOLD_MINE, BUILDING_HEADQUARTERS, BUILDING_HOUSE, BUILDING_IRON_MINE, BUILDING_MARKET, BUILDING_MONUMENT, BUILDING_QUARRY, BUILDING_STABLE, BUILDING_STOREHOUSE, BUILDING_TEMPLE, BUILDING_TOWER, BUILDING_WALL, BUILDING_WOODCUTTER, CHALLENGE_MODAL_FAILURE, CHALLENGE_MODAL_REWARD, CHALLENGE_MODAL_WIN, CHALLENGE_STATUS_ACTIVATED, CHALLENGE_STATUS_PENDING, CHALLENGE_STATUS_STARTED, EVENT_TYPE_BUILDING_UPGRADE, EVENT_TYPE_CHALLENGE_STARTED, EVENT_TYPE_POPULATION_LIMIT_REACHED, EVENT_TYPE_RAID_INCOMING, EVENT_TYPE_RAID_RESULT, EVENT_TYPE_RESEARCH_COMPLETE, EVENT_TYPE_RESOURCE_LIMIT_REACHED, EVENT_TYPE_TERRITORY_LIMIT_REACHED, HQ_TYPE_CAMP, HQ_TYPE_CITY, HQ_TYPE_SETTLEMENT, HQ_TYPE_TOWN, HQ_TYPE_VILLAGE, PUNISHMENT_CROP_FAILURE, PUNISHMENT_LANDSLIDE, PUNISHMENT_PLAGUE, PUNISHMENT_VOLCANO, PUNISHMENT_WILDFIRES, RAID_PHASE_INCOMING, RAID_PHASE_WAITING, RESEARCH_ATTACK_1, RESEARCH_DEFENSE_1, RESEARCH_FOOD_PRODUCTION_1, RESEARCH_WARNING_1, RESEARCH_WARNING_2, RESOURCE_COPPER, RESOURCE_FOOD, RESOURCE_GOLD, RESOURCE_IRON, RESOURCE_STONE, RESOURCE_WOOD, SEASON_COLD, SEASON_WARM, TRADE_BUY, TRADE_SELL, TRIBUTE_CANCEL, TRIBUTE_DELAY, TUTORIAL_MODAL_CHALLENGE_STARTED, TUTORIAL_MODAL_HQ_UPGRADE, TUTORIAL_MODAL_NEGATIVE_PRODUCTION, TUTORIAL_MODAL_RAID_INCOMING, TUTORIAL_MODAL_SEASON_CHANGED, UNIT_ARCHER, UNIT_CAVALRY, UNIT_INFANTRY} from '@/js/engine/enums.js'
 import {HQ_TERRITORY_PER_LEVEL, MILITARY_UNITS_PER_LEVEL, MONUMENT_FAITH_PER_LEVEL, RAID_GRACE_PERIOD, RAID_INTERVAL_BASE, RAID_INTERVAL_MIN, RAID_INTERVAL_PER_TERRITORY, RAID_UNITS_BASE, RAID_UNITS_PER_TERRITORY, RAID_UNITS_PER_YEAR, RAID_WARNING_TIME, RESEARCH_TIME_MULTIPLIER, SEASON_DURATION, SHORTAGE_MAX_PENALTY, TRIBUTE_DELAY_SECONDS, TRIBUTE_ROUNDING, UNIT_STATS, WORKER_FOOD_CONSUMPTION, WORKER_RECRUIT_COST, WORKER_WOOD_CONSUMPTION} from '@/js/engine/balancing.js'
 import {IMG_BUILDING_WALL, IMG_OTHER_TERRITORY, SND_BUILDING_CREATED, SND_HEADQUARTERS_UPGRADED, SND_NOTIFICATION_ALERT, SND_NOTIFICATION_DISASTER, SND_RESEARCH_COMPLETED, SND_TERRITORY_EXPANDED, SND_UNDER_ATTACK, SND_WORKER_ACADEMY, SND_WORKER_FARM, SND_WORKER_MINE, SND_WORKER_TEMPLE, SND_WORKER_WOODCUTTER} from '@/js/engine/assets.js'
 import {resolveBattle} from '@/js/engine/battle.js'
@@ -760,6 +760,129 @@ describe('State', () => {
       // With expansion research, cost should be lower
       expect(cost.food).toBeLessThanOrEqual(baseCost.food)
       expect(cost.wood).toBeLessThanOrEqual(baseCost.wood)
+    })
+  })
+
+  // ── unlockedBuildings ────────────────────────────────────────────
+
+  describe('unlockedBuildings', () => {
+    const campBuildings = [
+      BUILDING_HEADQUARTERS,
+      BUILDING_HOUSE,
+      BUILDING_ALTAR,
+      BUILDING_FARM,
+      BUILDING_WOODCUTTER,
+    ]
+    const settlementBuildings = [
+      ...campBuildings,
+      BUILDING_STOREHOUSE,
+      BUILDING_TEMPLE,
+      BUILDING_QUARRY,
+      BUILDING_BARRACKS,
+    ]
+    const villageBuildings = [
+      ...settlementBuildings,
+      BUILDING_ACADEMY,
+      BUILDING_COPPER_MINE,
+      BUILDING_ARCHERY,
+    ]
+    const townBuildings = [
+      ...villageBuildings,
+      BUILDING_MONUMENT,
+      BUILDING_IRON_MINE,
+      BUILDING_STABLE,
+      BUILDING_WALL,
+    ]
+    const cityBuildings = [
+      ...townBuildings,
+      BUILDING_MARKET,
+      BUILDING_GOLD_MINE,
+      BUILDING_TOWER,
+    ]
+
+    it.each([
+      {
+        type: HQ_TYPE_CAMP,
+        expected: campBuildings,
+      },
+      {
+        type: HQ_TYPE_SETTLEMENT,
+        expected: settlementBuildings,
+      },
+      {
+        type: HQ_TYPE_VILLAGE,
+        expected: villageBuildings,
+      },
+      {
+        type: HQ_TYPE_TOWN,
+        expected: townBuildings,
+      },
+      {
+        type: HQ_TYPE_CITY,
+        expected: cityBuildings,
+      },
+    ])('should unlock the headquarters and every building up to $type', async ({
+      type, expected,
+    }) => {
+      const state = await createState({
+        colonyOverrides: {
+          buildingOverrides: {
+            headquarters: {
+              level: 1,
+              type: type,
+            },
+          },
+        },
+      })
+      expect(state.unlockedBuildings).toEqual(new Set(expected))
+    })
+
+    it('should unlock all 19 buildings at City', async () => {
+      const state = await createState({
+        colonyOverrides: {
+          buildingOverrides: {
+            headquarters: {
+              level: 1,
+              type: HQ_TYPE_CITY,
+            },
+          },
+        },
+      })
+      expect(state.unlockedBuildings.size).toBe(Object.keys(state.colony.buildings).length)
+    })
+  })
+
+  // ── advanceProgress ──────────────────────────────────────────────
+
+  describe('advanceProgress', () => {
+    afterEach(() => {
+      vi.restoreAllMocks()
+    })
+
+    it('should advance season, construction, research, challenges, events and raids in that order', async () => {
+      const state = await createState()
+      const methods = [
+        'advanceSeason',
+        'advanceConstruction',
+        'advanceResearch',
+        'advanceChallenges',
+        'advanceEvents',
+        'advanceRaids',
+      ]
+      const spies = methods.map(method => vi.spyOn(state, method))
+      state.advanceProgress(2)
+      const callOrder = spies.map(spy => spy.mock.invocationCallOrder[0])
+      expect(callOrder).toEqual([...callOrder].sort((first, second) => first - second))
+      for (const spy of spies) {
+        expect(spy).toHaveBeenCalledTimes(1)
+        expect(spy).toHaveBeenCalledWith(2)
+      }
+    })
+
+    it('should move the season timer by the step', async () => {
+      const state = await createState()
+      state.advanceProgress(3)
+      expect(state.colony.season.seasonElapsed).toBe(3)
     })
   })
 

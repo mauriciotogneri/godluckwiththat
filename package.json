@@ -7,13 +7,14 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "lint": "eslint src/ tests/",
-    "lint:fix": "eslint src/ tests/ --fix",
+    "lint": "eslint src/ tests/ scripts/simulation/",
+    "lint:fix": "eslint src/ tests/ scripts/simulation/ --fix",
     "generate-assets": "node scripts/generate-assets.js",
     "deploy": "npm run build && firebase deploy --only hosting",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:coverage": "vitest run --coverage",
+    "simulate": "vitest run --config vitest.simulation.config.js",
     "check": "npm run lint:fix && npm run test && npm run build"
   },
   "dependencies": {

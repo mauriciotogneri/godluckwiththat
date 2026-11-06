@@ -1394,18 +1394,12 @@ function resumeClocks() {
 }
 
 /**
- * Advances season, construction, research, challenge, event, and raid timers by one step.
- * Raids run last so they can correct the raid event after advanceEvents, and so a challenge
- * result and a raid result never land in the same step (a paused game skips the raid step).
+ * Advances season, construction, research, challenge, event, and raid timers by one step
+ * (the order lives in State.advanceProgress).
  * @param {number} delta - Game seconds to advance
  */
 function advanceProgress(delta) {
-  state.advanceSeason(delta)
-  state.advanceConstruction(delta)
-  state.advanceResearch(delta)
-  state.advanceChallenges(delta)
-  state.advanceEvents(delta)
-  state.advanceRaids(delta)
+  state.advanceProgress(delta)
 }
 
 /**

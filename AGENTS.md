@@ -12,6 +12,7 @@ A hybrid incremental strategy game (Vite + Vue 3, JavaScript, Composition API wi
 - `docs/ui.md` — shared styles, colors, CSS units, frontend-design skill. Read when editing Vue components or CSS.
 - `docs/testing.md` — test layout, factory helpers, mocks, coverage. Read when adding or changing tests.
 - `docs/performance.md` — performance overlay metrics. Read when working on the game loop, UI sync, or performance.
+- `docs/simulation.md` — headless balance simulation (bots, options, baseline). Read when working on balancing, challenges, or `scripts/simulation/`.
 
 ## Rules
 
