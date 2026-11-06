@@ -13,12 +13,15 @@ import {BONUS_STORAGE_CAPACITY, RESOURCE_FAITH} from '@/js/engine/enums.js'
  * - workers / workersCap / idleWorkers: population
  * - stock / netRates: amount and net per-second rate of every resource
  * - storageCap: shared cap of the bounded resources, with the Storage research bonus
- * - productionValue: net production of the bounded resources weighted by TRIBUTE_RESOURCE_VALUES
+ * - productionValue: net production of the bounded resources weighted by TRIBUTE_RESOURCE_VALUES;
+ *   output into full storage is lost, so a resource at the cap adds no gain (a loss still counts)
  * - faithRate: net faith per second
  * - armyUnits: trained units plus the archers the tower fights as
  * - researchCount: completed researches
  * - buildingLevels: summed levels of every building except the headquarters
  * - altar / temple / monument: religious building levels
+ * - templeWorkers: workers assigned to the temple
+ * - house / storehouse: house and storehouse levels
  * - territoryFree: territory slots not used or reserved by a construction
  * - constructionMult: construction duration multiplier (research and Rapid Construction)
  * - unlockedResources / unlockedBuildings: keys unlocked by the headquarters type
@@ -43,8 +46,12 @@ export function colonyStats(state) {
     netRates[resource] = state.netProduction(resource)
   }
 
+  const storageCap = buildings.storehouse.storageCap(bonuses[BONUS_STORAGE_CAPACITY] ?? 0)
   let productionValue = 0
   for (const resource of BOUNDED_RESOURCES) {
+    if (netRates[resource] > 0 && stock[resource] >= storageCap) {
+      continue
+    }
     productionValue += netRates[resource] * TRIBUTE_RESOURCE_VALUES[resource]
   }
 
@@ -60,7 +67,7 @@ export function colonyStats(state) {
     idleWorkers: colony.idleWorkers,
     stock: stock,
     netRates: netRates,
-    storageCap: buildings.storehouse.storageCap(bonuses[BONUS_STORAGE_CAPACITY] ?? 0),
+    storageCap: storageCap,
     productionValue: productionValue,
     faithRate: netRates[RESOURCE_FAITH],
     armyUnits: military.totalUnits + buildings.tower.archers,
@@ -69,6 +76,9 @@ export function colonyStats(state) {
     altar: buildings.altar.level,
     temple: buildings.temple.level,
     monument: buildings.monument.level,
+    templeWorkers: buildings.temple.workers,
+    house: buildings.house.level,
+    storehouse: buildings.storehouse.level,
     territoryFree: headquarters.territoryCap + resources.territoryBonus - resources.territory,
     constructionMult: state._constructionDurationMult,
     unlockedResources: state._unlockedByHeadquarters(HQ_RESOURCE_UNLOCKS),

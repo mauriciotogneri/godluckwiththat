@@ -33,7 +33,21 @@ import {BUILDING_UPGRADES,
   TRIBUTE_DELAY_GROWTH,
   TRIBUTE_CANCEL_MULTIPLIER,
   TRIBUTE_DELAY_SECONDS,
-  TRIBUTE_ROUNDING} from '@/js/engine/balancing.js'
+  TRIBUTE_ROUNDING,
+  CHALLENGE_AMOUNT_ROUNDING,
+  CHALLENGE_BLESSING_DURATION_RANGE,
+  CHALLENGE_BLESSING_MAGNITUDE_RANGE,
+  CHALLENGE_DELAY_SCALE_MAX,
+  CHALLENGE_DELAY_SCALE_MIN,
+  CHALLENGE_HEALTH_RATIO_MAX,
+  CHALLENGE_HEALTH_RATIO_MIN,
+  CHALLENGE_MAX_HARDEN_SCALE,
+  CHALLENGE_MAX_LEVEL_CUT,
+  CHALLENGE_MAX_TIMEOUT_SCALE,
+  CHALLENGE_MIN_AMOUNT_SCALE,
+  CHALLENGE_MOOD_THRESHOLDS,
+  CHALLENGE_PUNISHMENT_SEVERITY_RANGE,
+  CHALLENGE_TARGET_TIME_SHARE} from '@/js/engine/balancing.js'
 import {BOUNDED_RESOURCES, HQ_RESOURCE_UNLOCKS, UNIT_TYPES} from '@/js/engine/constants.js'
 import * as enums from '@/js/engine/enums.js'
 import {HQ_TYPE_CAMP, HQ_TYPE_SETTLEMENT, RESOURCE_COPPER, RESOURCE_FOOD, RESOURCE_GOLD, RESOURCE_IRON, RESOURCE_KNOWLEDGE, RESOURCE_STONE, RESOURCE_WOOD} from '@/js/engine/enums.js'
@@ -285,6 +299,56 @@ describe('balancing', () => {
       expect(TRIBUTE_DELAY_SECONDS).toBeGreaterThan(0)
       expect(Number.isInteger(TRIBUTE_ROUNDING)).toBe(true)
       expect(TRIBUTE_ROUNDING).toBeGreaterThan(0)
+    })
+  })
+
+  describe('challenge scaling', () => {
+    it('fits requirements within the timer and keeps the scale limits around the base values', () => {
+      expect(CHALLENGE_TARGET_TIME_SHARE).toBeGreaterThan(0)
+      expect(CHALLENGE_TARGET_TIME_SHARE).toBeLessThan(1)
+      expect(CHALLENGE_MIN_AMOUNT_SCALE).toBeGreaterThan(0)
+      expect(CHALLENGE_MIN_AMOUNT_SCALE).toBeLessThan(1)
+      expect(CHALLENGE_MAX_HARDEN_SCALE).toBeGreaterThan(1)
+      expect(CHALLENGE_MAX_LEVEL_CUT).toBeGreaterThan(0)
+      expect(CHALLENGE_MAX_LEVEL_CUT).toBeLessThan(1)
+      expect(CHALLENGE_MAX_TIMEOUT_SCALE).toBeGreaterThan(1)
+    })
+
+    it('every range includes the base value 1', () => {
+      for (const [
+        min,
+        max,
+      ] of [
+          [
+            CHALLENGE_DELAY_SCALE_MIN,
+            CHALLENGE_DELAY_SCALE_MAX,
+          ],
+          [
+            CHALLENGE_HEALTH_RATIO_MIN,
+            CHALLENGE_HEALTH_RATIO_MAX,
+          ],
+          CHALLENGE_BLESSING_MAGNITUDE_RANGE,
+          CHALLENGE_BLESSING_DURATION_RANGE,
+          CHALLENGE_PUNISHMENT_SEVERITY_RANGE,
+        ]) {
+        expect(min).toBeLessThanOrEqual(1)
+        expect(max).toBeGreaterThanOrEqual(1)
+      }
+    })
+
+    it('mood thresholds rise and leave the base difficulty in the middle mood', () => {
+      for (let i = 1; i < CHALLENGE_MOOD_THRESHOLDS.length; i++) {
+        expect(CHALLENGE_MOOD_THRESHOLDS[i]).toBeGreaterThan(CHALLENGE_MOOD_THRESHOLDS[i - 1])
+      }
+      expect(CHALLENGE_MOOD_THRESHOLDS.filter(threshold => threshold <= 1)).toHaveLength(2)
+    })
+
+    it('amount rounding bands rise and cover every amount', () => {
+      for (let i = 1; i < CHALLENGE_AMOUNT_ROUNDING.length; i++) {
+        expect(CHALLENGE_AMOUNT_ROUNDING[i].below).toBeGreaterThan(CHALLENGE_AMOUNT_ROUNDING[i - 1].below)
+        expect(CHALLENGE_AMOUNT_ROUNDING[i].step).toBeGreaterThan(CHALLENGE_AMOUNT_ROUNDING[i - 1].step)
+      }
+      expect(CHALLENGE_AMOUNT_ROUNDING[CHALLENGE_AMOUNT_ROUNDING.length - 1].below).toBe(Infinity)
     })
   })
 })

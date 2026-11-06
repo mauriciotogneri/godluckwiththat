@@ -17,9 +17,9 @@ export const RESULT_FAILURE = 'failure'
 
 /**
  * Records one simulated game: every challenge attempt (timings, requirements, colony stats when it
- * activates and when its countdown starts, when its requirements were first met, the result and the
- * blessing chosen), raid outcomes, time spent in a food or wood shortage, colony snapshots at the
- * milestones, and the run length.
+ * activates and when its countdown starts, how the engine scaled it to the colony as its countdown
+ * started, when its requirements were first met, the result and the blessing chosen), raid outcomes,
+ * time spent in a food or wood shortage, colony snapshots at the milestones, and the run length.
  * observe() runs after every simulation step; it only reads the state.
  */
 class RunRecorder {
@@ -61,7 +61,8 @@ class RunRecorder {
   }
 
   /**
-   * Tracks the active challenge: a new attempt, its countdown start, when its requirements are
+   * Tracks the active challenge: a new attempt, its countdown start (with the scales, mood and
+   * backstop flag the engine chose for it, from state.challengeScaling), when its requirements are
    * first met, and its result.
    * @param {State} state - Game state
    * @param {number} time - Game seconds since the start
@@ -102,6 +103,9 @@ class RunRecorder {
         requirements: JSON.parse(JSON.stringify(active.requirements)),
         statsAtActivation: colonyStats(state),
         statsAtCountdownStart: null,
+        scales: null,
+        mood: null,
+        backstop: null,
         metAtStart: null,
         firstMetSeconds: null,
         stillMetAtEnd: null,
@@ -120,6 +124,18 @@ class RunRecorder {
       if (current.countdownStartTime === null) {
         current.countdownStartTime = time - active.timeoutElapsed
         current.statsAtCountdownStart = colonyStats(state)
+        // The engine decides the timer and requirements as the countdown starts
+        current.timeout = active.timeout
+        current.requirements = JSON.parse(JSON.stringify(active.requirements))
+        // How the engine scaled this countdown (null for a challenge without a definition)
+        const scaling = state.challengeScaling
+        if (scaling) {
+          current.scales = {
+            ...scaling.scales,
+          }
+          current.mood = scaling.mood
+          current.backstop = scaling.backstop
+        }
         current.metAtStart = met
         if (met) {
           current.firstMetSeconds = 0

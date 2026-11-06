@@ -1,10 +1,12 @@
 // Central game state container — mutation handler, game loop, and player actions.
 
-import {MONUMENT_FAITH_PER_LEVEL, PRODUCTION_RATES, RAID_GRACE_PERIOD, RAID_INTERVAL_BASE, RAID_INTERVAL_MIN, RAID_INTERVAL_PER_TERRITORY, RAID_UNITS_BASE, RAID_UNITS_PER_TERRITORY, RAID_UNITS_PER_YEAR, RAID_WARNING_TIME, RESEARCH_TIME_MULTIPLIER, SEASON_COLD_FOOD_MODIFIER, SEASON_COLD_WOOD_MODIFIER, SEASON_WARM_FOOD_MODIFIER, SEASON_WARM_WOOD_MODIFIER, SHORTAGE_MAX_PENALTY, TRIBUTE_DELAY_SECONDS, TRIBUTE_MAX_RESOURCES, TRIBUTE_MIN_RESOURCES, TRIBUTE_RESOURCE_VALUES, TRIBUTE_ROUNDING, TRIBUTE_VALUE_PER_UNIT, UNIT_STATS, WORKER_FOOD_CONSUMPTION, WORKER_RECRUIT_COST, WORKER_WOOD_CONSUMPTION} from '@/js/engine/balancing.js'
+import {CHALLENGE_REFERENCE_STATS, MONUMENT_FAITH_PER_LEVEL, PRODUCTION_RATES, RAID_GRACE_PERIOD, RAID_INTERVAL_BASE, RAID_INTERVAL_MIN, RAID_INTERVAL_PER_TERRITORY, RAID_UNITS_BASE, RAID_UNITS_PER_TERRITORY, RAID_UNITS_PER_YEAR, RAID_WARNING_TIME, RESEARCH_TIME_MULTIPLIER, SEASON_COLD_FOOD_MODIFIER, SEASON_COLD_WOOD_MODIFIER, SEASON_WARM_FOOD_MODIFIER, SEASON_WARM_WOOD_MODIFIER, SHORTAGE_MAX_PENALTY, TRIBUTE_DELAY_SECONDS, TRIBUTE_MAX_RESOURCES, TRIBUTE_MIN_RESOURCES, TRIBUTE_RESOURCE_VALUES, TRIBUTE_ROUNDING, TRIBUTE_VALUE_PER_UNIT, UNIT_STATS, WORKER_FOOD_CONSUMPTION, WORKER_RECRUIT_COST, WORKER_WOOD_CONSUMPTION} from '@/js/engine/balancing.js'
 import analytics from '@/js/engine/analytics.js'
 import {IMG_BUILDING_WALL, IMG_OTHER_TERRITORY, IMG_RESOURCE_FAITH, IMG_RESOURCE_KNOWLEDGE, IMG_SEASON_COLD, IMG_SEASON_WARM, IMG_UNIT_WORKER, SND_BUILDING_CREATED, SND_HEADQUARTERS_UPGRADED, SND_NOTIFICATION_ALERT, SND_NOTIFICATION_DISASTER, SND_NOTIFICATION_SEASON, SND_RESEARCH_COMPLETED, SND_TERRITORY_EXPANDED, SND_UNDER_ATTACK, SND_WORKER_ACADEMY, SND_WORKER_CREATED, SND_WORKER_FARM, SND_WORKER_MINE, SND_WORKER_TEMPLE, SND_WORKER_WOODCUTTER} from '@/js/engine/assets.js'
 import audio from '@/js/engine/audio.js'
 import {resolveBattle} from '@/js/engine/battle.js'
+import {adjustChallenge, adjustDelay, healthScore} from '@/js/engine/challenge_scaling.js'
+import {colonyStats} from '@/js/engine/colony_stats.js'
 import {migrateSave} from '@/js/engine/save_migration.js'
 import storage from '@/js/engine/storage.js'
 import {BOUNDED_RESOURCES, BUILDING_CLASS_MAP, BUILDING_IMAGE_MAP, CHALLENGE_DEFINITIONS, DOWNGRADABLE_BUILDINGS, HQ_BUILDING_UNLOCKS, HQ_RESOURCE_UNLOCKS, HQ_TYPES, IMG_BUILDING_HEADQUARTERS_MAP, RESEARCH_COSTS, RESEARCH_PREREQUISITES, RESEARCH_TREE, RESOURCE_LIMIT_EVENT_CONFIG, RESOURCE_NEGATIVE_PRODUCTION_EVENT_CONFIG, TUTORIAL_STEPS, UNIT_BUILDINGS, UNIT_TYPES} from '@/js/engine/constants.js'
@@ -113,6 +115,9 @@ class State {
 
     // Outcome of the last raid (RaidReport). Non-null while the raid result window shows, which keeps the game paused
     this.raidReport = null
+
+    // Last countdown adjustment from adjustChallenge (scales and backstop flag), kept for the balance simulation (not saved)
+    this.challengeScaling = null
   }
 
   /**
@@ -741,6 +746,7 @@ class State {
     // Activate first pending if no active challenge
     if (!challenges.active && challenges.pending.length > 0) {
       challenges.activate()
+      this._decideChallengeDelay()
     }
     if (!challenges.active) {
       return
@@ -748,8 +754,9 @@ class State {
 
     challenges.advance(delta)
 
-    // Delay expired → transition to started, fire future event
+    // Delay expired → decide the countdown values, transition to started, fire future event
     if (challenges.active.isDelayElapsed) {
+      this._decideChallengeCountdown()
       challenges.start()
       this.colony.events.addFuture({
         type: EVENT_TYPE_CHALLENGE_STARTED,
@@ -1037,6 +1044,51 @@ class State {
     this.challengeModal = null
     this.paused = false
     this.update(0)
+    this._decideChallengeDelay()
+  }
+
+  /**
+   * Reference row of a typical colony for a challenge.
+   * @param {number} index - Challenge index
+   * @returns {Object|null} CHALLENGE_REFERENCE_STATS row, or null
+   */
+  _challengeReference(index) {
+    return CHALLENGE_REFERENCE_STATS.find(row => row.index === index) ?? null
+  }
+
+  /**
+   * Decides the active challenge's delay from the colony's health, on activation and after each
+   * failure (a struggling colony gets longer, every failure adds recovery time). Challenges built
+   * without a definition keep their delay.
+   */
+  _decideChallengeDelay() {
+    const challenge = this.meta.challenges.active
+    if (!challenge?.base) {
+      return
+    }
+    const reference = this._challengeReference(challenge.index)?.activation ?? null
+    const health = healthScore(colonyStats(this), reference)
+    challenge.delay = adjustDelay(challenge.base.delay, health, challenge.failures)
+  }
+
+  /**
+   * Decides the active challenge's timer, requirements, blessings, punishment and mood from the colony,
+   * as its countdown starts; they stay fixed until it ends. Assigns new objects (the definition is
+   * never changed). Challenges built without a definition keep their values.
+   */
+  _decideChallengeCountdown() {
+    const challenge = this.meta.challenges.active
+    this.challengeScaling = null
+    if (!challenge?.base) {
+      return
+    }
+    const adjusted = adjustChallenge(challenge.base, colonyStats(this), this._challengeReference(challenge.index), challenge.failures)
+    challenge.timeout = adjusted.timeout
+    challenge.requirements = adjusted.requirements
+    challenge.blessings = adjusted.blessings
+    challenge.punishment = adjusted.punishment
+    challenge.mood = adjusted.mood
+    this.challengeScaling = adjusted
   }
 
   /**

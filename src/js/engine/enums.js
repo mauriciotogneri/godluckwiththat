@@ -271,6 +271,13 @@ export const CHALLENGE_MODAL_REWARD = 'reward'
 export const CHALLENGE_MODAL_FAILURE = 'failure'
 export const CHALLENGE_MODAL_WIN = 'win'
 
+// Challenge moods: how demanding the gods are for the current attempt (shown in the challenge popup)
+export const CHALLENGE_MOOD_MERCIFUL = 'merciful'
+export const CHALLENGE_MOOD_LENIENT = 'lenient'
+export const CHALLENGE_MOOD_WATCHFUL = 'watchful'
+export const CHALLENGE_MOOD_STERN = 'stern'
+export const CHALLENGE_MOOD_DEMANDING = 'demanding'
+
 // Blessing types
 export const BLESSING_FERTILE_SOIL = 'fertileSoil'
 export const BLESSING_FOREST_BLOOM = 'forestBloom'

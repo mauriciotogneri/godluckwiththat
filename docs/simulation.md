@@ -42,7 +42,7 @@ The default (3 bots × 20 seeds × 5 hours, 1-second steps) takes about 55 secon
 
 **Randomness** — `Math.random` is replaced by a seeded stream during a run and restored afterwards; the bot has its own stream (seed + offset), so its skipped decisions never shift the engine's raid and punishment rolls.
 
-**Engine hooks** — `State.advanceProgress(delta)` (the progress order, also used by the game screen), `State.unlockedBuildings` (the HQ building unlocks) and `colonyStats(state)` in `src/js/engine/colony_stats.js` (a plain snapshot: elapsed time, HQ tier and level, workers, stock and net rate per resource, storage cap, production value, faith rate, army, research count, building levels, religious levels, free territory, construction multiplier, unlocked resources and buildings). `productionValue` is the net production of the bounded resources weighted by `TRIBUTE_RESOURCE_VALUES`.
+**Engine hooks** — `State.advanceProgress(delta)` (the progress order, also used by the game screen), `State.unlockedBuildings` (the HQ building unlocks), `State.challengeScaling` (how the engine scaled the challenge as its countdown started: scales, mood, backstop flag; not saved) and `colonyStats(state)` in `src/js/engine/colony_stats.js` (a plain snapshot: elapsed time, HQ tier and level, workers, stock and net rate per resource, storage cap, production value, faith rate, army, research count, building levels, religious levels, temple workers, house and storehouse levels, free territory, construction multiplier, unlocked resources and buildings). `productionValue` is the net production of the bounded resources weighted by `TRIBUTE_RESOURCE_VALUES`, counting only output that can still be stored: a resource at the storage cap adds no gain (a loss still counts).
 
 ## Bots
 
@@ -84,12 +84,12 @@ When a raid is announced and the forecast is not good enough, it trains the unit
 ## Report
 
 - **Runs per bot** — finished and did-not-finish runs, run length to the win screen (median, p10, p90), failures per run, most attempts on one challenge, challenges completed, HQ tier at the end, share of time in a food/wood shortage, the challenge where unfinished runs stopped, and raids won/lost/called off/delayed per run.
-- **Challenges per bot** — runs that reached each challenge, attempts, first-try success, runs that completed it, median time from countdown start until the requirements were first met, and median spare share (`1 − time to meet / timeout`).
+- **Challenges per bot** — runs that reached each challenge, attempts, first-try success, runs that completed it, median time from countdown start until the requirements were first met, median spare share (`1 − time to meet / timeout`), and how the engine scaled the countdowns: median amount scale (faith and resources), level scale (building levels and workers) and timer scale against the base values (kinds the challenge does not have are left out), attempts per mood (`M`erciful, `L`enient, `W`atchful, `S`tern, `D`emanding) and attempts where the backstop kicked in (a locked resource dropped, or values capped at what the colony can reach).
 - **Progress at 30/60/90 minutes** — median HQ tier, research count, production value, workers and building levels.
 - **Sanity check** — HQ tier, research and production value should order the bots weak < average < strong at each milestone.
 - **Reference snippet** — for the average bot, the median `colonyStats` when each challenge first activates and when its countdown starts, printed as JavaScript to paste into `balancing.js` later.
 
-Each attempt in the JSON also keeps its activation time, delay, countdown start, timeout, requirements, colony stats at activation and countdown start, whether the requirements were met at the start, whether they still were at the end, the result and the blessing chosen.
+Each attempt in the JSON also keeps its activation time, delay, countdown start, timeout, requirements, colony stats at activation and countdown start, the `scales`, `mood` and `backstop` the engine chose as the countdown started (null until then, or for a challenge without a definition), whether the requirements were met at the start, whether they still were at the end, the result and the blessing chosen.
 
 ## Baseline
 

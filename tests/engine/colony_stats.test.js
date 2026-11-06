@@ -64,6 +64,9 @@ describe('colonyStats', () => {
       expect(stats.altar).toBe(0)
       expect(stats.temple).toBe(0)
       expect(stats.monument).toBe(0)
+      expect(stats.templeWorkers).toBe(0)
+      expect(stats.house).toBe(0)
+      expect(stats.storehouse).toBe(0)
       expect(stats.territoryFree).toBe(10)
       expect(stats.constructionMult).toBe(1)
       expect(stats.unlockedResources).toEqual([
@@ -193,6 +196,21 @@ describe('colonyStats', () => {
       expect(colonyStats(state).productionValue).toBeCloseTo(expected)
     })
 
+    it('should leave out a gain that flows into full storage but keep a loss at the cap', async () => {
+      const state = await createState(colony => {
+        colony.buildings.farm.level = 1
+        colony.buildings.farm.workers = 5
+        colony.buildings.woodcutter.level = 1
+        colony.buildings.woodcutter.workers = 0
+        colony.resources.workers = 5
+        colony.resources.food = STOREHOUSE_BASE_CAPACITY
+        colony.resources.wood = STOREHOUSE_BASE_CAPACITY
+      })
+      expect(state.netProduction(RESOURCE_FOOD)).toBeGreaterThan(0)
+      expect(state.netProduction(RESOURCE_WOOD)).toBeLessThan(0)
+      expect(colonyStats(state).productionValue).toBeCloseTo(state.netProduction(RESOURCE_WOOD) * TRIBUTE_RESOURCE_VALUES[RESOURCE_WOOD])
+    })
+
     it('should report the faith rate from the altar', async () => {
       const state = await createState(colony => {
         colony.buildings.altar.level = 3
@@ -214,7 +232,7 @@ describe('colonyStats', () => {
   })
 
   describe('buildings and research', () => {
-    it('should report completed research, building levels and religious levels', async () => {
+    it('should report completed research, building levels, religious levels, temple workers, houses and storehouse', async () => {
       const state = await createState(colony => {
         colony.buildings.academy = new Academy({
           level: 1,
@@ -223,13 +241,20 @@ describe('colonyStats', () => {
         colony.buildings.altar.level = 3
         colony.buildings.temple.level = 2
         colony.buildings.monument.level = 1
+        colony.buildings.temple.workers = 4
+        colony.buildings.house.level = 2
+        colony.buildings.storehouse.level = 3
+        colony.resources.workers = 4
       })
       const stats = colonyStats(state)
       expect(stats.researchCount).toBe(1)
-      expect(stats.buildingLevels).toBe(7)
+      expect(stats.buildingLevels).toBe(12)
       expect(stats.altar).toBe(3)
       expect(stats.temple).toBe(2)
       expect(stats.monument).toBe(1)
+      expect(stats.templeWorkers).toBe(4)
+      expect(stats.house).toBe(2)
+      expect(stats.storehouse).toBe(3)
     })
 
     it('should apply Construction research to the construction multiplier', async () => {

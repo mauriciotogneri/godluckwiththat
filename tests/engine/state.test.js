@@ -1,8 +1,10 @@
 import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest'
 import {BLESSING_BLESSED_MARKETS, BLESSING_CELESTIAL_FORTIFICATION, BLESSING_CELESTIAL_PROSPERITY, BLESSING_FAVORABLE_WEATHER, BLESSING_FERTILE_SOIL, BLESSING_FOREST_BLOOM, BLESSING_GIFT_FROM_THE_HEAVENS, BLESSING_HOLY_EXPANSION, BLESSING_RAPID_CONSTRUCTION, BLESSING_RICH_MINES, BLESSING_TEMPORARY_PEACE, BLESSING_WISDOM_OF_THE_GODS, BUILDING_ACADEMY, BUILDING_ALTAR, BUILDING_ARCHERY, BUILDING_BARRACKS, BUILDING_COPPER_MINE, BUILDING_FARM, BUILDING_GOLD_MINE, BUILDING_HEADQUARTERS, BUILDING_HOUSE, BUILDING_IRON_MINE, BUILDING_MARKET, BUILDING_MONUMENT, BUILDING_QUARRY, BUILDING_STABLE, BUILDING_STOREHOUSE, BUILDING_TEMPLE, BUILDING_TOWER, BUILDING_WALL, BUILDING_WOODCUTTER, CHALLENGE_MODAL_FAILURE, CHALLENGE_MODAL_REWARD, CHALLENGE_MODAL_WIN, CHALLENGE_STATUS_ACTIVATED, CHALLENGE_STATUS_COMPLETED, CHALLENGE_STATUS_PENDING, CHALLENGE_STATUS_STARTED, EVENT_TYPE_BUILDING_UPGRADE, EVENT_TYPE_CHALLENGE_STARTED, EVENT_TYPE_POPULATION_LIMIT_REACHED, EVENT_TYPE_RAID_INCOMING, EVENT_TYPE_RAID_RESULT, EVENT_TYPE_RESEARCH_COMPLETE, EVENT_TYPE_RESOURCE_LIMIT_REACHED, EVENT_TYPE_TERRITORY_LIMIT_REACHED, HQ_TYPE_CAMP, HQ_TYPE_CITY, HQ_TYPE_SETTLEMENT, HQ_TYPE_TOWN, HQ_TYPE_VILLAGE, PUNISHMENT_CROP_FAILURE, PUNISHMENT_LANDSLIDE, PUNISHMENT_PLAGUE, PUNISHMENT_VOLCANO, PUNISHMENT_WILDFIRES, RAID_PHASE_INCOMING, RAID_PHASE_WAITING, RESEARCH_ATTACK_1, RESEARCH_DEFENSE_1, RESEARCH_FOOD_PRODUCTION_1, RESEARCH_WARNING_1, RESEARCH_WARNING_2, RESOURCE_COPPER, RESOURCE_FOOD, RESOURCE_GOLD, RESOURCE_IRON, RESOURCE_STONE, RESOURCE_WOOD, SEASON_COLD, SEASON_WARM, TRADE_BUY, TRADE_SELL, TRIBUTE_CANCEL, TRIBUTE_DELAY, TUTORIAL_MODAL_CHALLENGE_STARTED, TUTORIAL_MODAL_HQ_UPGRADE, TUTORIAL_MODAL_NEGATIVE_PRODUCTION, TUTORIAL_MODAL_RAID_INCOMING, TUTORIAL_MODAL_SEASON_CHANGED, UNIT_ARCHER, UNIT_CAVALRY, UNIT_INFANTRY} from '@/js/engine/enums.js'
-import {HQ_TERRITORY_PER_LEVEL, MILITARY_UNITS_PER_LEVEL, MONUMENT_FAITH_PER_LEVEL, RAID_GRACE_PERIOD, RAID_INTERVAL_BASE, RAID_INTERVAL_MIN, RAID_INTERVAL_PER_TERRITORY, RAID_UNITS_BASE, RAID_UNITS_PER_TERRITORY, RAID_UNITS_PER_YEAR, RAID_WARNING_TIME, RESEARCH_TIME_MULTIPLIER, SEASON_DURATION, SHORTAGE_MAX_PENALTY, TRIBUTE_DELAY_SECONDS, TRIBUTE_ROUNDING, UNIT_STATS, WORKER_FOOD_CONSUMPTION, WORKER_RECRUIT_COST, WORKER_WOOD_CONSUMPTION} from '@/js/engine/balancing.js'
+import {CHALLENGE_FAILURE_DELAY_BONUS, CHALLENGE_REFERENCE_STATS, HQ_TERRITORY_PER_LEVEL, MILITARY_UNITS_PER_LEVEL, MONUMENT_FAITH_PER_LEVEL, RAID_GRACE_PERIOD, RAID_INTERVAL_BASE, RAID_INTERVAL_MIN, RAID_INTERVAL_PER_TERRITORY, RAID_UNITS_BASE, RAID_UNITS_PER_TERRITORY, RAID_UNITS_PER_YEAR, RAID_WARNING_TIME, RESEARCH_TIME_MULTIPLIER, SEASON_DURATION, SHORTAGE_MAX_PENALTY, TRIBUTE_DELAY_SECONDS, TRIBUTE_ROUNDING, UNIT_STATS, WORKER_FOOD_CONSUMPTION, WORKER_RECRUIT_COST, WORKER_WOOD_CONSUMPTION} from '@/js/engine/balancing.js'
 import {IMG_BUILDING_WALL, IMG_OTHER_TERRITORY, SND_BUILDING_CREATED, SND_HEADQUARTERS_UPGRADED, SND_NOTIFICATION_ALERT, SND_NOTIFICATION_DISASTER, SND_RESEARCH_COMPLETED, SND_TERRITORY_EXPANDED, SND_UNDER_ATTACK, SND_WORKER_ACADEMY, SND_WORKER_FARM, SND_WORKER_MINE, SND_WORKER_TEMPLE, SND_WORKER_WOODCUTTER} from '@/js/engine/assets.js'
 import {resolveBattle} from '@/js/engine/battle.js'
+import {adjustChallenge} from '@/js/engine/challenge_scaling.js'
+import {colonyStats} from '@/js/engine/colony_stats.js'
 import {CHALLENGE_DEFINITIONS, DOWNGRADABLE_BUILDINGS, RESEARCH_COSTS, RESOURCE_LIMIT_EVENT_CONFIG, RESOURCE_NEGATIVE_PRODUCTION_EVENT_CONFIG, SAVE_VERSION, createInitialChallenges} from '@/js/engine/constants.js'
 import Academy from '@/js/models/buildings/academy.js'
 import Altar from '@/js/models/buildings/altar.js'
@@ -24,6 +26,7 @@ import Tower from '@/js/models/buildings/tower.js'
 import Wall from '@/js/models/buildings/wall.js'
 import Woodcutter from '@/js/models/buildings/woodcutter.js'
 import Buildings from '@/js/models/buildings.js'
+import Challenge from '@/js/models/challenge.js'
 import Colony from '@/js/models/colony.js'
 import Cost from '@/js/models/cost.js'
 import Meta from '@/js/models/meta.js'
@@ -33,7 +36,7 @@ import Resources from '@/js/models/resources.js'
 import Season from '@/js/models/season.js'
 import Events from '@/js/models/events/events.js'
 import Tutorial from '@/js/models/tutorial.js'
-import {createBlessing, createChallenge, createChallenges, createMilitary, createPunishment, createRaid} from '../helpers/factories.js'
+import {createBlessing, createChallenge, createChallengeDefinition, createChallenges, createMilitary, createPunishment, createRaid} from '../helpers/factories.js'
 import activatedSave from '../fixtures/save_version_1_activated.json'
 import startedSave from '../fixtures/save_version_1_started.json'
 
@@ -2113,6 +2116,190 @@ describe('State', () => {
   })
 
   // ── continueAfterWin ─────────────────────────────────────────────
+
+  describe('_decideChallengeDelay', () => {
+    // A state whose only challenge is built from the factory definition (delay 60, timeout 300)
+    async function createScaledState(challengeOverrides = {}) {
+      const challenge = Challenge.fromDefinition(createChallengeDefinition())
+      Object.assign(challenge, challengeOverrides)
+      const state = await createState({
+        metaOverrides: {
+          challenges: createChallenges({
+            pending: challenge.status === CHALLENGE_STATUS_PENDING ? [challenge] : [],
+            active: challenge.status === CHALLENGE_STATUS_PENDING ? null : challenge,
+          }),
+        },
+      })
+      state.update(0)
+      return state
+    }
+
+    it('should decide the delay from the base delay when the challenge activates', async () => {
+      const state = await createScaledState({
+        delay: 999,
+      })
+      state.advanceChallenges(0)
+      expect(state.meta.challenges.active.delay).toBe(60)
+    })
+
+    it('should add recovery time to the delay after a failure', async () => {
+      const state = await createScaledState({
+        status: CHALLENGE_STATUS_STARTED,
+        timeoutElapsed: 300,
+      })
+      state.paused = true
+      state.challengeModal = CHALLENGE_MODAL_FAILURE
+      state.acknowledgePunishment()
+      const active = state.meta.challenges.active
+      expect(active.failures).toBe(1)
+      expect(active.delay).toBe(60 + CHALLENGE_FAILURE_DELAY_BONUS)
+    })
+
+    it('should leave the delay of a challenge without a definition alone', async () => {
+      const challenge = createChallenge({
+        status: CHALLENGE_STATUS_PENDING,
+        delay: 45,
+      })
+      const state = await createState({
+        metaOverrides: {
+          challenges: createChallenges({
+            pending: [challenge],
+          }),
+        },
+      })
+      state.advanceChallenges(0)
+      expect(state.meta.challenges.active.delay).toBe(45)
+      state.meta.challenges.active.status = CHALLENGE_STATUS_STARTED
+      state.challengeModal = CHALLENGE_MODAL_FAILURE
+      state.acknowledgePunishment()
+      expect(state.meta.challenges.active.delay).toBe(45)
+    })
+  })
+
+  describe('_decideChallengeCountdown', () => {
+    // A state whose activated challenge (factory definition, delay 60, timeout 300) starts its countdown on the next step
+    async function createReadyState(failures = 0) {
+      const challenge = Challenge.fromDefinition(createChallengeDefinition())
+      challenge.status = CHALLENGE_STATUS_ACTIVATED
+      challenge.delayElapsed = challenge.delay
+      challenge.failures = failures
+      const state = await createState({
+        metaOverrides: {
+          challenges: createChallenges({
+            active: challenge,
+          }),
+        },
+      })
+      state.update(0)
+      return state
+    }
+
+    it('should decide the timer, requirements, blessings, punishment and mood as the countdown starts', async () => {
+      const state = await createReadyState()
+      const active = state.meta.challenges.active
+      const expected = adjustChallenge(active.base, colonyStats(state), CHALLENGE_REFERENCE_STATS[0], 0)
+      state.advanceChallenges(0)
+      expect(active.status).toBe(CHALLENGE_STATUS_STARTED)
+      expect(active.timeout).toBe(expected.timeout)
+      expect(active.requirements).toEqual(expected.requirements)
+      expect(active.requirements).not.toBe(active.base.requirements)
+      expect(active.blessings.map(blessing => blessing.toJSON())).toEqual(expected.blessings.map(blessing => blessing.toJSON()))
+      expect(active.punishment.toJSON()).toEqual(expected.punishment.toJSON())
+      expect(active.mood).toBe(expected.mood)
+      expect(state.challengeScaling.scales).toEqual(expected.scales)
+    })
+
+    it('should keep the values fixed until the countdown ends', async () => {
+      const state = await createReadyState()
+      state.advanceChallenges(0)
+      const active = state.meta.challenges.active
+      const {
+        requirements, timeout, blessings, punishment, mood,
+      } = active
+      state.colony.resources.faith = 100000
+      state.colony.resources.food = 100000
+      state.update(0)
+      state.advanceChallenges(10)
+      expect(active.requirements).toBe(requirements)
+      expect(active.timeout).toBe(timeout)
+      expect(active.blessings).toBe(blessings)
+      expect(active.punishment).toBe(punishment)
+      expect(active.mood).toBe(mood)
+    })
+
+    it('should give the countdown event the adjusted timer', async () => {
+      const state = await createReadyState(2)
+      state.advanceChallenges(0)
+      const active = state.meta.challenges.active
+      const event = state.colony.events.future.find(entry => entry.type === EVENT_TYPE_CHALLENGE_STARTED)
+      expect(active.timeout).toBeGreaterThan(active.base.timeout)
+      expect(event.remainingSeconds).toBe(active.timeout)
+    })
+
+    it('should recalculate the values on a retry', async () => {
+      const state = await createReadyState()
+      state.advanceChallenges(0)
+      const active = state.meta.challenges.active
+      const firstTimeout = active.timeout
+      const firstRequirements = active.requirements
+      state.paused = true
+      state.challengeModal = CHALLENGE_MODAL_FAILURE
+      state.acknowledgePunishment()
+      state.advanceChallenges(active.delay)
+      expect(active.status).toBe(CHALLENGE_STATUS_STARTED)
+      expect(active.failures).toBe(1)
+      expect(active.timeout).toBeGreaterThan(firstTimeout)
+      expect(active.requirements).not.toBe(firstRequirements)
+    })
+
+    it('should keep the decided values through a save and load', async () => {
+      const state = await createState({
+        metaOverrides: {
+          challenges: createInitialChallenges(),
+        },
+      })
+      state.update(0)
+      state.advanceChallenges(0)
+      const active = state.meta.challenges.active
+      state.advanceChallenges(active.delay)
+      expect(active.status).toBe(CHALLENGE_STATUS_STARTED)
+      const {
+        default: State,
+      } = await import('@/js/engine/state.js')
+      const restoredActive = State.fromJSON(state.toJSON()).meta.challenges.active
+      expect(restoredActive.timeout).toBe(active.timeout)
+      expect(restoredActive.requirements).toEqual(active.requirements)
+      expect(restoredActive.blessings.map(blessing => blessing.toJSON())).toEqual(active.blessings.map(blessing => blessing.toJSON()))
+      expect(restoredActive.punishment.toJSON()).toEqual(active.punishment.toJSON())
+      expect(restoredActive.mood).toBe(active.mood)
+    })
+
+    it('should leave a challenge without a definition alone', async () => {
+      const challenge = createChallenge({
+        status: CHALLENGE_STATUS_ACTIVATED,
+        delay: 60,
+        delayElapsed: 60,
+        timeout: 300,
+      })
+      const requirements = challenge.requirements
+      const state = await createState({
+        metaOverrides: {
+          challenges: createChallenges({
+            active: challenge,
+          }),
+        },
+      })
+      state.challengeScaling = {
+        backstop: true,
+      }
+      state.advanceChallenges(0)
+      expect(challenge.status).toBe(CHALLENGE_STATUS_STARTED)
+      expect(challenge.requirements).toBe(requirements)
+      expect(challenge.timeout).toBe(300)
+      expect(challenge.mood).toBeNull()
+      expect(state.challengeScaling).toBeNull()
+    })
+  })
 
   describe('continueAfterWin', () => {
     it('should unpause and clear modal', async () => {

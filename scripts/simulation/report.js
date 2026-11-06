@@ -1,6 +1,6 @@
 // Report for the balance simulation: aggregates the run results per bot and formats them as text.
 
-import {HEADER_RESOURCES, HQ_TYPES} from '@/js/engine/constants.js'
+import {CHALLENGE_MOODS, HEADER_RESOURCES, HQ_TYPES} from '@/js/engine/constants.js'
 import {MILESTONE_SECONDS, RESULT_SUCCESS} from './run_recorder.js'
 
 const SECONDS_PER_MINUTE = 60
@@ -79,7 +79,9 @@ function mean(values) {
 
 /**
  * Per-challenge figures for one bot: how many runs reached it, attempts, first-try success,
- * completions, median time from countdown start to requirements met, and median spare share.
+ * completions, median time from countdown start to requirements met, median spare share, and how
+ * the engine scaled the countdowns: median amount, level and timer scales, attempts per mood and
+ * backstopped attempts.
  * @param {Object[]} runs - Run results
  * @returns {Object[]} One row per challenge index reached by any run
  */
@@ -89,6 +91,16 @@ function challengeRows(runs) {
     const attempts = runs.flatMap(run => run.attempts.filter(attempt => attempt.index === index))
     const resolvedFirst = attempts.filter(attempt => attempt.attempt === 1 && attempt.result)
     const met = attempts.filter(attempt => attempt.firstMetSeconds !== null)
+    // Countdowns the engine scaled (challenges without a definition have no scales)
+    const scaled = attempts.filter(attempt => attempt.countdownStartTime !== null && attempt.scales)
+    const scaleMedian = kind => median(scaled.map(attempt => attempt.scales[kind]).filter(value => value !== null))
+    const moods = Object.fromEntries(CHALLENGE_MOODS.map(mood => [
+      mood,
+      0,
+    ]))
+    for (const attempt of scaled) {
+      moods[attempt.mood] = (moods[attempt.mood] ?? 0) + 1
+    }
     return {
       index: index,
       runsReached: runs.filter(run => run.attempts.some(attempt => attempt.index === index)).length,
@@ -98,6 +110,11 @@ function challengeRows(runs) {
       medianTimeToMeet: median(met.map(attempt => attempt.firstMetSeconds)),
       // An attempt cut off by the time cap has a met time but no spare share yet
       medianSpareShare: median(met.filter(attempt => attempt.spareShare !== null).map(attempt => attempt.spareShare)),
+      medianAmountScale: scaleMedian('amounts'),
+      medianLevelScale: scaleMedian('levels'),
+      medianTimeoutScale: scaleMedian('timeout'),
+      moods: moods,
+      backstops: scaled.filter(attempt => attempt.backstop).length,
     }
   })
 }
@@ -304,6 +321,15 @@ function formatPercent(share) {
 }
 
 /**
+ * Formats attempts per mood compactly, mildest first: each mood's initial and count (e.g. 'M1 L2 W3 S0 D1').
+ * @param {Object<string, number>} moods - Attempts by mood
+ * @returns {string} Mood counts
+ */
+function formatMoods(moods) {
+  return CHALLENGE_MOODS.map(mood => mood[0].toUpperCase() + moods[mood]).join(' ')
+}
+
+/**
  * Lays out rows as a text table with a numbered first column.
  * @param {string[]} headers - Column headers (without the # column)
  * @param {string[][]} rows - Cell texts
@@ -410,6 +436,11 @@ export function formatReport(report) {
       'Runs completed',
       'Median time to meet',
       'Median spare share',
+      'Amounts ×',
+      'Levels ×',
+      'Timer ×',
+      'Moods',
+      'Backstops',
     ], bots[name].challenges.map(row => [
       String(row.index),
       String(row.runsReached),
@@ -418,6 +449,11 @@ export function formatReport(report) {
       String(row.completedRuns),
       row.medianTimeToMeet === null ? '-' : formatValue(row.medianTimeToMeet) + 's',
       formatPercent(row.medianSpareShare),
+      formatValue(row.medianAmountScale, 2),
+      formatValue(row.medianLevelScale, 2),
+      formatValue(row.medianTimeoutScale, 2),
+      formatMoods(row.moods),
+      String(row.backstops),
     ])))
   }
 

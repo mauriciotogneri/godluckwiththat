@@ -101,8 +101,8 @@ Separate base values from adjusted values, persist failures, enforce no stacking
 
 Pure, deterministic functions in the engine; every tuning number lives in `balancing.js`.
 
-- [ ] `enums.js`: `CHALLENGE_MOOD_MERCIFUL`, `CHALLENGE_MOOD_LENIENT`, `CHALLENGE_MOOD_WATCHFUL`, `CHALLENGE_MOOD_STERN`, `CHALLENGE_MOOD_DEMANDING`; `constants.js`: ordered `CHALLENGE_MOODS`
-- [ ] `balancing.js`: new "Challenge scaling" section with starting values (first guesses, set by Phase 3):
+- [x] `enums.js`: `CHALLENGE_MOOD_MERCIFUL`, `CHALLENGE_MOOD_LENIENT`, `CHALLENGE_MOOD_WATCHFUL`, `CHALLENGE_MOOD_STERN`, `CHALLENGE_MOOD_DEMANDING`; `constants.js`: ordered `CHALLENGE_MOODS`
+- [x] `balancing.js`: new "Challenge scaling" section with starting values (first guesses, set by Phase 3):
 
   | #   | Constant                                | Starting value                                | Purpose                                                        |
   | --- | --------------------------------------- | --------------------------------------------- | -------------------------------------------------------------- |
@@ -125,26 +125,36 @@ Pure, deterministic functions in the engine; every tuning number lives in `balan
   | 17  | `CHALLENGE_EFFECT_CAPS`                 | productivity ≤ 0.6, faith/resource loss ≤ 0.6 | Upper limits on effect values                                  |
   | 18  | `CHALLENGE_MOOD_THRESHOLDS`             | —                                             | Difficulty limits for the 5 moods                              |
   | 19  | `CHALLENGE_AMOUNT_ROUNDING`             | —                                             | Rounding steps for amounts                                     |
-  | 20  | `CHALLENGE_REFERENCE_STATS`             | neutral placeholder (health 1)                | 10 rows, each `{activation, countdown}`                        |
+  | 20  | `CHALLENGE_REFERENCE_STATS`             | neutral placeholder (health 1)                | 10 rows, each `{index, runs, activation, countdownStart}`      |
 
-- [ ] New `src/js/engine/challenge_scaling.js` — `healthScore(stats, referenceSnapshot)`: weighted geometric mean of clamped stat ratios (a reference near 0 counts as ratio 1; HQ tier uses (tier+1)/(refTier+1)); 1.0 means a typical colony
-- [ ] `estimateCompletionTime(requirements, stats)`: seconds needed, or Infinity — resources needed (requirement amounts, building level costs via temporary building instances, recruit food); resource time = max of missing ÷ net rate; build chain = Σ build time × construction multiplier, plus HQ expansions when territory is short; storehouse levels when an amount or a level cost exceeds the cap; HQ tier upgrades when a building is locked; faith income counts free temple slots idle workers could fill; result = max(resource time, build chain)
-- [ ] `fitRequirements(definition, stats, failures)` in stages: target = timer × target share × (1 − failure ease)^failures; A (time to spare) raises all values up to ×1.3; B1 (too hard) shrinks faith and resources down to the floor; B2 (still too hard) extends the timer up to the maximum and cuts levels and workers by up to 20%; C (backstop) caps each value at what the colony can reach in the maximum timer, drops still-locked resources, and flags the backstop
-- [ ] Rounding: amounts to nice steps; levels and workers to integers ≥ 1 (cut uses `ceil(base × 0.8)`); timer up to 30 s
-- [ ] `challengeDifficulty(scales)`: average applied scale ÷ timer scale (above 1 = harder than base)
-- [ ] `adjustBlessing(blessing, difficulty)`: new `Blessing`; productivity, construction, warm and cold scaled to whole percents and capped; gifted resources rounded to 50; territory an integer; duration scales a little and rounds to 60 s
-- [ ] `adjustPunishment(punishment, health, stats, referenceSnapshot)`: new `Punishment`; severity from health; fractions capped; duration rounded to 60 s; base worker and level counts mean "for the reference colony at this index" — lost = round(base ÷ reference × current × severity), capped, integers
-- [ ] `adjustDelay(baseDelay, health, failures)`: longer when struggling, shorter when thriving, plus the per-failure bonus; rounded to 10 s
-- [ ] `challengeMood(difficulty)`: one of the 5 moods
-- [ ] `adjustChallenge(definition, stats, referenceRow, failures)`: single entry point returning `{timeout, requirements, blessings, punishment, mood, scales, backstop}`
-- [ ] `state.js` `_decideChallengeDelay()`: after `challenges.activate()` in `advanceChallenges`, and in `acknowledgePunishment` after the punishment is applied and `update(0)` has run
-- [ ] `state.js` `_decideChallengeCountdown()`: before `challenges.start()` and before the future event is created (so its countdown uses the adjusted timer); assigns new objects, no in-place changes
-- [ ] Both hooks do nothing when `challenge.base` is null (keeps existing fixed-value tests stable)
-- [ ] Health production measure counts only output that can still be stored (production into full storage overrates an overflowing colony — pending confirmation, see Open Issues)
-- [ ] Tests: new `challenge_scaling.test.js` (health 1 at the reference and moves the right way; estimate respects storage, territory and locked content; amounts grow up to ×1.3 and shrink to the floor; level cut ≤ 20%; timer ≤ maximum; every failure eases further; integer outputs and nice rounding; locked resource dropped and backstop flagged; blessing strength follows difficulty; punishment milder at low health and scaled to colony size; mood thresholds; definitions never changed)
-- [ ] Tests: `state.test.js` (delay set at activation and after a failure; values set at countdown start and fixed mid-countdown; event countdown matches the adjusted timer; retry recalculates; save/load mid-countdown keeps the values; challenges without a base are left alone)
-- [ ] Simulation report shows scales, moods and backstop counts per attempt
-- [ ] Verify: targeted tests and lint pass
+- [x] New `src/js/engine/challenge_scaling.js` — `healthScore(stats, referenceSnapshot)`: weighted geometric mean of clamped stat ratios (a reference near 0 counts as ratio 1; HQ tier uses (tier+1)/(refTier+1)); 1.0 means a typical colony
+- [x] `estimateCompletionTime(requirements, stats)`: seconds needed, or Infinity — resources needed (requirement amounts, building level costs via temporary building instances, recruit food); resource time = max of missing ÷ net rate; build chain = Σ build time × construction multiplier, plus HQ expansions when territory is short; storehouse levels when an amount or a level cost exceeds the cap; HQ tier upgrades when a building is locked; faith income counts free temple slots idle workers could fill; result = max(resource time, build chain)
+- [x] `fitRequirements(definition, stats, failures)` in stages: target = timer × target share × (1 − failure ease)^failures; A (time to spare) raises all values up to ×1.3; B1 (too hard) shrinks faith and resources down to the floor; B2 (still too hard) extends the timer up to the maximum and cuts levels and workers by up to 20%; C (backstop) caps each value at what the colony can reach in the maximum timer, drops still-locked resources, and flags the backstop
+- [x] Rounding: amounts to nice steps; levels and workers to integers ≥ 1 (cut uses `ceil(base × 0.8)`); timer up to 30 s
+- [x] `challengeDifficulty(scales)`: average applied scale ÷ timer scale (above 1 = harder than base)
+- [x] `adjustBlessing(blessing, difficulty)`: new `Blessing`; productivity, construction, warm and cold scaled to whole percents and capped; gifted resources rounded to 50; territory an integer; duration scales a little and rounds to 60 s
+- [x] `adjustPunishment(punishment, health, stats, referenceSnapshot)`: new `Punishment`; severity from health; fractions capped; duration rounded to 60 s; base worker and level counts mean "for the reference colony at this index" — lost = round(base ÷ reference × current × severity), capped, integers
+- [x] `adjustDelay(baseDelay, health, failures)`: longer when struggling, shorter when thriving, plus the per-failure bonus; rounded to 10 s
+- [x] `challengeMood(difficulty)`: one of the 5 moods
+- [x] `adjustChallenge(definition, stats, referenceRow, failures)`: single entry point returning `{timeout, requirements, blessings, punishment, mood, scales, backstop}`
+- [x] `state.js` `_decideChallengeDelay()`: after `challenges.activate()` in `advanceChallenges`, and in `acknowledgePunishment` after the punishment is applied and `update(0)` has run
+- [x] `state.js` `_decideChallengeCountdown()`: before `challenges.start()` and before the future event is created (so its countdown uses the adjusted timer); assigns new objects, no in-place changes
+- [x] Both hooks do nothing when `challenge.base` is null (keeps existing fixed-value tests stable)
+- [x] Health production measure counts only output that can still be stored (production into full storage overrates an overflowing colony — confirmed)
+- [x] Tests: new `challenge_scaling.test.js` (health 1 at the reference and moves the right way; estimate respects storage, territory and locked content; amounts grow up to ×1.3 and shrink to the floor; level cut ≤ 20%; timer ≤ maximum; every failure eases further; integer outputs and nice rounding; locked resource dropped and backstop flagged; blessing strength follows difficulty; punishment milder at low health and scaled to colony size; mood thresholds; definitions never changed)
+- [x] Tests: `state.test.js` (delay set at activation and after a failure; values set at countdown start and fixed mid-countdown; event countdown matches the adjusted timer; retry recalculates; save/load mid-countdown keeps the values; challenges without a base are left alone)
+- [x] Simulation report shows scales, moods and backstop counts per attempt
+- [x] Verify: targeted tests and lint pass
+
+Implementation notes (where the code differs from or adds to the list above):
+
+- Extra constants: `CHALLENGE_HEALTH_MIN_REFERENCE` (per-stat "reference near 0" limit), and rounding steps `CHALLENGE_TIMEOUT_ROUNDING` (30 s), `CHALLENGE_DURATION_ROUNDING` (60 s), `CHALLENGE_DELAY_ROUNDING` (10 s), `CHALLENGE_GIFT_ROUNDING` (50). Health weights: economy split 0.5 production / 0.5 HQ tier, then 1 each for faith, army, research, workers.
+- `colonyStats` gained `templeWorkers`, `house` and `storehouse`; `productionValue` now counts only output that can still be stored (this also changes the report's sanity check and reference table).
+- Build time: each building's levels one after another, buildings in parallel (longest chain), HQ upgrades and expansions first; expansions ignore the expansion research discount.
+- B2 re-grows the amounts once the timer and level cut are found; the backstop starts from the base amounts (level cut at its largest), caps each part on its own, then lowers them together.
+- Timers never exceed the longest timer rounded down (300 s → 510 s, not 540 s). Punishment durations scale with the severity.
+- `State.challengeScaling` keeps the last countdown adjustment (scales, backstop) for the simulation; not saved.
+- The recorder now takes each attempt's timer and requirements at countdown start (they were copied at activation, which skewed spare share).
 
 ## Phase 3 — Tuning
 
@@ -177,9 +187,12 @@ Pure, deterministic functions in the engine; every tuning number lives in `balan
 ## Open Issues
 
 - **Soft-lock** — a colony with 0 workers and under 50 food can never recruit again. 13 of 20 strong baseline runs end this way after challenge 10's punishment (100 workers, 30 levels). Phase 2's size-based losses should remove this trigger; check after Phase 3 whether a general safety net is still needed.
-- **Production measure** — `productionValue` counts output that flows into full storage. Recommended: count only output that can still be stored for the health score (awaiting confirmation).
+- **Production measure** — done in Phase 2: `productionValue` counts only output that can still be stored.
+- **Phase 2 first guesses** (agreed, tuned in Phase 3) — equal health weights for economy, faith, military, research and population; building levels lost capped at about 10% of total levels; the 5 mood bands evenly spaced around difficulty 1; amounts rounded to steps of 10/50/100/500 by size.
 - **Spare share** — assumed to count only successful attempts, not attempts that met the requirements and then spent them.
 - **Possible bug (not verified)** — `selectBlessing` and `acknowledgePunishment` always unpause, even if a tutorial popup is still open; the raid window re-checks.
+- **Phase 2 smoke run (3 seeds, not tuned)** — the weak bot fails challenge 1 on most first tries, and the average bot fails challenge 3's first try (temple raised to 6) though it passes the retry; check in Phase 3 whether the estimate or the bots are at fault.
+- **Report mood counts** — moods and backstops count every countdown that started, including one cut off by the time cap, so they can exceed the finished attempts.
 - **Review nits not applied** — duplicated constants and formulas in the bots (raid size, blessing-to-resource mapping, producer list, `SECONDS_PER_MINUTE`), unused exports and fields, milestone snapshots taken on a cold→warm step, the report file name ignoring `SIM_MAX_HOURS` and `SIM_STEP`.
 
 ## Risks
