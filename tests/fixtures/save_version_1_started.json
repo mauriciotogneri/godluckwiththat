@@ -1,0 +1,721 @@
+{
+  "meta": {
+    "version": 1,
+    "createdDateTime": "2026-11-06T10:00:00.000Z",
+    "updatedDateTime": "2026-11-06T10:30:00.000Z",
+    "challenges": {
+      "pending": [
+        {
+          "index": 4,
+          "status": "pending",
+          "delay": 30,
+          "delayElapsed": 0,
+          "timeout": 300,
+          "timeoutElapsed": 0,
+          "requirements": {
+            "faith": 2000,
+            "altar": null,
+            "temple": null,
+            "monument": null,
+            "resources": null,
+            "workers": null
+          },
+          "blessings": [
+            {
+              "type": "rapidConstruction",
+              "timeout": 180,
+              "productivity": null,
+              "resources": null,
+              "territory": null,
+              "construction": 0.5,
+              "warm": null,
+              "cold": null
+            },
+            {
+              "type": "favorableWeather",
+              "timeout": 300,
+              "productivity": null,
+              "resources": null,
+              "territory": null,
+              "construction": null,
+              "warm": 0.1,
+              "cold": 0.1
+            }
+          ],
+          "punishment": {
+            "type": "landslide",
+            "timeout": 180,
+            "faith": 0.5,
+            "productivityFarm": null,
+            "productivityWoodcutter": null,
+            "productivityMines": 0.3,
+            "productivityGeneral": null,
+            "resources": 0.3,
+            "workers": null,
+            "levels": null
+          }
+        },
+        {
+          "index": 5,
+          "status": "pending",
+          "delay": 30,
+          "delayElapsed": 0,
+          "timeout": 600,
+          "timeoutElapsed": 0,
+          "requirements": {
+            "faith": null,
+            "altar": null,
+            "temple": null,
+            "monument": 5,
+            "resources": null,
+            "workers": null
+          },
+          "blessings": [
+            {
+              "type": "wisdomOfTheGods",
+              "timeout": 120,
+              "productivity": 0.3,
+              "resources": null,
+              "territory": null,
+              "construction": null,
+              "warm": null,
+              "cold": null
+            },
+            {
+              "type": "blessedMarkets",
+              "timeout": 120,
+              "productivity": null,
+              "resources": null,
+              "territory": null,
+              "construction": null,
+              "warm": null,
+              "cold": null
+            }
+          ],
+          "punishment": {
+            "type": "volcano",
+            "timeout": 120,
+            "faith": 0.5,
+            "productivityFarm": null,
+            "productivityWoodcutter": null,
+            "productivityMines": null,
+            "productivityGeneral": 0.2,
+            "resources": 0.2,
+            "workers": 5,
+            "levels": 10
+          }
+        },
+        {
+          "index": 6,
+          "status": "pending",
+          "delay": 30,
+          "delayElapsed": 0,
+          "timeout": 300,
+          "timeoutElapsed": 0,
+          "requirements": {
+            "faith": 3000,
+            "altar": null,
+            "temple": null,
+            "monument": null,
+            "resources": null,
+            "workers": null
+          },
+          "blessings": [
+            {
+              "type": "fertileSoil",
+              "timeout": 120,
+              "productivity": 0.3,
+              "resources": null,
+              "territory": null,
+              "construction": null,
+              "warm": null,
+              "cold": null
+            },
+            {
+              "type": "temporaryPeace",
+              "timeout": 300,
+              "productivity": null,
+              "resources": null,
+              "territory": null,
+              "construction": null,
+              "warm": null,
+              "cold": null
+            }
+          ],
+          "punishment": {
+            "type": "cropFailure",
+            "timeout": 180,
+            "faith": 0.5,
+            "productivityFarm": 0.2,
+            "productivityWoodcutter": null,
+            "productivityMines": null,
+            "productivityGeneral": null,
+            "resources": 0.3,
+            "workers": null,
+            "levels": null
+          }
+        },
+        {
+          "index": 7,
+          "status": "pending",
+          "delay": 30,
+          "delayElapsed": 0,
+          "timeout": 600,
+          "timeoutElapsed": 0,
+          "requirements": {
+            "faith": null,
+            "altar": null,
+            "temple": null,
+            "monument": null,
+            "resources": {
+              "food": 2000,
+              "wood": 1000,
+              "stone": 500
+            },
+            "workers": 20
+          },
+          "blessings": [
+            {
+              "type": "giftFromTheHeavens",
+              "timeout": null,
+              "productivity": null,
+              "resources": {
+                "food": 2000,
+                "wood": 1000
+              },
+              "territory": null,
+              "construction": null,
+              "warm": null,
+              "cold": null
+            },
+            {
+              "type": "holyExpansion",
+              "timeout": null,
+              "productivity": null,
+              "resources": null,
+              "territory": 10,
+              "construction": null,
+              "warm": null,
+              "cold": null
+            }
+          ],
+          "punishment": {
+            "type": "wildfires",
+            "timeout": 180,
+            "faith": 0.5,
+            "productivityFarm": null,
+            "productivityWoodcutter": 0.3,
+            "productivityMines": null,
+            "productivityGeneral": null,
+            "resources": 0.4,
+            "workers": null,
+            "levels": null
+          }
+        },
+        {
+          "index": 8,
+          "status": "pending",
+          "delay": 30,
+          "delayElapsed": 0,
+          "timeout": 600,
+          "timeoutElapsed": 0,
+          "requirements": {
+            "faith": 5000,
+            "altar": 30,
+            "temple": 15,
+            "monument": null,
+            "resources": {
+              "food": 3000,
+              "wood": 2000,
+              "stone": 1000,
+              "copper": 500
+            },
+            "workers": null
+          },
+          "blessings": [
+            {
+              "type": "richMines",
+              "timeout": 120,
+              "productivity": 0.3,
+              "resources": null,
+              "territory": null,
+              "construction": null,
+              "warm": null,
+              "cold": null
+            },
+            {
+              "type": "celestialFortification",
+              "timeout": 300,
+              "productivity": null,
+              "resources": null,
+              "territory": null,
+              "construction": null,
+              "warm": null,
+              "cold": null
+            }
+          ],
+          "punishment": {
+            "type": "plague",
+            "timeout": null,
+            "faith": 0.5,
+            "productivityFarm": null,
+            "productivityWoodcutter": null,
+            "productivityMines": null,
+            "productivityGeneral": null,
+            "resources": 0.4,
+            "workers": 50,
+            "levels": null
+          }
+        },
+        {
+          "index": 9,
+          "status": "pending",
+          "delay": 30,
+          "delayElapsed": 0,
+          "timeout": 600,
+          "timeoutElapsed": 0,
+          "requirements": {
+            "faith": 8000,
+            "altar": null,
+            "temple": null,
+            "monument": 10,
+            "resources": {
+              "food": 5000,
+              "wood": 3000,
+              "stone": 2000,
+              "copper": 1000,
+              "iron": 500
+            },
+            "workers": 50
+          },
+          "blessings": [
+            {
+              "type": "rapidConstruction",
+              "timeout": 180,
+              "productivity": null,
+              "resources": null,
+              "territory": null,
+              "construction": 0.5,
+              "warm": null,
+              "cold": null
+            },
+            {
+              "type": "favorableWeather",
+              "timeout": 300,
+              "productivity": null,
+              "resources": null,
+              "territory": null,
+              "construction": null,
+              "warm": 0.1,
+              "cold": 0.1
+            }
+          ],
+          "punishment": {
+            "type": "landslide",
+            "timeout": 180,
+            "faith": 0.5,
+            "productivityFarm": null,
+            "productivityWoodcutter": null,
+            "productivityMines": 0.4,
+            "productivityGeneral": null,
+            "resources": 0.4,
+            "workers": null,
+            "levels": null
+          }
+        },
+        {
+          "index": 10,
+          "status": "pending",
+          "delay": 30,
+          "delayElapsed": 0,
+          "timeout": 600,
+          "timeoutElapsed": 0,
+          "requirements": {
+            "faith": 10000,
+            "altar": 50,
+            "temple": 30,
+            "monument": 20,
+            "resources": {
+              "food": 7500,
+              "wood": 5000,
+              "stone": 3000,
+              "copper": 2000,
+              "iron": 1000,
+              "gold": 500
+            },
+            "workers": 100
+          },
+          "blessings": [
+            {
+              "type": "wisdomOfTheGods",
+              "timeout": 120,
+              "productivity": 0.3,
+              "resources": null,
+              "territory": null,
+              "construction": null,
+              "warm": null,
+              "cold": null
+            },
+            {
+              "type": "blessedMarkets",
+              "timeout": 120,
+              "productivity": null,
+              "resources": null,
+              "territory": null,
+              "construction": null,
+              "warm": null,
+              "cold": null
+            }
+          ],
+          "punishment": {
+            "type": "volcano",
+            "timeout": 180,
+            "faith": 0.5,
+            "productivityFarm": null,
+            "productivityWoodcutter": null,
+            "productivityMines": null,
+            "productivityGeneral": 0.5,
+            "resources": 0.5,
+            "workers": 100,
+            "levels": 30
+          }
+        }
+      ],
+      "active": {
+        "index": 3,
+        "status": "started",
+        "delay": 30,
+        "delayElapsed": 30,
+        "timeout": 300,
+        "timeoutElapsed": 300,
+        "requirements": {
+          "faith": null,
+          "altar": null,
+          "temple": 5,
+          "monument": null,
+          "resources": null,
+          "workers": null
+        },
+        "blessings": [
+          {
+            "type": "richMines",
+            "timeout": 120,
+            "productivity": 0.3,
+            "resources": null,
+            "territory": null,
+            "construction": null,
+            "warm": null,
+            "cold": null
+          },
+          {
+            "type": "celestialProsperity",
+            "timeout": 60,
+            "productivity": 0.1,
+            "resources": null,
+            "territory": null,
+            "construction": null,
+            "warm": null,
+            "cold": null
+          }
+        ],
+        "punishment": {
+          "type": "plague",
+          "timeout": null,
+          "faith": 0.5,
+          "productivityFarm": null,
+          "productivityWoodcutter": null,
+          "productivityMines": null,
+          "productivityGeneral": null,
+          "resources": 0.3,
+          "workers": 20,
+          "levels": null
+        }
+      },
+      "completed": [
+        {
+          "index": 1,
+          "status": "completed",
+          "delay": 30,
+          "delayElapsed": 30,
+          "timeout": 300,
+          "timeoutElapsed": 300,
+          "requirements": {
+            "faith": null,
+            "altar": 5,
+            "temple": null,
+            "monument": null,
+            "resources": null,
+            "workers": null
+          },
+          "blessings": [
+            {
+              "type": "fertileSoil",
+              "timeout": 120,
+              "productivity": 0.3,
+              "resources": null,
+              "territory": null,
+              "construction": null,
+              "warm": null,
+              "cold": null
+            },
+            {
+              "type": "forestBloom",
+              "timeout": 120,
+              "productivity": 0.3,
+              "resources": null,
+              "territory": null,
+              "construction": null,
+              "warm": null,
+              "cold": null
+            }
+          ],
+          "punishment": {
+            "type": "cropFailure",
+            "timeout": 120,
+            "faith": 0.5,
+            "productivityFarm": 0.1,
+            "productivityWoodcutter": null,
+            "productivityMines": null,
+            "productivityGeneral": null,
+            "resources": 0.2,
+            "workers": 2,
+            "levels": 2
+          }
+        },
+        {
+          "index": 2,
+          "status": "completed",
+          "delay": 30,
+          "delayElapsed": 30,
+          "timeout": 300,
+          "timeoutElapsed": 300,
+          "requirements": {
+            "faith": 500,
+            "altar": null,
+            "temple": null,
+            "monument": null,
+            "resources": null,
+            "workers": null
+          },
+          "blessings": [
+            {
+              "type": "giftFromTheHeavens",
+              "timeout": null,
+              "productivity": null,
+              "resources": {
+                "food": 1000,
+                "wood": 500
+              },
+              "territory": null,
+              "construction": null,
+              "warm": null,
+              "cold": null
+            },
+            {
+              "type": "holyExpansion",
+              "timeout": null,
+              "productivity": null,
+              "resources": null,
+              "territory": 10,
+              "construction": null,
+              "warm": null,
+              "cold": null
+            }
+          ],
+          "punishment": {
+            "type": "wildfires",
+            "timeout": 120,
+            "faith": 0.5,
+            "productivityFarm": null,
+            "productivityWoodcutter": 0.2,
+            "productivityMines": null,
+            "productivityGeneral": null,
+            "resources": 0.3,
+            "workers": null,
+            "levels": null
+          }
+        }
+      ],
+      "activeBlessings": [],
+      "activePunishments": []
+    },
+    "gameSpeed": 1,
+    "tutorial": {
+      "currentStep": 0,
+      "completed": true,
+      "dismissedModals": [],
+      "activeModal": "challengeStarted",
+      "pendingModals": []
+    }
+  },
+  "colony": {
+    "year": 1,
+    "season": {
+      "currentSeason": "warm",
+      "seasonElapsed": 0
+    },
+    "resources": {
+      "territory": 5,
+      "territoryBonus": 10,
+      "workers": 0,
+      "food": 250,
+      "wood": 100,
+      "stone": 0,
+      "copper": 0,
+      "iron": 0,
+      "gold": 0,
+      "faith": 100,
+      "knowledge": 0
+    },
+    "buildings": {
+      "headquarters": {
+        "level": 1,
+        "constructionRemaining": 0,
+        "constructionDuration": 0,
+        "type": "camp",
+        "upgradeRemaining": 0,
+        "upgradeDuration": 0
+      },
+      "house": {
+        "level": 0,
+        "constructionRemaining": 0,
+        "constructionDuration": 0
+      },
+      "academy": {
+        "level": 0,
+        "constructionRemaining": 0,
+        "constructionDuration": 0,
+        "workers": 0,
+        "completed": [],
+        "active": []
+      },
+      "storehouse": {
+        "level": 0,
+        "constructionRemaining": 0,
+        "constructionDuration": 0
+      },
+      "market": {
+        "level": 0,
+        "constructionRemaining": 0,
+        "constructionDuration": 0,
+        "food": 100,
+        "wood": 110,
+        "stone": 120,
+        "copper": 130,
+        "iron": 140
+      },
+      "altar": {
+        "level": 5,
+        "constructionRemaining": 0,
+        "constructionDuration": 0
+      },
+      "temple": {
+        "level": 0,
+        "constructionRemaining": 0,
+        "constructionDuration": 0,
+        "workers": 0
+      },
+      "monument": {
+        "level": 0,
+        "constructionRemaining": 0,
+        "constructionDuration": 0
+      },
+      "farm": {
+        "level": 0,
+        "constructionRemaining": 0,
+        "constructionDuration": 0,
+        "workers": 0
+      },
+      "woodcutter": {
+        "level": 0,
+        "constructionRemaining": 0,
+        "constructionDuration": 0,
+        "workers": 0
+      },
+      "quarry": {
+        "level": 0,
+        "constructionRemaining": 0,
+        "constructionDuration": 0,
+        "workers": 0
+      },
+      "copperMine": {
+        "level": 0,
+        "constructionRemaining": 0,
+        "constructionDuration": 0,
+        "workers": 0
+      },
+      "ironMine": {
+        "level": 0,
+        "constructionRemaining": 0,
+        "constructionDuration": 0,
+        "workers": 0
+      },
+      "goldMine": {
+        "level": 0,
+        "constructionRemaining": 0,
+        "constructionDuration": 0,
+        "workers": 0
+      },
+      "barracks": {
+        "level": 0,
+        "constructionRemaining": 0,
+        "constructionDuration": 0
+      },
+      "archery": {
+        "level": 0,
+        "constructionRemaining": 0,
+        "constructionDuration": 0
+      },
+      "stable": {
+        "level": 0,
+        "constructionRemaining": 0,
+        "constructionDuration": 0
+      },
+      "wall": {
+        "level": 0,
+        "constructionRemaining": 0,
+        "constructionDuration": 0
+      },
+      "tower": {
+        "level": 0,
+        "constructionRemaining": 0,
+        "constructionDuration": 0
+      }
+    },
+    "events": {
+      "future": [
+        {
+          "id": 3,
+          "type": "challenge_started",
+          "textKey": "event.challengeStarted",
+          "icon": "/img/resources/faith.png",
+          "params": [
+            3,
+            10,
+            "challenge.name.3"
+          ],
+          "buildingKey": null,
+          "researchKey": null,
+          "action": "openChallengeModal",
+          "remainingSeconds": 300
+        }
+      ],
+      "past": [],
+      "nextId": 4
+    },
+    "military": {
+      "units": {
+        "infantry": 0,
+        "archer": 0,
+        "cavalry": 0
+      },
+      "raid": null,
+      "raidCount": 0
+    }
+  },
+  "resourcesAtCap": [],
+  "resourcesNegativeProduction": [],
+  "hadIdleWorkers": false,
+  "challengeModal": "failure",
+  "raidReport": null
+}

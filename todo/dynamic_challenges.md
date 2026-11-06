@@ -75,27 +75,27 @@ Baseline (current `challenges.json`, no scaling, 20 seeds per bot, 5-hour cap):
 
 Separate base values from adjusted values, persist failures, enforce no stacking and upgrade old saves. Gameplay numbers do not change yet.
 
-- [ ] `constants.js`: build `CHALLENGE_DEFINITIONS` once from `challenges.json`, with nulls filled in, deep-frozen
-- [ ] `constants.js`: add `SAVE_VERSION = 2` and use it in `createInitialMeta`
-- [ ] `constants.js`: `createInitialChallenges()` builds each challenge with `Challenge.fromDefinition(definition)`
-- [ ] `challenge.js`: new fields `base` (frozen definition, never saved), `failures` (default 0) and `mood` (default null); `delay`, `timeout`, `requirements`, `blessings` and `punishment` now mean the values in effect
-- [ ] `challenge.js`: `static fromDefinition(definition)` deep-copies the base values into new `Blessing`/`Punishment` objects and a new `resources` object (removes the shared-reference risk)
-- [ ] `challenge.js`: `reset()` keeps `failures`
-- [ ] `challenge.js`: `toJSON()` saves only progress (index, status, delay, delayElapsed, timeoutElapsed, failures, mood), plus timeout, requirements, blessings and punishment while the status is `started`
-- [ ] `challenge.js`: `fromJSON(data, definition)` re-attaches `base` and fills missing values from it
-- [ ] `challenges.js`: `fail()` increments `active.failures`
-- [ ] `challenges.js`: `complete()` and `fail()` remove an active effect of the same type before adding the new copy (refresh instead of stacking)
-- [ ] `challenges.js`: `toJSON()` saves `completed` as a list of indexes and drops `pending`; `fromJSON(data, definitions)` rebuilds both from the definitions and ignores unknown indexes
-- [ ] `meta.js`: `fromJSON(data, definitions)` passes the definitions through
-- [ ] New `src/js/engine/save_migration.js` with `migrateSave(data)`, run by `State.fromJSON` before `Meta.fromJSON`: version 1 → 2 (completed → indexes; an active `started` challenge keeps its stored values as adjusted values; an active `activated` challenge keeps its delay and timers; pending dropped); a version newer than `SAVE_VERSION` throws, so the existing catch shows "Load Failed"
-- [ ] `state.js` `fromJSON`: run the migration first and pass `CHALLENGE_DEFINITIONS`
-- [ ] Tests: `challenge.test.js` (`fromDefinition` deep copy, failures, both `toJSON` shapes, `base` not saved)
-- [ ] Tests: `challenges.test.js` (failures increment, same-type refresh, rebuild from definitions, completed saved as indexes)
-- [ ] Tests: `serialization.test.js` (missing `failures` or `mood`)
-- [ ] Tests: `constants.test.js` (definitions frozen; changing one game's challenge affects neither the definitions nor a second new game); replace the 300 s duration pin with type-only checks
-- [ ] Tests: new `save_migration.test.js` (a version 1 fixture taken from current main: active started with its window open, active activated, completed list; version set to 2; newer version rejected)
-- [ ] Tests: `state.test.js` (version 1 and version 2 load round trips); update `tests/helpers/factories.js`
-- [ ] Verify: targeted tests and lint pass; the simulation reproduces the Phase 0 baseline (except where blessings used to stack); a version 1 save loads in the browser
+- [x] `constants.js`: build `CHALLENGE_DEFINITIONS` once from `challenges.json`, with nulls filled in, deep-frozen
+- [x] `constants.js`: add `SAVE_VERSION = 2` and use it in `createInitialMeta`
+- [x] `constants.js`: `createInitialChallenges()` builds each challenge with `Challenge.fromDefinition(definition)`
+- [x] `challenge.js`: new fields `base` (frozen definition, never saved), `failures` (default 0) and `mood` (default null); `delay`, `timeout`, `requirements`, `blessings` and `punishment` now mean the values in effect
+- [x] `challenge.js`: `static fromDefinition(definition)` deep-copies the base values into new `Blessing`/`Punishment` objects and a new `resources` object (removes the shared-reference risk)
+- [x] `challenge.js`: `reset()` keeps `failures`
+- [x] `challenge.js`: `toJSON()` saves only progress (index, status, delay, delayElapsed, timeoutElapsed, failures, mood), plus timeout, requirements, blessings and punishment while the status is `started`
+- [x] `challenge.js`: `fromJSON(data, definition)` re-attaches `base` and fills missing values from it
+- [x] `challenges.js`: `fail()` increments `active.failures`
+- [x] `challenges.js`: `complete()` and `fail()` remove an active effect of the same type before adding the new copy (refresh instead of stacking)
+- [x] `challenges.js`: `toJSON()` saves `completed` as a list of indexes and drops `pending`; `fromJSON(data, definitions)` rebuilds both from the definitions and ignores unknown indexes
+- [x] `meta.js`: `fromJSON(data, definitions)` passes the definitions through
+- [x] New `src/js/engine/save_migration.js` with `migrateSave(data)`, run by `State.fromJSON` before `Meta.fromJSON`: version 1 → 2 (completed → indexes; an active `started` challenge keeps its stored values as adjusted values; an active `activated` challenge keeps its delay and timers; pending dropped); a version newer than `SAVE_VERSION` throws, so the existing catch shows "Load Failed"
+- [x] `state.js` `fromJSON`: run the migration first and pass `CHALLENGE_DEFINITIONS`
+- [x] Tests: `challenge.test.js` (`fromDefinition` deep copy, failures, both `toJSON` shapes, `base` not saved)
+- [x] Tests: `challenges.test.js` (failures increment, same-type refresh, rebuild from definitions, completed saved as indexes)
+- [x] Tests: `serialization.test.js` (missing `failures` or `mood`)
+- [x] Tests: `constants.test.js` (definitions frozen; changing one game's challenge affects neither the definitions nor a second new game); replace the 300 s duration pin with type-only checks
+- [x] Tests: new `save_migration.test.js` (a version 1 fixture taken from current main: active started with its window open, active activated, completed list; version set to 2; newer version rejected)
+- [x] Tests: `state.test.js` (version 1 and version 2 load round trips); update `tests/helpers/factories.js`
+- [x] Verify: targeted tests and lint pass; the simulation reproduces the Phase 0 baseline (except where blessings used to stack); a version 1 save loads in the browser
 
 ## Phase 2 — Scaling Logic
 

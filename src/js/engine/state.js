@@ -5,8 +5,9 @@ import analytics from '@/js/engine/analytics.js'
 import {IMG_BUILDING_WALL, IMG_OTHER_TERRITORY, IMG_RESOURCE_FAITH, IMG_RESOURCE_KNOWLEDGE, IMG_SEASON_COLD, IMG_SEASON_WARM, IMG_UNIT_WORKER, SND_BUILDING_CREATED, SND_HEADQUARTERS_UPGRADED, SND_NOTIFICATION_ALERT, SND_NOTIFICATION_DISASTER, SND_NOTIFICATION_SEASON, SND_RESEARCH_COMPLETED, SND_TERRITORY_EXPANDED, SND_UNDER_ATTACK, SND_WORKER_ACADEMY, SND_WORKER_CREATED, SND_WORKER_FARM, SND_WORKER_MINE, SND_WORKER_TEMPLE, SND_WORKER_WOODCUTTER} from '@/js/engine/assets.js'
 import audio from '@/js/engine/audio.js'
 import {resolveBattle} from '@/js/engine/battle.js'
+import {migrateSave} from '@/js/engine/save_migration.js'
 import storage from '@/js/engine/storage.js'
-import {BOUNDED_RESOURCES, BUILDING_CLASS_MAP, BUILDING_IMAGE_MAP, DOWNGRADABLE_BUILDINGS, HQ_BUILDING_UNLOCKS, HQ_RESOURCE_UNLOCKS, HQ_TYPES, IMG_BUILDING_HEADQUARTERS_MAP, RESEARCH_COSTS, RESEARCH_PREREQUISITES, RESEARCH_TREE, RESOURCE_LIMIT_EVENT_CONFIG, RESOURCE_NEGATIVE_PRODUCTION_EVENT_CONFIG, TUTORIAL_STEPS, UNIT_BUILDINGS, UNIT_TYPES} from '@/js/engine/constants.js'
+import {BOUNDED_RESOURCES, BUILDING_CLASS_MAP, BUILDING_IMAGE_MAP, CHALLENGE_DEFINITIONS, DOWNGRADABLE_BUILDINGS, HQ_BUILDING_UNLOCKS, HQ_RESOURCE_UNLOCKS, HQ_TYPES, IMG_BUILDING_HEADQUARTERS_MAP, RESEARCH_COSTS, RESEARCH_PREREQUISITES, RESEARCH_TREE, RESOURCE_LIMIT_EVENT_CONFIG, RESOURCE_NEGATIVE_PRODUCTION_EVENT_CONFIG, TUTORIAL_STEPS, UNIT_BUILDINGS, UNIT_TYPES} from '@/js/engine/constants.js'
 import Colony from '@/js/models/colony.js'
 import Consumption from '@/js/models/consumption.js'
 import Cost from '@/js/models/cost.js'
@@ -1926,13 +1927,15 @@ class State {
 
   /**
    * Reconstructs a State instance from serialized data.
-   * Returns null if data is corrupted or invalid.
+   * Older saves are upgraded first (migrateSave); challenges are rebuilt from CHALLENGE_DEFINITIONS.
+   * Returns null if data is corrupted, invalid or from a newer version of the game.
    * @param {Object} data - Serialized state data
    * @returns {State|null} Restored State instance, or null on failure
    */
   static fromJSON(data) {
     try {
-      const meta = Meta.fromJSON(data.meta)
+      const saveData = migrateSave(data)
+      const meta = Meta.fromJSON(saveData.meta, CHALLENGE_DEFINITIONS)
       // A tutorial completed on this device stays complete when an older save is loaded.
       // Clear its saved modal so it cannot leave the restored game paused.
       if (storage.tutorialCompleted) {
@@ -1940,16 +1943,16 @@ class State {
         meta.tutorial.activeModal = null
         meta.tutorial.pendingModals = []
       }
-      const colony = Colony.fromJSON(data.colony, BUILDING_CLASS_MAP)
+      const colony = Colony.fromJSON(saveData.colony, BUILDING_CLASS_MAP)
       const state = new State(meta, colony)
 
       // Restore edge-detection tracking state so update(0) doesn't
       // re-fire events that are already in the loaded past list
-      state._resourcesAtCap = new Set(data.resourcesAtCap ?? [])
-      state._resourcesNegativeProduction = new Set(data.resourcesNegativeProduction ?? [])
-      state._hadIdleWorkers = data.hadIdleWorkers ?? false
-      state.challengeModal = data.challengeModal ?? null
-      state.raidReport = data.raidReport ? RaidReport.fromJSON(data.raidReport) : null
+      state._resourcesAtCap = new Set(saveData.resourcesAtCap ?? [])
+      state._resourcesNegativeProduction = new Set(saveData.resourcesNegativeProduction ?? [])
+      state._hadIdleWorkers = saveData.hadIdleWorkers ?? false
+      state.challengeModal = saveData.challengeModal ?? null
+      state.raidReport = saveData.raidReport ? RaidReport.fromJSON(saveData.raidReport) : null
       // A challenge, raid result or tutorial modal open at save time keeps the game paused until dismissed
       if (state.challengeModal || state.raidReport || meta.tutorial.activeModal) {
         state.paused = true

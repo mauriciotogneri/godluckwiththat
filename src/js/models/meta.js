@@ -28,14 +28,15 @@ class Meta {
   /**
    * Reconstructs a Meta instance from serialized data.
    * @param {Object} data - Serialized meta data
+   * @param {Object[]} [definitions] - Frozen challenge definitions, passed to Challenges.fromJSON
    * @returns {Meta} Restored Meta instance
    */
-  static fromJSON(data) {
+  static fromJSON(data, definitions = []) {
     return new Meta({
       version: data.version,
       createdDateTime: data.createdDateTime,
       updatedDateTime: data.updatedDateTime,
-      challenges: Challenges.fromJSON(data.challenges),
+      challenges: Challenges.fromJSON(data.challenges, definitions),
       gameSpeed: data.gameSpeed ?? GAME_SPEED_DEFAULT,
       tutorial: new Tutorial(data.tutorial),
     })

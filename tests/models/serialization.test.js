@@ -22,6 +22,7 @@ import Cost from '@/js/models/cost.js'
 import Military from '@/js/models/military.js'
 import Raid from '@/js/models/raid.js'
 import RaidReport from '@/js/models/raid_report.js'
+import {createChallengeDefinition} from '../helpers/factories.js'
 
 // Minimal valid data factories for nested dependencies
 
@@ -56,7 +57,6 @@ function minimalChallengeData(overrides = {}) {
 
 function minimalChallengesData(overrides = {}) {
   return {
-    pending: [],
     active: null,
     completed: [],
     activeBlessings: [],
@@ -76,7 +76,7 @@ function minimalTutorialData(overrides = {}) {
 
 function minimalMetaData(overrides = {}) {
   return {
-    version: 1,
+    version: 2,
     createdDateTime: '2026-01-01T00:00:00.000Z',
     updatedDateTime: '2026-01-01T00:00:00.000Z',
     challenges: minimalChallengesData(),
@@ -257,6 +257,29 @@ describe('Serialization robustness', () => {
       expect(challenge.timeoutElapsed).toBe(120)
     })
 
+    it('fromJSON with missing failures and mood uses defaults', () => {
+      const challenge = Challenge.fromJSON(minimalChallengeData())
+      expect(challenge.failures).toBe(0)
+      expect(challenge.mood).toBeNull()
+    })
+
+    it('fromJSON preserves provided failures and mood', () => {
+      const challenge = Challenge.fromJSON(minimalChallengeData({
+        failures: 2,
+        mood: 'merciful',
+      }))
+      expect(challenge.failures).toBe(2)
+      expect(challenge.mood).toBe('merciful')
+    })
+
+    it('fromJSON with only progress and no definition throws', () => {
+      expect(() => Challenge.fromJSON({
+        index: 1,
+        status: CHALLENGE_STATUS_PENDING,
+        delay: 60,
+      })).toThrow()
+    })
+
     it('fromJSON reconstructs nested Blessing and Punishment instances', () => {
       const challenge = Challenge.fromJSON(minimalChallengeData({
         blessings: [
@@ -303,13 +326,13 @@ describe('Serialization robustness', () => {
       expect(challenges.activePunishments).toEqual([])
     })
 
-    it('fromJSON reconstructs nested Challenge instances in arrays', () => {
+    it('fromJSON reconstructs nested Challenge instances from the definitions', () => {
       const challenges = Challenges.fromJSON({
-        pending: [minimalChallengeData()],
         active: minimalChallengeData({
+          index: 2,
           status: CHALLENGE_STATUS_STARTED,
         }),
-        completed: [minimalChallengeData()],
+        completed: [1],
         activeBlessings: [
           minimalBlessingData({
             timeout: 60,
@@ -320,12 +343,30 @@ describe('Serialization robustness', () => {
             timeout: 60,
           }),
         ],
-      })
+      }, [
+        createChallengeDefinition({
+          index: 1,
+        }),
+        createChallengeDefinition({
+          index: 2,
+        }),
+        createChallengeDefinition({
+          index: 3,
+        }),
+      ])
       expect(challenges.pending[0]).toBeInstanceOf(Challenge)
       expect(challenges.active).toBeInstanceOf(Challenge)
       expect(challenges.completed[0]).toBeInstanceOf(Challenge)
       expect(challenges.activeBlessings[0]).toBeInstanceOf(Blessing)
       expect(challenges.activePunishments[0]).toBeInstanceOf(Punishment)
+    })
+
+    it('fromJSON without definitions restores no pending or completed challenges', () => {
+      const challenges = Challenges.fromJSON(minimalChallengesData({
+        completed: [1],
+      }))
+      expect(challenges.pending).toEqual([])
+      expect(challenges.completed).toEqual([])
     })
 
     it('fromJSON with extra unknown fields ignores them', () => {
@@ -478,19 +519,13 @@ describe('Serialization robustness', () => {
 
     it('fromJSON reconstructs nested Challenges and Tutorial', () => {
       const meta = Meta.fromJSON(minimalMetaData({
-        challenges: {
-          pending: [minimalChallengeData()],
-          active: null,
-          completed: [],
-          activeBlessings: [],
-          activePunishments: [],
-        },
+        challenges: minimalChallengesData(),
         tutorial: {
           currentStep: 5,
           completed: true,
           dismissedModals: ['m1'],
         },
-      }))
+      }), [createChallengeDefinition()])
       expect(meta.challenges).toBeInstanceOf(Challenges)
       expect(meta.challenges.pending).toHaveLength(1)
       expect(meta.tutorial).toBeInstanceOf(Tutorial)

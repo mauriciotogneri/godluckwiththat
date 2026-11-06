@@ -1,4 +1,4 @@
-import {BLESSING_FERTILE_SOIL, CHALLENGE_STATUS_PENDING, HQ_TYPE_CAMP, PUNISHMENT_CROP_FAILURE, RAID_PHASE_INCOMING, SEASON_WARM} from '@/js/engine/enums.js'
+import {BLESSING_FERTILE_SOIL, BLESSING_GIFT_FROM_THE_HEAVENS, CHALLENGE_STATUS_PENDING, HQ_TYPE_CAMP, PUNISHMENT_CROP_FAILURE, RAID_PHASE_INCOMING, SEASON_WARM} from '@/js/engine/enums.js'
 import Blessing from '@/js/models/blessing.js'
 import Challenge from '@/js/models/challenge.js'
 import Challenges from '@/js/models/challenges.js'
@@ -90,6 +90,53 @@ export function createChallenge(overrides = {}) {
     },
     blessings: [createBlessing()],
     punishment: createPunishment(),
+    ...overrides,
+  })
+}
+
+function deepFreeze(value) {
+  for (const nested of Object.values(value)) {
+    if (nested !== null && typeof nested === 'object') {
+      deepFreeze(nested)
+    }
+  }
+  return Object.freeze(value)
+}
+
+// A deep-frozen challenge definition shaped like CHALLENGE_DEFINITIONS entries (absent fields null)
+export function createChallengeDefinition(overrides = {}) {
+  return deepFreeze({
+    index: 1,
+    delay: 60,
+    timeout: 300,
+    requirements: {
+      faith: 100,
+      altar: null,
+      temple: null,
+      monument: null,
+      resources: {
+        food: 200,
+      },
+      workers: null,
+    },
+    blessings: [
+      new Blessing({
+        type: BLESSING_FERTILE_SOIL,
+        timeout: 120,
+        productivity: 0.3,
+      }).toJSON(),
+      new Blessing({
+        type: BLESSING_GIFT_FROM_THE_HEAVENS,
+        resources: {
+          food: 500,
+        },
+      }).toJSON(),
+    ],
+    punishment: new Punishment({
+      type: PUNISHMENT_CROP_FAILURE,
+      timeout: 120,
+      faith: 0.5,
+    }).toJSON(),
     ...overrides,
   })
 }

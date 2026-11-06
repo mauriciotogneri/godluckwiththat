@@ -1,9 +1,9 @@
 import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest'
-import {BLESSING_BLESSED_MARKETS, BLESSING_CELESTIAL_FORTIFICATION, BLESSING_CELESTIAL_PROSPERITY, BLESSING_FAVORABLE_WEATHER, BLESSING_FERTILE_SOIL, BLESSING_FOREST_BLOOM, BLESSING_GIFT_FROM_THE_HEAVENS, BLESSING_HOLY_EXPANSION, BLESSING_RAPID_CONSTRUCTION, BLESSING_RICH_MINES, BLESSING_TEMPORARY_PEACE, BLESSING_WISDOM_OF_THE_GODS, BUILDING_ACADEMY, BUILDING_ALTAR, BUILDING_ARCHERY, BUILDING_BARRACKS, BUILDING_COPPER_MINE, BUILDING_FARM, BUILDING_GOLD_MINE, BUILDING_HEADQUARTERS, BUILDING_HOUSE, BUILDING_IRON_MINE, BUILDING_MARKET, BUILDING_MONUMENT, BUILDING_QUARRY, BUILDING_STABLE, BUILDING_STOREHOUSE, BUILDING_TEMPLE, BUILDING_TOWER, BUILDING_WALL, BUILDING_WOODCUTTER, CHALLENGE_MODAL_FAILURE, CHALLENGE_MODAL_REWARD, CHALLENGE_MODAL_WIN, CHALLENGE_STATUS_ACTIVATED, CHALLENGE_STATUS_PENDING, CHALLENGE_STATUS_STARTED, EVENT_TYPE_BUILDING_UPGRADE, EVENT_TYPE_CHALLENGE_STARTED, EVENT_TYPE_POPULATION_LIMIT_REACHED, EVENT_TYPE_RAID_INCOMING, EVENT_TYPE_RAID_RESULT, EVENT_TYPE_RESEARCH_COMPLETE, EVENT_TYPE_RESOURCE_LIMIT_REACHED, EVENT_TYPE_TERRITORY_LIMIT_REACHED, HQ_TYPE_CAMP, HQ_TYPE_CITY, HQ_TYPE_SETTLEMENT, HQ_TYPE_TOWN, HQ_TYPE_VILLAGE, PUNISHMENT_CROP_FAILURE, PUNISHMENT_LANDSLIDE, PUNISHMENT_PLAGUE, PUNISHMENT_VOLCANO, PUNISHMENT_WILDFIRES, RAID_PHASE_INCOMING, RAID_PHASE_WAITING, RESEARCH_ATTACK_1, RESEARCH_DEFENSE_1, RESEARCH_FOOD_PRODUCTION_1, RESEARCH_WARNING_1, RESEARCH_WARNING_2, RESOURCE_COPPER, RESOURCE_FOOD, RESOURCE_GOLD, RESOURCE_IRON, RESOURCE_STONE, RESOURCE_WOOD, SEASON_COLD, SEASON_WARM, TRADE_BUY, TRADE_SELL, TRIBUTE_CANCEL, TRIBUTE_DELAY, TUTORIAL_MODAL_CHALLENGE_STARTED, TUTORIAL_MODAL_HQ_UPGRADE, TUTORIAL_MODAL_NEGATIVE_PRODUCTION, TUTORIAL_MODAL_RAID_INCOMING, TUTORIAL_MODAL_SEASON_CHANGED, UNIT_ARCHER, UNIT_CAVALRY, UNIT_INFANTRY} from '@/js/engine/enums.js'
+import {BLESSING_BLESSED_MARKETS, BLESSING_CELESTIAL_FORTIFICATION, BLESSING_CELESTIAL_PROSPERITY, BLESSING_FAVORABLE_WEATHER, BLESSING_FERTILE_SOIL, BLESSING_FOREST_BLOOM, BLESSING_GIFT_FROM_THE_HEAVENS, BLESSING_HOLY_EXPANSION, BLESSING_RAPID_CONSTRUCTION, BLESSING_RICH_MINES, BLESSING_TEMPORARY_PEACE, BLESSING_WISDOM_OF_THE_GODS, BUILDING_ACADEMY, BUILDING_ALTAR, BUILDING_ARCHERY, BUILDING_BARRACKS, BUILDING_COPPER_MINE, BUILDING_FARM, BUILDING_GOLD_MINE, BUILDING_HEADQUARTERS, BUILDING_HOUSE, BUILDING_IRON_MINE, BUILDING_MARKET, BUILDING_MONUMENT, BUILDING_QUARRY, BUILDING_STABLE, BUILDING_STOREHOUSE, BUILDING_TEMPLE, BUILDING_TOWER, BUILDING_WALL, BUILDING_WOODCUTTER, CHALLENGE_MODAL_FAILURE, CHALLENGE_MODAL_REWARD, CHALLENGE_MODAL_WIN, CHALLENGE_STATUS_ACTIVATED, CHALLENGE_STATUS_COMPLETED, CHALLENGE_STATUS_PENDING, CHALLENGE_STATUS_STARTED, EVENT_TYPE_BUILDING_UPGRADE, EVENT_TYPE_CHALLENGE_STARTED, EVENT_TYPE_POPULATION_LIMIT_REACHED, EVENT_TYPE_RAID_INCOMING, EVENT_TYPE_RAID_RESULT, EVENT_TYPE_RESEARCH_COMPLETE, EVENT_TYPE_RESOURCE_LIMIT_REACHED, EVENT_TYPE_TERRITORY_LIMIT_REACHED, HQ_TYPE_CAMP, HQ_TYPE_CITY, HQ_TYPE_SETTLEMENT, HQ_TYPE_TOWN, HQ_TYPE_VILLAGE, PUNISHMENT_CROP_FAILURE, PUNISHMENT_LANDSLIDE, PUNISHMENT_PLAGUE, PUNISHMENT_VOLCANO, PUNISHMENT_WILDFIRES, RAID_PHASE_INCOMING, RAID_PHASE_WAITING, RESEARCH_ATTACK_1, RESEARCH_DEFENSE_1, RESEARCH_FOOD_PRODUCTION_1, RESEARCH_WARNING_1, RESEARCH_WARNING_2, RESOURCE_COPPER, RESOURCE_FOOD, RESOURCE_GOLD, RESOURCE_IRON, RESOURCE_STONE, RESOURCE_WOOD, SEASON_COLD, SEASON_WARM, TRADE_BUY, TRADE_SELL, TRIBUTE_CANCEL, TRIBUTE_DELAY, TUTORIAL_MODAL_CHALLENGE_STARTED, TUTORIAL_MODAL_HQ_UPGRADE, TUTORIAL_MODAL_NEGATIVE_PRODUCTION, TUTORIAL_MODAL_RAID_INCOMING, TUTORIAL_MODAL_SEASON_CHANGED, UNIT_ARCHER, UNIT_CAVALRY, UNIT_INFANTRY} from '@/js/engine/enums.js'
 import {HQ_TERRITORY_PER_LEVEL, MILITARY_UNITS_PER_LEVEL, MONUMENT_FAITH_PER_LEVEL, RAID_GRACE_PERIOD, RAID_INTERVAL_BASE, RAID_INTERVAL_MIN, RAID_INTERVAL_PER_TERRITORY, RAID_UNITS_BASE, RAID_UNITS_PER_TERRITORY, RAID_UNITS_PER_YEAR, RAID_WARNING_TIME, RESEARCH_TIME_MULTIPLIER, SEASON_DURATION, SHORTAGE_MAX_PENALTY, TRIBUTE_DELAY_SECONDS, TRIBUTE_ROUNDING, UNIT_STATS, WORKER_FOOD_CONSUMPTION, WORKER_RECRUIT_COST, WORKER_WOOD_CONSUMPTION} from '@/js/engine/balancing.js'
 import {IMG_BUILDING_WALL, IMG_OTHER_TERRITORY, SND_BUILDING_CREATED, SND_HEADQUARTERS_UPGRADED, SND_NOTIFICATION_ALERT, SND_NOTIFICATION_DISASTER, SND_RESEARCH_COMPLETED, SND_TERRITORY_EXPANDED, SND_UNDER_ATTACK, SND_WORKER_ACADEMY, SND_WORKER_FARM, SND_WORKER_MINE, SND_WORKER_TEMPLE, SND_WORKER_WOODCUTTER} from '@/js/engine/assets.js'
 import {resolveBattle} from '@/js/engine/battle.js'
-import {DOWNGRADABLE_BUILDINGS, RESEARCH_COSTS, RESOURCE_LIMIT_EVENT_CONFIG, RESOURCE_NEGATIVE_PRODUCTION_EVENT_CONFIG} from '@/js/engine/constants.js'
+import {CHALLENGE_DEFINITIONS, DOWNGRADABLE_BUILDINGS, RESEARCH_COSTS, RESOURCE_LIMIT_EVENT_CONFIG, RESOURCE_NEGATIVE_PRODUCTION_EVENT_CONFIG, SAVE_VERSION, createInitialChallenges} from '@/js/engine/constants.js'
 import Academy from '@/js/models/buildings/academy.js'
 import Altar from '@/js/models/buildings/altar.js'
 import Archery from '@/js/models/buildings/archery.js'
@@ -34,6 +34,8 @@ import Season from '@/js/models/season.js'
 import Events from '@/js/models/events/events.js'
 import Tutorial from '@/js/models/tutorial.js'
 import {createBlessing, createChallenge, createChallenges, createMilitary, createPunishment, createRaid} from '../helpers/factories.js'
+import activatedSave from '../fixtures/save_version_1_activated.json'
+import startedSave from '../fixtures/save_version_1_started.json'
 
 vi.mock('@/js/engine/analytics.js', () => ({
   default: {
@@ -140,7 +142,7 @@ function createColony(overrides = {}) {
 
 function createMeta(overrides = {}) {
   return new Meta({
-    version: 1,
+    version: SAVE_VERSION,
     createdDateTime: '2025-01-01T00:00:00.000Z',
     updatedDateTime: '2025-01-01T00:00:00.000Z',
     challenges: overrides.challenges ?? createChallenges(),
@@ -3040,7 +3042,7 @@ describe('State', () => {
       const json = state.toJSON()
       // Meta fields
       expect(json.meta).toBeDefined()
-      expect(json.meta.version).toBe(1)
+      expect(json.meta.version).toBe(SAVE_VERSION)
       expect(json.meta.challenges).toBeDefined()
       expect(json.meta.tutorial).toBeDefined()
       // Colony fields
@@ -3436,6 +3438,146 @@ describe('State', () => {
       const restored = State.fromJSON(json)
       expect(restored.raidReport).toBeNull()
       expect(restored.paused).toBe(false)
+    })
+
+    it('should load a version 1 save with the failure window of a started challenge open', async () => {
+      // Clears the save's open tutorial modal, so only the failure window can pause the game
+      storage.tutorialCompleted = true
+      const {
+        default: State,
+      } = await import('@/js/engine/state.js')
+      const restored = State.fromJSON(JSON.parse(JSON.stringify(startedSave)))
+      expect(restored).not.toBeNull()
+      expect(restored.meta.version).toBe(SAVE_VERSION)
+      const {
+        completed, pending, active,
+      } = restored.meta.challenges
+      expect(completed.map(challenge => challenge.index)).toEqual([
+        1,
+        2,
+      ])
+      for (const challenge of completed) {
+        expect(challenge.status).toBe(CHALLENGE_STATUS_COMPLETED)
+        expect(challenge.base).toBe(CHALLENGE_DEFINITIONS[challenge.index - 1])
+      }
+      expect(pending.map(challenge => challenge.index)).toEqual([
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+      ])
+      expect(active.index).toBe(3)
+      expect(active.status).toBe(CHALLENGE_STATUS_STARTED)
+      expect(active.base).toBe(CHALLENGE_DEFINITIONS[2])
+      expect(active.toJSON()).toEqual({
+        ...startedSave.meta.challenges.active,
+        failures: 0,
+        mood: null,
+      })
+      expect(restored.challengeModal).toBe(CHALLENGE_MODAL_FAILURE)
+      expect(restored.paused).toBe(true)
+    })
+
+    it('should take the values in effect of an activated version 1 challenge from its definition', async () => {
+      const save = JSON.parse(JSON.stringify(activatedSave))
+      // Stored values that differ from challenges.json show which source the loaded challenge uses
+      const stored = save.meta.challenges.active
+      stored.timeout = 999
+      stored.requirements.temple = 99
+      stored.blessings[0].productivity = 0.99
+      stored.punishment.workers = 99
+      const {
+        default: State,
+      } = await import('@/js/engine/state.js')
+      const restored = State.fromJSON(save)
+      const active = restored.meta.challenges.active
+      const definition = CHALLENGE_DEFINITIONS[2]
+      expect(active.index).toBe(3)
+      expect(active.status).toBe(CHALLENGE_STATUS_ACTIVATED)
+      expect(active.delayElapsed).toBe(10)
+      expect(active.timeout).toBe(definition.timeout)
+      expect(active.requirements).toEqual(definition.requirements)
+      expect(active.blessings.map(blessing => blessing.toJSON())).toEqual(definition.blessings)
+      expect(active.punishment.toJSON()).toEqual(definition.punishment)
+      expect(active.failures).toBe(0)
+      expect(active.base).toBe(definition)
+    })
+
+    it('should keep the values in effect of a started challenge after a save and load', async () => {
+      const state = await createState({
+        metaOverrides: {
+          challenges: createInitialChallenges(),
+        },
+      })
+      state.meta.challenges.activate()
+      state.meta.challenges.start()
+      const active = state.meta.challenges.active
+      active.timeout = 420
+      active.timeoutElapsed = 100
+      active.requirements = {
+        ...active.requirements,
+        altar: 7,
+      }
+      active.failures = 2
+      active.mood = 'stern'
+      const {
+        default: State,
+      } = await import('@/js/engine/state.js')
+      const restored = State.fromJSON(state.toJSON())
+      const restoredActive = restored.meta.challenges.active
+      expect(restoredActive.status).toBe(CHALLENGE_STATUS_STARTED)
+      expect(restoredActive.timeout).toBe(420)
+      expect(restoredActive.timeoutElapsed).toBe(100)
+      expect(restoredActive.requirements.altar).toBe(7)
+      expect(restoredActive.failures).toBe(2)
+      expect(restoredActive.mood).toBe('stern')
+      expect(restoredActive.base).toBe(CHALLENGE_DEFINITIONS[0])
+      expect(restoredActive.toJSON()).toEqual(active.toJSON())
+    })
+
+    it('should rebuild the values in effect of an activated challenge from its definition after a save and load', async () => {
+      const state = await createState({
+        metaOverrides: {
+          challenges: createInitialChallenges(),
+        },
+      })
+      state.meta.challenges.activate()
+      const active = state.meta.challenges.active
+      active.delay = 45
+      active.delayElapsed = 12
+      active.timeout = 420
+      active.requirements = {
+        ...active.requirements,
+        altar: 7,
+      }
+      active.failures = 2
+      active.mood = 'stern'
+      const {
+        default: State,
+      } = await import('@/js/engine/state.js')
+      const restored = State.fromJSON(state.toJSON())
+      const restoredActive = restored.meta.challenges.active
+      const definition = CHALLENGE_DEFINITIONS[0]
+      expect(restoredActive.status).toBe(CHALLENGE_STATUS_ACTIVATED)
+      expect(restoredActive.timeout).toBe(definition.timeout)
+      expect(restoredActive.requirements).toEqual(definition.requirements)
+      expect(restoredActive.delay).toBe(45)
+      expect(restoredActive.delayElapsed).toBe(12)
+      expect(restoredActive.failures).toBe(2)
+      expect(restoredActive.mood).toBe('stern')
+    })
+
+    it('should return null for a save from a newer version of the game', async () => {
+      const state = await createState()
+      const json = state.toJSON()
+      json.meta.version = SAVE_VERSION + 1
+      const {
+        default: State,
+      } = await import('@/js/engine/state.js')
+      expect(State.fromJSON(json)).toBeNull()
     })
   })
 

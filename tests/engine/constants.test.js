@@ -1,6 +1,6 @@
 import {describe, it, expect, vi} from 'vitest'
 import {BUILDING_UPGRADES, RESEARCH_SUBCATEGORY_COST_MULTIPLIERS, RESEARCH_TIER_COSTS} from '@/js/engine/balancing.js'
-import {BUILDING_CLASS_MAP, DOWNGRADABLE_BUILDINGS, HQ_BUILDING_UNLOCKS, RESEARCH_COSTS, RESEARCH_PREREQUISITES, RESEARCH_TREE, TUTORIAL_MODALS, TUTORIAL_STEPS, UNIT_BUILDINGS, UNIT_COUNTERS, UNIT_TYPES, createInitialColony, createInitialColonyBasic, createInitialColonyAdvanced, createInitialMeta, createInitialChallenges} from '@/js/engine/constants.js'
+import {BUILDING_CLASS_MAP, CHALLENGE_DEFINITIONS, DOWNGRADABLE_BUILDINGS, HQ_BUILDING_UNLOCKS, RESEARCH_COSTS, RESEARCH_PREREQUISITES, RESEARCH_TREE, TUTORIAL_MODALS, TUTORIAL_STEPS, UNIT_BUILDINGS, SAVE_VERSION, UNIT_COUNTERS, UNIT_TYPES, createInitialColony, createInitialColonyBasic, createInitialColonyAdvanced, createInitialMeta, createInitialChallenges} from '@/js/engine/constants.js'
 import {BLESSING_CELESTIAL_FORTIFICATION, BLESSING_CELESTIAL_PROSPERITY, BLESSING_FOREST_BLOOM, BLESSING_TEMPORARY_PEACE, BUILDING_ARCHERY, BUILDING_BARRACKS, BUILDING_HEADQUARTERS, BUILDING_STABLE, HQ_TYPE_CAMP, HQ_TYPE_CITY, HQ_TYPE_SETTLEMENT, HQ_TYPE_TOWN, HQ_TYPE_VILLAGE, RESEARCH_FOOD_PRODUCTION_1, RESEARCH_SUBCATEGORY_FOOD_PRODUCTION, TUTORIAL_MODAL_RAID_INCOMING, UNIT_ARCHER, UNIT_CAVALRY, UNIT_INFANTRY} from '@/js/engine/enums.js'
 import Cost from '@/js/models/cost.js'
 import Colony from '@/js/models/colony.js'
@@ -103,6 +103,11 @@ describe('constants', () => {
       expect(meta).toBeInstanceOf(Meta)
     })
 
+    it('createInitialMeta uses the current save version', () => {
+      expect(SAVE_VERSION).toBe(2)
+      expect(createInitialMeta().version).toBe(SAVE_VERSION)
+    })
+
     it('createInitialChallenges returns a Challenges instance', () => {
       const challenges = createInitialChallenges()
       expect(challenges).toBeInstanceOf(Challenges)
@@ -130,6 +135,42 @@ describe('constants', () => {
       }
     })
 
+    it('createInitialChallenges builds every challenge from its definition', () => {
+      const challenges = createInitialChallenges()
+      expect(challenges.pending).toHaveLength(CHALLENGE_DEFINITIONS.length)
+      challenges.pending.forEach((challenge, i) => {
+        expect(challenge.base).toBe(CHALLENGE_DEFINITIONS[i])
+        expect(challenge.index).toBe(CHALLENGE_DEFINITIONS[i].index)
+        expect(challenge.failures).toBe(0)
+        expect(challenge.mood).toBeNull()
+      })
+    })
+
+    it('createInitialChallenges games share no objects with the definitions or each other', () => {
+      const first = createInitialChallenges()
+      const second = createInitialChallenges()
+      // Challenge 7 has resource requirements; challenge 2 gifts resources
+      const firstSeventh = first.pending.find(challenge => challenge.index === 7)
+      const firstSecond = first.pending.find(challenge => challenge.index === 2)
+      const definitionSeventh = CHALLENGE_DEFINITIONS.find(definition => definition.index === 7)
+      const definitionSecond = CHALLENGE_DEFINITIONS.find(definition => definition.index === 2)
+      const foodRequired = definitionSeventh.requirements.resources.food
+      const foodGifted = definitionSecond.blessings[0].resources.food
+      firstSeventh.timeout = 1
+      firstSeventh.requirements.resources.food = 1
+      firstSecond.blessings[0].resources.food = 1
+      firstSecond.punishment.faith = 1
+      expect(definitionSeventh.timeout).not.toBe(1)
+      expect(definitionSeventh.requirements.resources.food).toBe(foodRequired)
+      expect(definitionSecond.blessings[0].resources.food).toBe(foodGifted)
+      expect(definitionSecond.punishment.faith).not.toBe(1)
+      const secondSeventh = second.pending.find(challenge => challenge.index === 7)
+      const secondSecond = second.pending.find(challenge => challenge.index === 2)
+      expect(secondSeventh.timeout).toBe(definitionSeventh.timeout)
+      expect(secondSeventh.requirements.resources.food).toBe(foodRequired)
+      expect(secondSecond.blessings[0].resources.food).toBe(foodGifted)
+    })
+
     it('createInitialChallenges resolves absent punishment fields to null', () => {
       const challenges = createInitialChallenges()
       // Challenge 3 (plague) omits timeout, productivityFarm, productivityWoodcutter,
@@ -141,6 +182,52 @@ describe('constants', () => {
       expect(plague.punishment.productivityMines).toBeNull()
       expect(plague.punishment.productivityGeneral).toBeNull()
       expect(plague.punishment.levels).toBeNull()
+    })
+
+    describe('CHALLENGE_DEFINITIONS', () => {
+      it('should hold the 10 challenges in index order', () => {
+        expect(CHALLENGE_DEFINITIONS.map(definition => definition.index)).toEqual([
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8,
+          9,
+          10,
+        ])
+      })
+
+      it('should be deep-frozen', () => {
+        expect(Object.isFrozen(CHALLENGE_DEFINITIONS)).toBe(true)
+        for (const definition of CHALLENGE_DEFINITIONS) {
+          expect(Object.isFrozen(definition)).toBe(true)
+          expect(Object.isFrozen(definition.requirements)).toBe(true)
+          expect(Object.isFrozen(definition.blessings)).toBe(true)
+          expect(Object.isFrozen(definition.punishment)).toBe(true)
+          if (definition.requirements.resources) {
+            expect(Object.isFrozen(definition.requirements.resources)).toBe(true)
+          }
+          for (const blessing of definition.blessings) {
+            expect(Object.isFrozen(blessing)).toBe(true)
+            if (blessing.resources) {
+              expect(Object.isFrozen(blessing.resources)).toBe(true)
+            }
+          }
+        }
+      })
+
+      it('should set absent optional fields to null', () => {
+        // Challenge 1 asks only for an altar level and has no gifted resources
+        const first = CHALLENGE_DEFINITIONS[0]
+        expect(first.requirements.faith).toBeNull()
+        expect(first.requirements.resources).toBeNull()
+        expect(first.requirements.workers).toBeNull()
+        expect(first.blessings[0].resources).toBeNull()
+        expect(first.blessings[0].territory).toBeNull()
+      })
     })
 
     describe('createInitialColonyBasic', () => {
@@ -325,12 +412,12 @@ describe('constants', () => {
       expect(blessingTypes(8)).not.toContain(BLESSING_CELESTIAL_PROSPERITY)
     })
 
-    it('both last 300 s (at most 300 s, so blessings cannot stack)', () => {
+    it('both are timed blessings', () => {
       for (const type of [
         BLESSING_TEMPORARY_PEACE,
         BLESSING_CELESTIAL_FORTIFICATION,
       ]) {
-        expect(findBlessing(type).timeout, type).toBe(300)
+        expect(findBlessing(type).timeout, type).toBeGreaterThan(0)
       }
     })
   })

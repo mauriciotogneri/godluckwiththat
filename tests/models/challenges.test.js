@@ -1,7 +1,8 @@
 import {describe, it, expect} from 'vitest'
-import {CHALLENGE_STATUS_ACTIVATED, CHALLENGE_STATUS_COMPLETED, CHALLENGE_STATUS_STARTED} from '@/js/engine/enums.js'
+import {BLESSING_FERTILE_SOIL, BLESSING_FOREST_BLOOM, CHALLENGE_STATUS_ACTIVATED, CHALLENGE_STATUS_COMPLETED, CHALLENGE_STATUS_PENDING, CHALLENGE_STATUS_STARTED, PUNISHMENT_CROP_FAILURE, PUNISHMENT_WILDFIRES} from '@/js/engine/enums.js'
+import Challenge from '@/js/models/challenge.js'
 import Challenges from '@/js/models/challenges.js'
-import {createBlessing, createChallenge, createChallenges, createPunishment} from '../helpers/factories.js'
+import {createBlessing, createChallenge, createChallengeDefinition, createChallenges, createPunishment} from '../helpers/factories.js'
 
 describe('Challenges', () => {
   describe('totalCount', () => {
@@ -154,6 +155,32 @@ describe('Challenges', () => {
       expect(blessing.timeout).toBe(600)
     })
 
+    it('should replace a blessing of the same type instead of stacking it', () => {
+      const challenges = createChallenges({
+        active: createChallenge({
+          status: CHALLENGE_STATUS_STARTED,
+        }),
+        activeBlessings: [
+          createBlessing({
+            type: BLESSING_FERTILE_SOIL,
+            timeout: 30,
+          }),
+          createBlessing({
+            type: BLESSING_FOREST_BLOOM,
+            timeout: 30,
+          }),
+        ],
+      })
+      challenges.complete(createBlessing({
+        type: BLESSING_FERTILE_SOIL,
+        timeout: 600,
+      }))
+      expect(challenges.activeBlessings).toHaveLength(2)
+      expect(challenges.activeBlessings.filter(blessing => blessing.type === BLESSING_FERTILE_SOIL)).toHaveLength(1)
+      expect(challenges.activeBlessings.find(blessing => blessing.type === BLESSING_FERTILE_SOIL).timeout).toBe(600)
+      expect(challenges.activeBlessings.find(blessing => blessing.type === BLESSING_FOREST_BLOOM).timeout).toBe(30)
+    })
+
     it('should do nothing when no active challenge', () => {
       const challenges = createChallenges()
       const blessing = createBlessing()
@@ -211,6 +238,45 @@ describe('Challenges', () => {
       expect(punishment.timeout).toBe(120)
     })
 
+    it('should count each failure', () => {
+      const challenges = createChallenges({
+        active: createChallenge({
+          status: CHALLENGE_STATUS_STARTED,
+        }),
+      })
+      challenges.fail(createPunishment())
+      expect(challenges.active.failures).toBe(1)
+      challenges.start()
+      challenges.fail(createPunishment())
+      expect(challenges.active.failures).toBe(2)
+    })
+
+    it('should replace a punishment of the same type instead of stacking it', () => {
+      const challenges = createChallenges({
+        active: createChallenge({
+          status: CHALLENGE_STATUS_STARTED,
+        }),
+        activePunishments: [
+          createPunishment({
+            type: PUNISHMENT_CROP_FAILURE,
+            timeout: 30,
+          }),
+          createPunishment({
+            type: PUNISHMENT_WILDFIRES,
+            timeout: 30,
+          }),
+        ],
+      })
+      challenges.fail(createPunishment({
+        type: PUNISHMENT_CROP_FAILURE,
+        timeout: 120,
+      }))
+      expect(challenges.activePunishments).toHaveLength(2)
+      expect(challenges.activePunishments.filter(punishment => punishment.type === PUNISHMENT_CROP_FAILURE)).toHaveLength(1)
+      expect(challenges.activePunishments.find(punishment => punishment.type === PUNISHMENT_CROP_FAILURE).timeout).toBe(120)
+      expect(challenges.activePunishments.find(punishment => punishment.type === PUNISHMENT_WILDFIRES).timeout).toBe(30)
+    })
+
     it('should do nothing when no active challenge', () => {
       const challenges = createChallenges()
       const punishment = createPunishment()
@@ -265,39 +331,131 @@ describe('Challenges', () => {
     })
   })
 
-  describe('fromJSON / toJSON', () => {
-    it('should serialize active as null when no active challenge', () => {
+  describe('toJSON', () => {
+    it('should save completed challenges as indexes and leave out pending ones', () => {
       const original = createChallenges({
-        pending: [createChallenge()],
-        completed: [createChallenge()],
+        pending: [
+          createChallenge({
+            index: 3,
+          }),
+        ],
+        active: createChallenge({
+          index: 2,
+          status: CHALLENGE_STATUS_ACTIVATED,
+        }),
+        completed: [
+          createChallenge({
+            index: 1,
+            status: CHALLENGE_STATUS_COMPLETED,
+          }),
+        ],
       })
       const json = original.toJSON()
+      expect(json.completed).toEqual([1])
+      expect(json).not.toHaveProperty('pending')
+      expect(json.active.index).toBe(2)
+    })
+
+    it('should serialize active as null when no active challenge', () => {
+      const json = createChallenges().toJSON()
       expect(json.active).toBeNull()
-      const restored = Challenges.fromJSON(json)
+    })
+  })
+
+  describe('fromJSON', () => {
+    const definitions = [
+      createChallengeDefinition({
+        index: 1,
+      }),
+      createChallengeDefinition({
+        index: 2,
+      }),
+      createChallengeDefinition({
+        index: 3,
+      }),
+      createChallengeDefinition({
+        index: 4,
+      }),
+    ]
+
+    it('should rebuild completed and pending challenges from the definitions', () => {
+      const restored = Challenges.fromJSON({
+        active: {
+          index: 3,
+          status: CHALLENGE_STATUS_ACTIVATED,
+          delay: 60,
+          delayElapsed: 20,
+          timeoutElapsed: 0,
+        },
+        completed: [
+          1,
+          2,
+        ],
+        activeBlessings: [],
+        activePunishments: [],
+      }, definitions)
+      expect(restored.completed.map(challenge => challenge.index)).toEqual([
+        1,
+        2,
+      ])
+      expect(restored.completed.every(challenge => challenge.status === CHALLENGE_STATUS_COMPLETED)).toBe(true)
+      expect(restored.completed[0].base).toBe(definitions[0])
+      expect(restored.pending.map(challenge => challenge.index)).toEqual([4])
+      expect(restored.pending[0]).toBeInstanceOf(Challenge)
+      expect(restored.pending[0].status).toBe(CHALLENGE_STATUS_PENDING)
+      expect(restored.pending[0].base).toBe(definitions[3])
+      expect(restored.active.index).toBe(3)
+      expect(restored.active.delayElapsed).toBe(20)
+      expect(restored.active.base).toBe(definitions[2])
+      expect(restored.totalCount).toBe(4)
+    })
+
+    it('should make every definition pending when nothing is completed or active', () => {
+      const restored = Challenges.fromJSON({}, definitions)
+      expect(restored.pending.map(challenge => challenge.index)).toEqual([
+        1,
+        2,
+        3,
+        4,
+      ])
       expect(restored.active).toBeNull()
+      expect(restored.completed).toEqual([])
+    })
+
+    it('should ignore completed indexes without a definition', () => {
+      const restored = Challenges.fromJSON({
+        completed: [
+          1,
+          99,
+        ],
+      }, definitions)
+      expect(restored.completed.map(challenge => challenge.index)).toEqual([1])
+      expect(restored.totalCount).toBe(4)
     })
 
     it('should round-trip through serialization', () => {
-      const challenge = createChallenge({
-        status: CHALLENGE_STATUS_ACTIVATED,
-        delayElapsed: 20,
-      })
-      const original = createChallenges({
-        active: challenge,
-        activeBlessings: [
-          createBlessing({
-            timeout: 60,
-          }),
-        ],
-        activePunishments: [
-          createPunishment({
-            timeout: 60,
-          }),
-        ],
-      })
-      const json = original.toJSON()
-      const restored = Challenges.fromJSON(json)
+      const original = Challenges.fromJSON({
+        completed: [1],
+      }, definitions)
+      original.activate()
+      original.active.delayElapsed = 20
+      original.active.failures = 1
+      original.activeBlessings.push(createBlessing({
+        timeout: 60,
+      }))
+      original.activePunishments.push(createPunishment({
+        timeout: 60,
+      }))
+      const restored = Challenges.fromJSON(original.toJSON(), definitions)
+      expect(restored.active.index).toBe(2)
+      expect(restored.active.status).toBe(CHALLENGE_STATUS_ACTIVATED)
       expect(restored.active.delayElapsed).toBe(20)
+      expect(restored.active.failures).toBe(1)
+      expect(restored.completed.map(challenge => challenge.index)).toEqual([1])
+      expect(restored.pending.map(challenge => challenge.index)).toEqual([
+        3,
+        4,
+      ])
       expect(restored.activeBlessings).toHaveLength(1)
       expect(restored.activePunishments).toHaveLength(1)
     })
