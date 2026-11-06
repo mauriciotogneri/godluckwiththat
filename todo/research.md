@@ -6,7 +6,7 @@ A tech tree system where players spend Knowledge + resources + time to unlock pa
 
 - **5 categories** (tabs, in this order): Colony, Resources, Religion, Military, Disasters
 - **18 subcategories**, each a linear chain of 5 tiers (90 researches)
-- **Cost**: Knowledge + two other resources (paid upfront when starting). Tiers climb the resource ladder: T1 food + wood, T2 wood + stone, T3 stone + copper, T4 copper + iron, T5 iron + gold. Each chain pays the tier's base cost times its price band: cheap ×0.75, standard ×1, premium ×1.5 (see [research-1-balancing.md](./research-1-balancing.md))
+- **Cost**: Knowledge + two other resources (paid upfront when starting). Tiers climb the resource ladder: T1 food + wood, T2 wood + stone, T3 stone + copper, T4 copper + iron, T5 iron + gold. Each chain pays the tier's base cost times its price band: cheap ×0.75, standard ×1, premium ×1.5
 - **Duration**: `cost.toSeconds × 4` (the building formula, scaled for research). Construction bonuses do not affect it
 - **Parallelism**: Unlimited concurrent researches (one per chain)
 - **Prerequisites**: Linear within subcategory only (level N requires level N-1)
@@ -32,14 +32,14 @@ A tech tree system where players spend Knowledge + resources + time to unlock pa
 ### Done
 
 - **Phase 1** — Data model, tech tree, research modal, i18n (en, es, fr, it, ca)
-- **Phase 2** — Start, pay, timer, future events, completion
+- **Phase 2** — Start, pay, timer, future events, completion, tier prerequisites
 - **Phase 3** — 12 of 18 bonuses applied to game systems:
   - Colony: Transportation, Construction, Expansion, Storage, Habitation
   - Resources: Food prod., Food cons., Wood prod., Wood cons., Mining, Knowledge
   - Religion: Faith
-- **Balancing** (first pass; tune by playtest) — tier base costs × per-chain price bands, research durations ×4, new Transportation, Expansion, Storage and Knowledge bonus sizes (see [research-1-balancing.md](./research-1-balancing.md))
+- **Balancing** (first pass; tune by playtest) — tier base costs × per-chain price bands, research durations ×4, new Transportation, Expansion, Storage and Knowledge bonus sizes
 - **Phase 4** — Modal polish (status colors, checkmarks, countdown, cost tooltips, accumulated bonus per chain, help modal) and documentation in `docs/specs.md` and `docs/architecture.md`
-- **Node visuals** — a gold progress fill on active nodes, replacing the pulse (see [research-2-node-visuals.md](./research-2-node-visuals.md)). Per-research icons were tried and dropped
+- **Node visuals** — a gold progress fill on active nodes, replacing the pulse. Per-research icons were tried and dropped
 
 ### Deferred
 
@@ -56,5 +56,4 @@ Blocked on unbuilt game systems (disasters, military). These researches can alre
 
 ### TODO
 
-- Enforce prerequisites in `startResearch()` — today only the research modal prevents skipping a tier
 - Decide what happens to active researches when the Academy is downgraded to level 0 — today they keep running and complete

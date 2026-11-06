@@ -54,11 +54,14 @@ class Academy extends Producer {
 
   /**
    * Whether the academy can start a given research.
+   * Tier N of a chain requires tier N-1 to be completed (not just active).
    * @param {string} key - Research key
+   * @param {Object<string, string>} prerequisites - RESEARCH_PREREQUISITES from constants.js
    * @returns {boolean} Whether the research can be started
    */
-  canResearch(key) {
-    return this.level >= 1 && !this.isActive(key) && !this.isCompleted(key)
+  canResearch(key, prerequisites) {
+    const prerequisite = prerequisites[key] // Previous tier; undefined for tier 1
+    return this.level >= 1 && !this.isActive(key) && !this.isCompleted(key) && (!prerequisite || this.isCompleted(prerequisite))
   }
 
   /**

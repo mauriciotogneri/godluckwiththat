@@ -118,18 +118,23 @@ describe('Academy', () => {
   })
 
   describe('canResearch', () => {
+    const prerequisites = {
+      transportation2: 'transportation1',
+      transportation3: 'transportation2',
+    }
+
     it('should return true when level >= 1 and not active or completed', () => {
       const academy = new Academy({
         level: 1,
       })
-      expect(academy.canResearch('transportation1')).toBe(true)
+      expect(academy.canResearch('transportation1', prerequisites)).toBe(true)
     })
 
     it('should return false when level is 0', () => {
       const academy = new Academy({
         level: 0,
       })
-      expect(academy.canResearch('transportation1')).toBe(false)
+      expect(academy.canResearch('transportation1', prerequisites)).toBe(false)
     })
 
     it('should return false when already completed', () => {
@@ -137,7 +142,7 @@ describe('Academy', () => {
         level: 1,
         completed: ['transportation1'],
       })
-      expect(academy.canResearch('transportation1')).toBe(false)
+      expect(academy.canResearch('transportation1', prerequisites)).toBe(false)
     })
 
     it('should return false when already active', () => {
@@ -145,7 +150,38 @@ describe('Academy', () => {
         level: 1,
       })
       academy.start('transportation1', 60)
-      expect(academy.canResearch('transportation1')).toBe(false)
+      expect(academy.canResearch('transportation1', prerequisites)).toBe(false)
+    })
+
+    it('should return false when the previous tier is not completed', () => {
+      const academy = new Academy({
+        level: 1,
+      })
+      expect(academy.canResearch('transportation2', prerequisites)).toBe(false)
+    })
+
+    it('should return true when the previous tier is completed', () => {
+      const academy = new Academy({
+        level: 1,
+        completed: ['transportation1'],
+      })
+      expect(academy.canResearch('transportation2', prerequisites)).toBe(true)
+    })
+
+    it('should return false when the previous tier is only active', () => {
+      const academy = new Academy({
+        level: 1,
+      })
+      academy.start('transportation1', 60)
+      expect(academy.canResearch('transportation2', prerequisites)).toBe(false)
+    })
+
+    it('should return false when skipping more than one tier', () => {
+      const academy = new Academy({
+        level: 1,
+        completed: ['transportation1'],
+      })
+      expect(academy.canResearch('transportation3', prerequisites)).toBe(false)
     })
   })
 

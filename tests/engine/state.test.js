@@ -2532,6 +2532,84 @@ describe('State', () => {
       state.startResearch('foodProduction1')
       expect(state.colony.buildings.academy.active.get('foodProduction1').duration).toBe(expected)
     })
+
+    it('should not start a tier whose previous tier is not completed', async () => {
+      const state = await createState({
+        colonyOverrides: {
+          resources: {
+            food: 500,
+            wood: 500,
+            knowledge: 500,
+          },
+          buildingOverrides: {
+            academy: {
+              level: 1,
+            },
+            storehouse: {
+              level: 1,
+            },
+          },
+        },
+      })
+      const {
+        knowledge, wood, stone,
+      } = state.colony.resources
+      state.startResearch('foodProduction2')
+      expect(state.colony.buildings.academy.isActive('foodProduction2')).toBe(false)
+      expect(state.colony.resources.knowledge).toBe(knowledge)
+      expect(state.colony.resources.wood).toBe(wood)
+      expect(state.colony.resources.stone).toBe(stone)
+      expect(state.colony.events.future).toHaveLength(0)
+    })
+
+    it('should start a tier when the previous tier is completed', async () => {
+      const state = await createState({
+        colonyOverrides: {
+          resources: {
+            food: 500,
+            wood: 500,
+            knowledge: 500,
+          },
+          buildingOverrides: {
+            academy: {
+              level: 1,
+              completed: ['foodProduction1'],
+            },
+            storehouse: {
+              level: 1,
+            },
+          },
+        },
+      })
+      const knowledgeBefore = state.colony.resources.knowledge
+      state.startResearch('foodProduction2')
+      expect(state.colony.buildings.academy.isActive('foodProduction2')).toBe(true)
+      expect(state.colony.resources.knowledge).toBeLessThan(knowledgeBefore)
+    })
+
+    it('should not start a tier while the previous tier is still active', async () => {
+      const state = await createState({
+        colonyOverrides: {
+          resources: {
+            food: 500,
+            wood: 500,
+            knowledge: 500,
+          },
+          buildingOverrides: {
+            academy: {
+              level: 1,
+            },
+            storehouse: {
+              level: 1,
+            },
+          },
+        },
+      })
+      state.startResearch('foodProduction1')
+      state.startResearch('foodProduction2')
+      expect(state.colony.buildings.academy.isActive('foodProduction2')).toBe(false)
+      expect(state.colony.events.future).toHaveLength(1)
+    })
   })
 
   // ── executeTrade ─────────────────────────────────────────────────

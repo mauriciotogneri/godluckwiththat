@@ -1,6 +1,6 @@
 import {describe, it, expect, vi} from 'vitest'
 import {BUILDING_UPGRADES, RESEARCH_SUBCATEGORY_COST_MULTIPLIERS, RESEARCH_TIER_COSTS} from '@/js/engine/balancing.js'
-import {BUILDING_CLASS_MAP, DOWNGRADABLE_BUILDINGS, HQ_BUILDING_UNLOCKS, RESEARCH_COSTS, RESEARCH_TREE, TUTORIAL_MODALS, TUTORIAL_STEPS, UNIT_BUILDINGS, UNIT_COUNTERS, UNIT_TYPES, createInitialColony, createInitialColonyBasic, createInitialColonyAdvanced, createInitialMeta, createInitialChallenges} from '@/js/engine/constants.js'
+import {BUILDING_CLASS_MAP, DOWNGRADABLE_BUILDINGS, HQ_BUILDING_UNLOCKS, RESEARCH_COSTS, RESEARCH_PREREQUISITES, RESEARCH_TREE, TUTORIAL_MODALS, TUTORIAL_STEPS, UNIT_BUILDINGS, UNIT_COUNTERS, UNIT_TYPES, createInitialColony, createInitialColonyBasic, createInitialColonyAdvanced, createInitialMeta, createInitialChallenges} from '@/js/engine/constants.js'
 import {BLESSING_CELESTIAL_FORTIFICATION, BLESSING_CELESTIAL_PROSPERITY, BLESSING_FOREST_BLOOM, BLESSING_TEMPORARY_PEACE, BUILDING_ARCHERY, BUILDING_BARRACKS, BUILDING_HEADQUARTERS, BUILDING_STABLE, HQ_TYPE_CAMP, HQ_TYPE_CITY, HQ_TYPE_SETTLEMENT, HQ_TYPE_TOWN, HQ_TYPE_VILLAGE, RESEARCH_FOOD_PRODUCTION_1, RESEARCH_SUBCATEGORY_FOOD_PRODUCTION, TUTORIAL_MODAL_RAID_INCOMING, UNIT_ARCHER, UNIT_CAVALRY, UNIT_INFANTRY} from '@/js/engine/enums.js'
 import Cost from '@/js/models/cost.js'
 import Colony from '@/js/models/colony.js'
@@ -66,6 +66,29 @@ describe('constants', () => {
     it('scales the tier base cost by the chain price band', () => {
       const expected = RESEARCH_TIER_COSTS[0].multiplyFloor(RESEARCH_SUBCATEGORY_COST_MULTIPLIERS[RESEARCH_SUBCATEGORY_FOOD_PRODUCTION])
       expect(RESEARCH_COSTS[RESEARCH_FOOD_PRODUCTION_1].entries).toEqual(expected.entries)
+    })
+  })
+
+  describe('RESEARCH_PREREQUISITES', () => {
+    const subcategories = RESEARCH_TREE.flatMap(entry => entry.subcategories)
+
+    it('should map each research to the previous tier in its chain', () => {
+      for (const subcategory of subcategories) {
+        for (let i = 1; i < subcategory.researches.length; i++) {
+          expect(RESEARCH_PREREQUISITES[subcategory.researches[i]], subcategory.researches[i]).toBe(subcategory.researches[i - 1])
+        }
+      }
+    })
+
+    it('should have no entry for tier 1 researches', () => {
+      for (const subcategory of subcategories) {
+        expect(RESEARCH_PREREQUISITES[subcategory.researches[0]], subcategory.researches[0]).toBeUndefined()
+      }
+    })
+
+    it('should have one entry per non-first research', () => {
+      const researchCount = subcategories.reduce((total, subcategory) => total + subcategory.researches.length, 0)
+      expect(Object.keys(RESEARCH_PREREQUISITES)).toHaveLength(researchCount - subcategories.length)
     })
   })
 

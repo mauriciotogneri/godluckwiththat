@@ -717,6 +717,15 @@ export const RESEARCH_COSTS = Object.fromEntries(
 // Research categories shown as tabs in the research modal; disasters stays hidden until disasters are implemented.
 export const RESEARCH_MODAL_TREE = RESEARCH_TREE.filter(entry => entry.category !== RESEARCH_CATEGORY_DISASTERS)
 
+// Research prerequisites — research key → key of the previous tier in its chain (tier 1 keys have no entry).
+// Derived from RESEARCH_TREE order, which stays the single definition of each chain.
+export const RESEARCH_PREREQUISITES = Object.fromEntries(
+  RESEARCH_TREE.flatMap(entry => entry.subcategories.flatMap(subcategory => subcategory.researches.slice(1).map((key, index) => [
+    key,
+    subcategory.researches[index],
+  ]))),
+)
+
 // Tutorial sequential steps — each has i18n text key, building icon key, and completion check
 export const TUTORIAL_STEPS = [
   {

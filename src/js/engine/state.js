@@ -6,7 +6,7 @@ import {IMG_BUILDING_WALL, IMG_OTHER_TERRITORY, IMG_RESOURCE_FAITH, IMG_RESOURCE
 import audio from '@/js/engine/audio.js'
 import {resolveBattle} from '@/js/engine/battle.js'
 import storage from '@/js/engine/storage.js'
-import {BOUNDED_RESOURCES, BUILDING_CLASS_MAP, BUILDING_IMAGE_MAP, DOWNGRADABLE_BUILDINGS, HQ_BUILDING_UNLOCKS, HQ_RESOURCE_UNLOCKS, HQ_TYPES, IMG_BUILDING_HEADQUARTERS_MAP, RESEARCH_COSTS, RESEARCH_TREE, RESOURCE_LIMIT_EVENT_CONFIG, RESOURCE_NEGATIVE_PRODUCTION_EVENT_CONFIG, TUTORIAL_STEPS, UNIT_BUILDINGS, UNIT_TYPES} from '@/js/engine/constants.js'
+import {BOUNDED_RESOURCES, BUILDING_CLASS_MAP, BUILDING_IMAGE_MAP, DOWNGRADABLE_BUILDINGS, HQ_BUILDING_UNLOCKS, HQ_RESOURCE_UNLOCKS, HQ_TYPES, IMG_BUILDING_HEADQUARTERS_MAP, RESEARCH_COSTS, RESEARCH_PREREQUISITES, RESEARCH_TREE, RESOURCE_LIMIT_EVENT_CONFIG, RESOURCE_NEGATIVE_PRODUCTION_EVENT_CONFIG, TUTORIAL_STEPS, UNIT_BUILDINGS, UNIT_TYPES} from '@/js/engine/constants.js'
 import Colony from '@/js/models/colony.js'
 import Consumption from '@/js/models/consumption.js'
 import Cost from '@/js/models/cost.js'
@@ -1558,7 +1558,7 @@ class State {
     } = buildings
     const cost = RESEARCH_COSTS[key]
 
-    if (!academy.canResearch(key) || !cost || !resources.canAfford(cost)) {
+    if (!academy.canResearch(key, RESEARCH_PREREQUISITES) || !cost || !resources.canAfford(cost)) {
       return
     }
 
