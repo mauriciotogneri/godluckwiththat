@@ -230,6 +230,25 @@ class Events {
   }
 
   /**
+   * Sets the countdown of the future event for the given research and moves it to its sorted position.
+   * Research rows follow their research's own timer, which stands still while the academy is at level 0.
+   * No-op when no such event exists or the value is unchanged.
+   * @param {string} researchKey - Research key to match
+   * @param {number} seconds - New remaining seconds
+   */
+  setFutureRemainingByResearchKey(researchKey, seconds) {
+    const index = this.future.findIndex(
+      event => event.researchKey === researchKey,
+    )
+    if (index === -1 || this.future[index].remainingSeconds === seconds) {
+      return
+    }
+    const [event] = this.future.splice(index, 1)
+    event.remainingSeconds = seconds
+    this._binaryInsertFuture(event)
+  }
+
+  /**
    * Decrements remaining seconds on future events.
    * Clamps at 0 — does not auto-convert to past.
    * @param {number} delta - Seconds elapsed since last tick

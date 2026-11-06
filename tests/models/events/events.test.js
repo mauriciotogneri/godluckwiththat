@@ -368,6 +368,87 @@ describe('Events', () => {
     })
   })
 
+  describe('setFutureRemainingByResearchKey', () => {
+    it('should move the research event to its sorted position', () => {
+      const events = new Events()
+      events.addFuture({
+        ...createEventData(),
+        remainingSeconds: 50,
+      })
+      const research = events.addFuture({
+        ...createEventData({
+          type: 'research_complete',
+          researchKey: 'mining1',
+        }),
+        remainingSeconds: 10,
+      })
+      events.setFutureRemainingByResearchKey('mining1', 100)
+      expect(research.remainingSeconds).toBe(100)
+      expect(events.future[1]).toBe(research)
+    })
+
+    it('should leave other research and non-research events alone', () => {
+      const events = new Events()
+      const building = events.addFuture({
+        ...createEventData(),
+        remainingSeconds: 50,
+      })
+      const other = events.addFuture({
+        ...createEventData({
+          type: 'research_complete',
+          researchKey: 'farming1',
+        }),
+        remainingSeconds: 30,
+      })
+      events.addFuture({
+        ...createEventData({
+          type: 'research_complete',
+          researchKey: 'mining1',
+        }),
+        remainingSeconds: 10,
+      })
+      events.setFutureRemainingByResearchKey('mining1', 40)
+      expect(other.remainingSeconds).toBe(30)
+      expect(building.remainingSeconds).toBe(50)
+      expect(events.future.map(event => event.remainingSeconds)).toEqual([
+        30,
+        40,
+        50,
+      ])
+    })
+
+    it('should do nothing when no event has the given research key', () => {
+      const events = new Events()
+      events.addFuture({
+        ...createEventData(),
+        remainingSeconds: 10,
+      })
+      events.setFutureRemainingByResearchKey('mining1', 60)
+      expect(events.future).toHaveLength(1)
+      expect(events.future[0].remainingSeconds).toBe(10)
+    })
+
+    it('should not reorder when the value is unchanged', () => {
+      const events = new Events()
+      const other = events.addFuture({
+        ...createEventData(),
+        remainingSeconds: 20,
+      })
+      events.addFuture({
+        ...createEventData({
+          type: 'research_complete',
+          researchKey: 'mining1',
+        }),
+        remainingSeconds: 30,
+      })
+      // Tie: re-inserting the research event would place it before the other one
+      other.remainingSeconds = 30
+      events.setFutureRemainingByResearchKey('mining1', 30)
+      expect(events.future[0]).toBe(other)
+      expect(events.future[1].researchKey).toBe('mining1')
+    })
+  })
+
   describe('sortedFuture / sortedPast', () => {
     it('should return future array directly', () => {
       const events = new Events()

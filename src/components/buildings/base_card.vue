@@ -156,6 +156,13 @@ const canDowngrade = computed(() =>
   && expansionExceedsCap.value
   && props.building.level > 0 && !isConstructing.value,
 )
+// Downgrading a level-1 academy to 0 pauses its running researches; warn on a second line
+const downgradeTooltip = computed(() =>
+  props.buildingKey === BUILDING_ACADEMY && props.building.level === 1 && ui.academy.activeKeys.size > 0
+    ? t('building.downgrade') + '\n' + t('building.downgradePausesResearch')
+    : t('building.downgrade'),
+)
+const hasMultilineDowngradeTooltip = computed(() => downgradeTooltip.value.includes('\n'))
 
 /** Builds or levels up this building. */
 function act() {
@@ -206,7 +213,7 @@ function downgrade() {
               <span v-else class="action-btn-time">{{ formatTime(building.constructionRemaining) }}</span>
             </button>
           </span>
-          <span v-if="canDowngrade && !isBuildable" class="tooltip tooltip--delayed" :data-tooltip="t('building.downgrade')">
+          <span v-if="canDowngrade && !isBuildable" class="tooltip tooltip--delayed" :class="{ 'tooltip--multiline': hasMultilineDowngradeTooltip }" :data-tooltip="downgradeTooltip">
             <button
               class="btn-gold action-btn"
               @click="downgrade"

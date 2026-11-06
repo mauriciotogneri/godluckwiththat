@@ -1,7 +1,7 @@
 import {describe, it, expect, vi, beforeEach, afterEach} from 'vitest'
 import {BLESSING_BLESSED_MARKETS, BLESSING_CELESTIAL_FORTIFICATION, BLESSING_CELESTIAL_PROSPERITY, BLESSING_FAVORABLE_WEATHER, BLESSING_FERTILE_SOIL, BLESSING_FOREST_BLOOM, BLESSING_GIFT_FROM_THE_HEAVENS, BLESSING_HOLY_EXPANSION, BLESSING_RAPID_CONSTRUCTION, BLESSING_RICH_MINES, BLESSING_TEMPORARY_PEACE, BLESSING_WISDOM_OF_THE_GODS, BUILDING_ACADEMY, BUILDING_ALTAR, BUILDING_COPPER_MINE, BUILDING_FARM, BUILDING_GOLD_MINE, BUILDING_HEADQUARTERS, BUILDING_HOUSE, BUILDING_IRON_MINE, BUILDING_QUARRY, BUILDING_STOREHOUSE, BUILDING_TEMPLE, BUILDING_WOODCUTTER, CHALLENGE_MODAL_FAILURE, CHALLENGE_MODAL_REWARD, CHALLENGE_MODAL_WIN, CHALLENGE_STATUS_ACTIVATED, CHALLENGE_STATUS_PENDING, CHALLENGE_STATUS_STARTED, EVENT_TYPE_BUILDING_UPGRADE, EVENT_TYPE_CHALLENGE_STARTED, EVENT_TYPE_POPULATION_LIMIT_REACHED, EVENT_TYPE_RAID_INCOMING, EVENT_TYPE_RAID_RESULT, EVENT_TYPE_RESEARCH_COMPLETE, EVENT_TYPE_RESOURCE_LIMIT_REACHED, EVENT_TYPE_TERRITORY_LIMIT_REACHED, HQ_TYPE_CAMP, HQ_TYPE_CITY, HQ_TYPE_SETTLEMENT, HQ_TYPE_TOWN, HQ_TYPE_VILLAGE, PUNISHMENT_CROP_FAILURE, PUNISHMENT_LANDSLIDE, PUNISHMENT_PLAGUE, PUNISHMENT_VOLCANO, PUNISHMENT_WILDFIRES, RAID_PHASE_INCOMING, RAID_PHASE_WAITING, RESEARCH_ATTACK_1, RESEARCH_DEFENSE_1, RESEARCH_FOOD_PRODUCTION_1, RESEARCH_WARNING_1, RESEARCH_WARNING_2, RESOURCE_COPPER, RESOURCE_FOOD, RESOURCE_GOLD, RESOURCE_IRON, RESOURCE_STONE, RESOURCE_WOOD, SEASON_COLD, SEASON_WARM, TRADE_BUY, TRADE_SELL, TRIBUTE_CANCEL, TRIBUTE_DELAY, TUTORIAL_MODAL_CHALLENGE_STARTED, TUTORIAL_MODAL_HQ_UPGRADE, TUTORIAL_MODAL_NEGATIVE_PRODUCTION, TUTORIAL_MODAL_RAID_INCOMING, TUTORIAL_MODAL_SEASON_CHANGED, UNIT_ARCHER, UNIT_CAVALRY, UNIT_INFANTRY} from '@/js/engine/enums.js'
 import {HQ_TERRITORY_PER_LEVEL, MILITARY_UNITS_PER_LEVEL, MONUMENT_FAITH_PER_LEVEL, RAID_GRACE_PERIOD, RAID_INTERVAL_BASE, RAID_INTERVAL_MIN, RAID_INTERVAL_PER_TERRITORY, RAID_UNITS_BASE, RAID_UNITS_PER_TERRITORY, RAID_UNITS_PER_YEAR, RAID_WARNING_TIME, RESEARCH_TIME_MULTIPLIER, SEASON_DURATION, SHORTAGE_MAX_PENALTY, TRIBUTE_DELAY_SECONDS, TRIBUTE_ROUNDING, UNIT_STATS, WORKER_FOOD_CONSUMPTION, WORKER_RECRUIT_COST, WORKER_WOOD_CONSUMPTION} from '@/js/engine/balancing.js'
-import {IMG_BUILDING_WALL, IMG_OTHER_TERRITORY, SND_BUILDING_CREATED, SND_HEADQUARTERS_UPGRADED, SND_NOTIFICATION_ALERT, SND_NOTIFICATION_DISASTER, SND_TERRITORY_EXPANDED, SND_UNDER_ATTACK, SND_WORKER_ACADEMY, SND_WORKER_FARM, SND_WORKER_MINE, SND_WORKER_TEMPLE, SND_WORKER_WOODCUTTER} from '@/js/engine/assets.js'
+import {IMG_BUILDING_WALL, IMG_OTHER_TERRITORY, SND_BUILDING_CREATED, SND_HEADQUARTERS_UPGRADED, SND_NOTIFICATION_ALERT, SND_NOTIFICATION_DISASTER, SND_RESEARCH_COMPLETED, SND_TERRITORY_EXPANDED, SND_UNDER_ATTACK, SND_WORKER_ACADEMY, SND_WORKER_FARM, SND_WORKER_MINE, SND_WORKER_TEMPLE, SND_WORKER_WOODCUTTER} from '@/js/engine/assets.js'
 import {resolveBattle} from '@/js/engine/battle.js'
 import {DOWNGRADABLE_BUILDINGS, RESEARCH_COSTS, RESOURCE_LIMIT_EVENT_CONFIG, RESOURCE_NEGATIVE_PRODUCTION_EVENT_CONFIG} from '@/js/engine/constants.js'
 import Academy from '@/js/models/buildings/academy.js'
@@ -199,6 +199,36 @@ function raidEvent(state) {
   return state.colony.events.future.find(event => event.type === EVENT_TYPE_RAID_INCOMING)
 }
 
+// An academy at the given level running foodProduction1 with the given time left
+function academyWithResearch(level, remainingSeconds, overrides = {}) {
+  return {
+    level: level,
+    active: [
+      {
+        key: 'foodProduction1',
+        remainingSeconds: remainingSeconds,
+        duration: 100,
+      },
+    ],
+    ...overrides,
+  }
+}
+
+// Adds the upcoming event startResearch creates for a running research
+function addResearchEvent(state, researchKey, remainingSeconds) {
+  return state.colony.events.addFuture({
+    type: EVENT_TYPE_RESEARCH_COMPLETE,
+    textKey: 'event.researchInProgress',
+    icon: '',
+    researchKey: researchKey,
+    remainingSeconds: remainingSeconds,
+  })
+}
+
+function researchEvent(state, researchKey) {
+  return state.colony.events.future.find(event => event.researchKey === researchKey)
+}
+
 describe('State', () => {
   let analytics
   let audio
@@ -283,6 +313,32 @@ describe('State', () => {
   // ── update(delta) ────────────────────────────────────────────────
 
   describe('update', () => {
+    it('should keep completed research bonuses while the academy is at level 0', async () => {
+      const createWithAcademy = academy => createState({
+        colonyOverrides: {
+          buildingOverrides: {
+            academy: academy,
+          },
+        },
+      })
+      const levelZero = await createWithAcademy({
+        level: 0,
+        completed: ['foodProduction1'],
+      })
+      const levelOne = await createWithAcademy({
+        level: 1,
+        completed: ['foodProduction1'],
+      })
+      const noResearch = await createWithAcademy({
+        level: 1,
+      })
+      levelZero.update(0)
+      levelOne.update(0)
+      noResearch.update(0)
+      expect(levelZero.productionMultipliers.food).toBe(levelOne.productionMultipliers.food)
+      expect(levelZero.productionMultipliers.food).toBeGreaterThan(noResearch.productionMultipliers.food)
+    })
+
     it('should increase food when farm has workers', async () => {
       const state = await createState({
         colonyOverrides: {
@@ -800,6 +856,30 @@ describe('State', () => {
   // ── advanceConstruction ──────────────────────────────────────────
 
   describe('advanceConstruction', () => {
+    it('should resume paused research once the academy is rebuilt', async () => {
+      const state = await createState({
+        colonyOverrides: {
+          buildingOverrides: {
+            academy: academyWithResearch(0, 10, {
+              constructionRemaining: 1,
+              constructionDuration: 5,
+            }),
+          },
+        },
+      })
+      addResearchEvent(state, 'foodProduction1', 10)
+      const research = state.colony.buildings.academy.active.get('foodProduction1')
+      state.advanceResearch(0.5)
+      state.advanceEvents(0.5)
+      expect(research.remainingSeconds).toBe(10)
+      state.advanceConstruction(1)
+      expect(state.colony.buildings.academy.level).toBe(1)
+      state.advanceResearch(4)
+      state.advanceEvents(4)
+      expect(research.remainingSeconds).toBe(6)
+      expect(researchEvent(state, 'foodProduction1').remainingSeconds).toBe(6)
+    })
+
     it('should complete building when timer reaches 0', async () => {
       const state = await createState({
         colonyOverrides: {
@@ -1166,6 +1246,44 @@ describe('State', () => {
       state.advanceResearch(1)
       expect(state.colony.events.hasPastEvent(EVENT_TYPE_POPULATION_LIMIT_REACHED)).toBe(true)
     })
+
+    it('should freeze research while the academy is at level 0', async () => {
+      const state = await createState({
+        colonyOverrides: {
+          buildingOverrides: {
+            academy: academyWithResearch(0, 10),
+          },
+        },
+      })
+      state.advanceResearch(100)
+      const {
+        academy,
+      } = state.colony.buildings
+      expect(academy.active.get('foodProduction1').remainingSeconds).toBe(10)
+      expect(academy.isActive('foodProduction1')).toBe(true)
+      expect(academy.isCompleted('foodProduction1')).toBe(false)
+      expect(audio.playSound).not.toHaveBeenCalledWith(SND_RESEARCH_COMPLETED)
+    })
+
+    it('should resume paused research with the same time left once the academy is rebuilt', async () => {
+      const state = await createState({
+        colonyOverrides: {
+          buildingOverrides: {
+            academy: academyWithResearch(0, 10),
+          },
+        },
+      })
+      const {
+        academy,
+      } = state.colony.buildings
+      state.advanceResearch(100)
+      academy.level = 1
+      state.advanceResearch(9)
+      expect(academy.active.get('foodProduction1').remainingSeconds).toBe(1)
+      state.advanceResearch(1)
+      expect(academy.isCompleted('foodProduction1')).toBe(true)
+      expect(audio.playSound).toHaveBeenCalledWith(SND_RESEARCH_COMPLETED)
+    })
   })
 
   // ── advanceEvents ────────────────────────────────────────────────
@@ -1186,6 +1304,68 @@ describe('State', () => {
     it('should not error when no future events exist', async () => {
       const state = await createState()
       expect(() => state.advanceEvents(1)).not.toThrow()
+    })
+
+    it('should keep a paused research event on its frozen research timer, in sorted order', async () => {
+      const state = await createState({
+        colonyOverrides: {
+          buildingOverrides: {
+            academy: academyWithResearch(0, 10),
+          },
+        },
+      })
+      addResearchEvent(state, 'foodProduction1', 10)
+      state.colony.events.addFuture({
+        type: EVENT_TYPE_BUILDING_UPGRADE,
+        textKey: 'event.buildingBuilding',
+        icon: '',
+        buildingKey: BUILDING_FARM,
+        remainingSeconds: 15,
+      })
+      expect(state.colony.events.future[0].researchKey).toBe('foodProduction1')
+      state.advanceResearch(8)
+      state.advanceEvents(8)
+      const [
+        first,
+        second,
+      ] = state.colony.events.future
+      expect(first.buildingKey).toBe(BUILDING_FARM)
+      expect(first.remainingSeconds).toBe(7)
+      expect(second.researchKey).toBe('foodProduction1')
+      expect(second.remainingSeconds).toBe(10)
+    })
+
+    it('should tick a research event together with its research while the academy is built', async () => {
+      const state = await createState({
+        colonyOverrides: {
+          buildingOverrides: {
+            academy: academyWithResearch(1, 10),
+          },
+        },
+      })
+      addResearchEvent(state, 'foodProduction1', 10)
+      state.advanceResearch(4)
+      state.advanceEvents(4)
+      expect(state.colony.buildings.academy.active.get('foodProduction1').remainingSeconds).toBe(6)
+      expect(researchEvent(state, 'foodProduction1').remainingSeconds).toBe(6)
+    })
+
+    it('should not error when a running research has no event', async () => {
+      const state = await createState({
+        colonyOverrides: {
+          buildingOverrides: {
+            academy: academyWithResearch(0, 10),
+          },
+        },
+      })
+      state.colony.events.addFuture({
+        type: 'test',
+        textKey: 'test.event',
+        icon: '',
+        remainingSeconds: 10,
+      })
+      expect(() => state.advanceEvents(1)).not.toThrow()
+      expect(state.colony.events.future[0].remainingSeconds).toBe(9)
     })
   })
 
@@ -2685,6 +2865,31 @@ describe('State', () => {
   // ── toJSON / fromJSON ────────────────────────────────────────────
 
   describe('toJSON / fromJSON', () => {
+    it('should keep paused research frozen after a save and load', async () => {
+      const state = await createState({
+        colonyOverrides: {
+          buildingOverrides: {
+            academy: academyWithResearch(0, 10),
+          },
+        },
+      })
+      addResearchEvent(state, 'foodProduction1', 10)
+      const {
+        default: State,
+      } = await import('@/js/engine/state.js')
+      const restored = State.fromJSON(state.toJSON())
+      const research = restored.colony.buildings.academy.active.get('foodProduction1')
+      restored.advanceResearch(5)
+      restored.advanceEvents(5)
+      expect(research.remainingSeconds).toBe(10)
+      expect(researchEvent(restored, 'foodProduction1').remainingSeconds).toBe(10)
+      restored.colony.buildings.academy.level = 1
+      restored.advanceResearch(4)
+      restored.advanceEvents(4)
+      expect(research.remainingSeconds).toBe(6)
+      expect(researchEvent(restored, 'foodProduction1').remainingSeconds).toBe(6)
+    })
+
     it('should serialize toJSON with correct structure', async () => {
       const state = await createState({
         colonyOverrides: {
@@ -4759,6 +4964,65 @@ describe('State', () => {
   // ── _applyPunishment ────────────────────────────────────────────────
 
   describe('_applyPunishment', () => {
+    it('should pause running research when it destroys a constructing level-1 academy', async () => {
+      const state = await createState({
+        colonyOverrides: {
+          buildingOverrides: {
+            academy: academyWithResearch(1, 30, {
+              constructionRemaining: 10,
+              constructionDuration: 20,
+            }),
+          },
+        },
+      })
+      state._constructingKeys.add(BUILDING_ACADEMY)
+      state.colony.events.addFuture({
+        type: EVENT_TYPE_BUILDING_UPGRADE,
+        textKey: 'event.buildingUpgrading',
+        icon: '',
+        buildingKey: BUILDING_ACADEMY,
+        remainingSeconds: 10,
+      })
+      addResearchEvent(state, 'foodProduction1', 30)
+      state._applyPunishment(createPunishment({
+        levels: 1,
+      }))
+      state.advanceResearch(5)
+      state.advanceEvents(5)
+      const {
+        academy,
+      } = state.colony.buildings
+      expect(academy.level).toBe(0)
+      expect(academy.isActive('foodProduction1')).toBe(true)
+      expect(academy.active.get('foodProduction1').remainingSeconds).toBe(30)
+      // Only the construction event is removed
+      expect(state.colony.events.future).toHaveLength(1)
+      expect(researchEvent(state, 'foodProduction1').remainingSeconds).toBe(30)
+    })
+
+    it('should pause running research when two levels destroy an upgrading level-2 academy', async () => {
+      const state = await createState({
+        colonyOverrides: {
+          buildingOverrides: {
+            academy: academyWithResearch(2, 30, {
+              constructionRemaining: 10,
+              constructionDuration: 20,
+            }),
+          },
+        },
+      })
+      state._constructingKeys.add(BUILDING_ACADEMY)
+      state._applyPunishment(createPunishment({
+        levels: 2,
+      }))
+      state.advanceResearch(5)
+      const {
+        academy,
+      } = state.colony.buildings
+      expect(academy.level).toBe(0)
+      expect(academy.active.get('foodProduction1').remainingSeconds).toBe(30)
+    })
+
     it('should remove fraction of stored faith', async () => {
       const state = await createState({
         colonyOverrides: {
@@ -5846,6 +6110,37 @@ describe('State', () => {
   // ── downgradeBuilding ─────────────────────────────────────────────
 
   describe('downgradeBuilding', () => {
+    it('should pause running research when the academy drops to level 0', async () => {
+      const state = await createState({
+        colonyOverrides: {
+          resources: {
+            territory: HQ_TERRITORY_PER_LEVEL,
+            workers: 5,
+          },
+          buildingOverrides: {
+            headquarters: {
+              level: 1,
+              type: HQ_TYPE_CAMP,
+            },
+            academy: academyWithResearch(1, 10, {
+              workers: 5,
+            }),
+          },
+        },
+      })
+      addResearchEvent(state, 'foodProduction1', 10)
+      state.downgradeBuilding(BUILDING_ACADEMY)
+      state.advanceResearch(5)
+      state.advanceEvents(5)
+      const {
+        academy,
+      } = state.colony.buildings
+      expect(academy.level).toBe(0)
+      expect(academy.workers).toBe(0)
+      expect(academy.active.get('foodProduction1').remainingSeconds).toBe(10)
+      expect(researchEvent(state, 'foodProduction1').remainingSeconds).toBe(10)
+    })
+
     it('should decrement building level by 1', async () => {
       const state = await createState({
         colonyOverrides: {
@@ -7031,6 +7326,36 @@ describe('State', () => {
       state._resolveRaid()
       expect(state.colony.resources.faith).toBe(200)
       expect(state.colony.resources.knowledge).toBe(200)
+    })
+
+    it('should pause running research when a defeat destroys an upgrading academy', async () => {
+      const state = await createRaidState({
+        raid: createRaid({
+          enemy: {
+            [UNIT_INFANTRY]: 5,
+          },
+        }),
+        colonyOverrides: {
+          buildingOverrides: {
+            academy: academyWithResearch(1, 30, {
+              constructionRemaining: 10,
+              constructionDuration: 20,
+            }),
+          },
+        },
+      })
+      addResearchEvent(state, 'foodProduction1', 30)
+      state._resolveRaid()
+      state.advanceResearch(5)
+      state.advanceEvents(5)
+      const {
+        academy,
+      } = state.colony.buildings
+      // The academy is the only eligible building, so the other levels are not taken
+      expect(state.raidReport.buildingsLost).toEqual([BUILDING_ACADEMY])
+      expect(academy.level).toBe(0)
+      expect(academy.active.get('foodProduction1').remainingSeconds).toBe(30)
+      expect(researchEvent(state, 'foodProduction1').remainingSeconds).toBe(30)
     })
 
     it('should report the losses actually applied on a defeat', async () => {

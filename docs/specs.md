@@ -151,7 +151,7 @@ Regular resources are capped by the storage capacity (see Storehouse). Any of th
     - Headquarters
   - Consumed to
     - Construct and upgrade buildings
-  - When territory is full and expanding is impossible (the largest single resource in the expansion cost exceeds storage capacity), certain buildings (farm, woodcutter, quarry, mines, academy, temple, market, altar) can be downgraded by 1 level to free a slot. Downgrading is free, instant, and returns excess workers to idle
+  - When territory is full and expanding is impossible (the largest single resource in the expansion cost exceeds storage capacity), certain buildings (farm, woodcutter, quarry, mines, academy, temple, market, altar) can be downgraded by 1 level to free a slot. Downgrading is free, instant, and returns excess workers to idle. Downgrading the academy to level 0 pauses its running research (see Research)
 - Workers
   - Recruited by spending 50 food each
     - There is no separate recruit action: assigning a worker to a building when no worker is idle recruits one automatically, as long as there is enough food and the population cap allows it
@@ -351,6 +351,7 @@ The research system allows the player to unlock permanent bonuses by spending kn
 - Each research has a resource cost: knowledge plus the two resources of its tier (T1 food + wood, T2 wood + stone, T3 stone + copper, T4 copper + iron, T5 iron + gold). The cost is the tier's base cost times the chain's price band: cheap ×0.75 (Food Production, Food Consumption, Wood Production, Wood Consumption, Knowledge Production, Storage), standard ×1 (Mining, Faith, Construction, all Military and Disasters chains) or premium ×1.5 (Transportation, Expansion, Habitation). Duration is `floor(Cost.toSeconds × RESEARCH_TIME_MULTIPLIER)` (×4, minimum 1 s); Construction research and the Rapid Construction blessing do not shorten it. Starting any research requires academy level ≥ 1 (flat check, not per-research). Bonuses are defined per subcategory (type and value), granted once per completed tier
 - Multiple researches can be active simultaneously across different subcategories, but within a subcategory only one can be active (the linear chain prevents starting the next tier before the current one completes)
 - Completed bonuses accumulate additively across all completed researches
+- At academy level 0, whether from a downgrade or from a punishment or lost raid destroying an upgrading academy, running research pauses: its timer and its Upcoming row freeze, the row shows "Paused", and research resumes with the same remaining time once the academy is back at level 1. Completed bonuses keep applying. When the academy is at level 1 with research running, its downgrade tooltip warns that research will pause
 
 ### Bonuses by subcategory
 
@@ -382,7 +383,7 @@ The research system allows the player to unlock permanent bonuses by spending kn
 
 The game displays an event log as a column alongside the building columns. Events inform the player of upcoming threats and past occurrences.
 
-- **Future events** — warn about incoming events: construction, territory expansion, HQ type upgrade, research in progress, the active challenge countdown and an announced raid. Each shows a countdown timer that ticks down in real time (the raid countdown follows the raid itself, so it freezes during Temporary Peace and jumps when a delay is paid). Disasters will also appear here *(planned — see [disasters](../todo/disasters.md))*.
+- **Future events** — warn about incoming events: construction, territory expansion, HQ type upgrade, research in progress, the active challenge countdown and an announced raid. Each shows a countdown timer that ticks down in real time (the raid countdown follows the raid itself, so it freezes during Temporary Peace and jumps when a delay is paid; a research countdown follows its research, so it freezes and shows "Paused" while the academy is at level 0). Disasters will also appear here *(planned — see [disasters](../todo/disasters.md))*.
 - **Past events** — inform about things that have already happened (e.g. season changed, research completed, resource at storage cap, resource production went negative, idle workers, population or territory limit reached, raid repelled, lost or called off). Displayed in a muted style.
 - Past events can be dismissed by the player (close button), or all at once with a "Clear all" button (asks for confirmation). Future events cannot be dismissed.
 - Warnings clear themselves when their condition ends: storage cap, negative production, idle workers, population limit and territory limit.
@@ -442,7 +443,7 @@ Penalties applied when a challenge fails. Every punishment instantly takes 50% o
 - **Plague** — sacrifices workers (instant only, no ongoing productivity reduction)
 - **Volcano** — reduces general productivity, sacrifices workers and destroys building levels
 
-Building level downgrades select random buildings from the downgradable list. A building is eligible if its level is > 1, or level == 1 and currently under construction (construction is cancelled and the building is destroyed). Excess workers above new capacity are returned to idle.
+Building level downgrades select random buildings from the downgradable list. A building is eligible if its level is > 1, or level == 1 and currently under construction (construction is cancelled and the building is destroyed). Excess workers above new capacity are returned to idle. A destroyed academy pauses its running research until it is rebuilt.
 
 ### Design Rules
 

@@ -635,7 +635,8 @@ class State {
   }
 
   /**
-   * Advances research timers and handles completion.
+   * Advances research timers and handles completion. Timers stand still while the
+   * academy is at level 0 and resume with the same remaining time once it is rebuilt.
    * Driven by requestAnimationFrame for smooth visual progress.
    * @param {number} delta - Seconds since last tick
    */
@@ -643,7 +644,7 @@ class State {
     const {
       academy,
     } = this.colony.buildings
-    if (academy.active.size === 0) {
+    if (academy.active.size === 0 || academy.isResearchPaused) {
       return
     }
     const completed = []
@@ -673,15 +674,27 @@ class State {
   }
 
   /**
-   * Advances event countdown timers by the elapsed delta.
+   * Advances event countdown timers by the elapsed delta, then resets each research event
+   * to its research's own timer, which stands still while the academy is at level 0.
+   * Runs after advanceResearch, so research events see this step's research timers.
    * Driven by requestAnimationFrame for smooth visual progress.
    * @param {number} delta - Seconds elapsed since last tick
    */
   advanceEvents(delta) {
-    if (this.colony.events.future.length === 0) {
+    const {
+      events, buildings,
+    } = this.colony
+    if (events.future.length === 0) {
       return
     }
-    this.colony.events.advance(delta)
+    events.advance(delta)
+    // Research rows follow their research's own timer, which stands still while the academy is at level 0
+    for (const [
+      key,
+      research,
+    ] of buildings.academy.active) {
+      events.setFutureRemainingByResearchKey(key, research.remainingSeconds)
+    }
   }
 
   /**

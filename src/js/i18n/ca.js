@@ -181,6 +181,7 @@ export const LOCALIZED_CA = {
   'building.build': 'Construir',
   'building.levelUp': 'Pujar de nivell',
   'building.downgrade': 'Reduir nivell',
+  'building.downgradePausesResearch': 'La recerca en curs es pausarà fins a reconstruir-la',
   'building.insufficientResources': 'Recursos insuficients',
   'building.maxTerritoryReached': 'Territori màxim assolit',
   'building.maxPopulationReached': 'Població màxima assolida',
@@ -217,6 +218,7 @@ export const LOCALIZED_CA = {
   // Events
   'events.title': 'Esdeveniments',
   'events.future': 'Propers',
+  'events.paused': 'En pausa',
   'events.past': 'Historial',
   'events.empty': 'Cap esdeveniment',
   'events.clearAll': 'Esborrar tot',

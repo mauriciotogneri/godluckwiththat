@@ -181,6 +181,7 @@ export const LOCALIZED_IT = {
   'building.build': 'Costruisci',
   'building.levelUp': 'Aumenta livello',
   'building.downgrade': 'Riduci livello',
+  'building.downgradePausesResearch': 'Le ricerche in corso saranno sospese fino alla ricostruzione',
   'building.insufficientResources': 'Risorse insufficienti',
   'building.maxTerritoryReached': 'Territorio massimo raggiunto',
   'building.maxPopulationReached': 'Popolazione massima raggiunta',
@@ -217,6 +218,7 @@ export const LOCALIZED_IT = {
   // Events
   'events.title': 'Eventi',
   'events.future': 'In arrivo',
+  'events.paused': 'In pausa',
   'events.past': 'Cronologia',
   'events.empty': 'Nessun evento',
   'events.clearAll': 'Cancella tutto',

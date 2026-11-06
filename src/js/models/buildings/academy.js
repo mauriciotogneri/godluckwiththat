@@ -65,6 +65,14 @@ class Academy extends Producer {
   }
 
   /**
+   * Whether running researches are paused (academy downgraded or destroyed to level 0).
+   * @returns {boolean} True while the academy is below level 1
+   */
+  get isResearchPaused() {
+    return this.level < 1
+  }
+
+  /**
    * Starts a new research.
    * @param {string} key - Research key
    * @param {number} duration - Total duration in seconds

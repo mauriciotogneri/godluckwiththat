@@ -10,6 +10,7 @@ A tech tree system where players spend Knowledge + resources + time to unlock pa
 - **Duration**: `cost.toSeconds × 4` (the building formula, scaled for research). Construction bonuses do not affect it
 - **Parallelism**: Unlimited concurrent researches (one per chain)
 - **Prerequisites**: Linear within subcategory only (level N requires level N-1)
+- **Academy at level 0**: running researches pause and resume when it is rebuilt; completed bonuses stay
 - **Gating**: Requires Academy to be built (level >= 1)
 - **Progress**: Active researches appear as future events with countdown
 - **Bonuses**: Additive per completed tier, cached and recomputed only when a research completes
@@ -53,7 +54,3 @@ Blocked on unbuilt game systems (disasters, military). These researches can alre
 | Military  | Defense     | `BONUS_UNIT_DEFENSE`       | Combat system           |
 | Military  | Attack      | `BONUS_UNIT_ATTACK`        | Combat system           |
 | Military  | Warning     | `BONUS_WARNING_TIME`       | Raid warning system     |
-
-### TODO
-
-- Decide what happens to active researches when the Academy is downgraded to level 0 — today they keep running and complete

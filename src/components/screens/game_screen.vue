@@ -524,8 +524,8 @@ function syncTimers() {
     }
   }
 
-  // Research timers
-  if (buildings.academy.active.size > 0) {
+  // Research timers (frozen while the academy is at level 0)
+  if (buildings.academy.active.size > 0 && !buildings.academy.isResearchPaused) {
     const activeTimers = {}
     for (const [
       key,
@@ -544,12 +544,14 @@ function syncTimers() {
 
   // Event countdowns
   if (events.future.length > 0) {
+    const researchPaused = buildings.academy.isResearchPaused
     ui.futureEvents = events.sortedFuture.map(event => ({
       id: event.id,
       icon: event.icon,
       textKey: event.textKey,
       params: event.params,
       remainingSeconds: event.remainingSeconds,
+      paused: researchPaused && event.researchKey !== null,
       action: event.action,
       requirementsMet: event.type === EVENT_TYPE_CHALLENGE_STARTED && state.areChallengeRequirementsMet(),
     }))
@@ -903,14 +905,16 @@ function syncMilitary() {
 /** Syncs future and past events. */
 function syncEvents() {
   const {
-    events,
+    events, buildings,
   } = state.colony
+  const researchPaused = buildings.academy.isResearchPaused
   ui.futureEvents = events.sortedFuture.map(event => ({
     id: event.id,
     icon: event.icon,
     textKey: event.textKey,
     params: event.params,
     remainingSeconds: event.remainingSeconds,
+    paused: researchPaused && event.researchKey !== null,
     action: event.action,
     requirementsMet: event.type === EVENT_TYPE_CHALLENGE_STARTED && state.areChallengeRequirementsMet(),
   }))
@@ -1591,7 +1595,7 @@ watch(() => ui.raidReport, (raidReport) => {
   }
 })
 
-// A punishment can drop a mid-upgrade market or academy to level 0, which removes its card button; close its modal too
+// A punishment or a lost raid can drop a mid-upgrade market or academy to level 0, which removes its card button; close its modal too
 watch(() => ui.buildings[BUILDING_MARKET]?.level, (level) => {
   if (level < 1) {
     showMarketModal.value = false
@@ -1857,7 +1861,7 @@ onUnmounted(() => {
             >
               <img class="event-icon" :src="event.icon" :alt="t(event.textKey, ...event.params)">
               <span class="event-text">{{ t(event.textKey, ...event.params) }}</span>
-              <span class="event-countdown">{{ formatTime(event.remainingSeconds) }}</span>
+              <span class="event-countdown" :class="{ 'event-countdown--paused': event.paused }">{{ event.paused ? t('events.paused') : formatTime(event.remainingSeconds) }}</span>
               <svg v-if="event.action" class="event-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                 <polyline points="9 18 15 12 9 6" />
               </svg>
@@ -2498,6 +2502,13 @@ onUnmounted(() => {
   color: var(--color-accent);
   letter-spacing: 0.04em;
   flex-shrink: 0;
+}
+
+/* Frozen research countdown while the academy is at level 0 */
+.event-countdown--paused {
+  font-family: var(--font-body);
+  color: rgba(var(--color-text-rgb), 0.4);
+  letter-spacing: 0.02em;
 }
 
 /* Small close button to dismiss a single past event */

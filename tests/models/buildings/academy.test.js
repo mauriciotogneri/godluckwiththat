@@ -185,6 +185,29 @@ describe('Academy', () => {
     })
   })
 
+  describe('isResearchPaused', () => {
+    it('should be true at level 0', () => {
+      const academy = new Academy({
+        level: 0,
+      })
+      expect(academy.isResearchPaused).toBe(true)
+    })
+
+    it('should be false at level 1', () => {
+      const academy = new Academy({
+        level: 1,
+      })
+      expect(academy.isResearchPaused).toBe(false)
+    })
+
+    it('should be false at level 3', () => {
+      const academy = new Academy({
+        level: 3,
+      })
+      expect(academy.isResearchPaused).toBe(false)
+    })
+  })
+
   describe('start', () => {
     it('should add research to active map', () => {
       const academy = new Academy({

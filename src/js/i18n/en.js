@@ -181,6 +181,7 @@ export const LOCALIZED_EN = {
   'building.build': 'Build',
   'building.levelUp': 'Increase level',
   'building.downgrade': 'Decrease level',
+  'building.downgradePausesResearch': 'Active research will pause until rebuilt',
   'building.insufficientResources': 'Insufficient resources',
   'building.maxTerritoryReached': 'Max territory reached',
   'building.maxPopulationReached': 'Max population reached',
@@ -217,6 +218,7 @@ export const LOCALIZED_EN = {
   // Events
   'events.title': 'Events',
   'events.future': 'Upcoming',
+  'events.paused': 'Paused',
   'events.past': 'History',
   'events.empty': 'No events',
   'events.clearAll': 'Clear all',
