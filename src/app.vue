@@ -1,5 +1,5 @@
 <script setup>
-import {ref, shallowRef} from 'vue'
+import {onMounted, ref, shallowRef} from 'vue'
 import AboutScreen from '@/components/screens/about_screen.vue'
 import GameScreen from '@/components/screens/game_screen.vue'
 import HomeScreen from '@/components/screens/home_screen.vue'
@@ -7,7 +7,7 @@ import SettingsScreen from '@/components/screens/settings_screen.vue'
 import analytics from '@/js/engine/analytics.js'
 import {MUS_MUSIC_1, MUS_MUSIC_2, MUS_MUSIC_3, MUS_MUSIC_4} from '@/js/engine/assets.js'
 import audio from '@/js/engine/audio.js'
-import {createInitialColony, createInitialMeta} from '@/js/engine/constants.js'
+import {createInitialColony, createInitialMeta, IS_DEV} from '@/js/engine/constants.js'
 import {ANALYTICS_GAME_MODE_NEW, ANALYTICS_GAME_MODE_SAVED} from '@/js/engine/enums.js'
 import State from '@/js/engine/state.js'
 import storage from '@/js/engine/storage.js'
@@ -71,6 +71,13 @@ function quitGame() {
 function goHome() {
   currentScreen.value = 'home'
 }
+
+// Dev builds skip the home screen once per page load; returning to it later shows the menu
+onMounted(() => {
+  if (IS_DEV) {
+    startGame(storage.savedGame)
+  }
+})
 
 </script>
 
