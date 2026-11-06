@@ -6,13 +6,13 @@
 ## Current state
 
 * No random disasters yet: a season transition only changes the season/year
-* Floods, Health and Earthquakes researches can be bought, but their bonuses are not used yet
+* Floods, Health and Earthquakes researches exist, but the Disasters tab is hidden in the research modal so they cannot be started, and their bonuses are not used yet
 * No Watchtower or Apothecary building, and no herbs resource ("Medicinal Herbs" is only a Health research name)
 * Challenge punishments (sent by the gods) already have similar effects: Plague kills workers (like Disease), Crop Failure cuts farm output (like Floods), Volcano destroys building levels (like Earthquakes). Disaster research does not reduce them
 
 - Implement random disasters (see Spreadsheet)
 - Make disaster research bonuses take effect (`BONUS_FLOOD_IMPACT`, `BONUS_DISEASE_IMPACT`, `BONUS_EARTHQUAKE_IMPACT`)
-- Until then, hide or mark as "coming soon" the disaster researches, so players don't spend resources on them for nothing
+- Then show the Disasters tab in the research modal again (it is filtered out of `RESEARCH_MODAL_TREE` in `constants.js`)
 
 ### 2. Disaster System
 

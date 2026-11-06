@@ -22,8 +22,6 @@
 
 - [Implement disasters](./disasters.md)
 
-- [Finish research](./research.md)
-
 - Implement story intro
 
 - Improve save and load (currently a single local slot, manual save/load from the pause menu, F9 quick save, Continue on the home screen, optional autosave)
