@@ -45,7 +45,7 @@ const AVERAGE_MAX_FAILURES = 2 // Average bot: failures per run allowed on most 
 const AVERAGE_FAILURE_SEED_SHARE = 0.9 // …on at least this share of the seeds
 const AVERAGE_SPARE_SHARE = [
   0.2,
-  0.4,
+  0.6,
 ] // Average bot: median time left on the timer per challenge (successful attempts)
 const STRONG_MIN_MET_SHARE = 0.5 // Strong bot: median time to first meet the requirements, as a share of the timer
 

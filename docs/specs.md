@@ -399,23 +399,23 @@ The core narrative driver. The gods test the colony's worthiness to pass through
 ### Lifecycle
 
 1. When the game starts, the first pending challenge is activated immediately
-2. **Delay phase**: a hidden timer counts up (`delayElapsed`). When it reaches `delay`, the challenge transitions to `started`, a non-dismissable future event appears, and the player is notified. Clicking the event opens the challenge detail modal
+2. **Delay phase**: a hidden timer counts up (`delayElapsed`). The delay is decided when the challenge activates (see Scaling). When it reaches `delay`, the timer, requirements, blessings and punishment of the countdown are decided from the colony and stay fixed until it ends; the challenge transitions to `started`, a non-dismissable future event appears, and the player is notified. Clicking the event opens the challenge detail modal
 3. **Timeout phase**: a visible timer counts up (`timeoutElapsed`). The player must meet all requirements before `timeoutElapsed` reaches `timeout`
 4. **Resolution**: when the timeout expires, the game checks whether all requirements are met at that moment
    - **Success**: requirements are deducted from the colony (faith, resources, workers sacrificed). A reward modal pauses the game and offers two blessings to choose from. After choosing, the blessing is applied. If more challenges remain, the next one activates. If all 10 are completed, the win modal appears
-   - **Failure**: a punishment modal pauses the game showing the penalty. After acknowledging, the punishment is applied: every punishment takes 50% of stored faith and a fraction of each stored regular resource, and some also sacrifice workers and destroy building levels (see Punishments). The challenge resets (timers back to 0) and the player can retry
+   - **Failure**: a punishment modal pauses the game showing the penalty. After acknowledging, the punishment is applied: every punishment takes 50% of stored faith and a fraction of each stored regular resource, and some also sacrifice workers and destroy building levels (see Punishments). The challenge resets (timers back to 0) and the player can retry: the failure is counted, the retry gets a new delay with extra recovery time, and its countdown values are recalculated, easier with each failure and never asking for more of any requirement than the failed attempt
 
 ### Requirements
 
-Each challenge specifies a combination of (all optional per challenge):
+Each challenge specifies a combination of (all optional per challenge). The values in `challenges.json` are base values for a typical colony; when the countdown starts they are fitted to the colony (see Scaling):
 - `faith` — consumed on completion
 - `altar` / `temple` / `monument` — building level checked (not consumed)
 - `resources` — resource amounts consumed on completion
-- `workers` — sacrificed on completion: first from idle pool, then randomly unassigned from producer buildings (clamped to available workers)
+- `workers` — sacrificed on completion: first from idle pool, then randomly unassigned from producer buildings (clamped to available workers). A challenge asks for at most half of the colony's workers at the countdown start (none when that is under one worker)
 
 ### Blessings
 
-Rewards earned by completing challenges. The player chooses one of two offered blessings. Each challenge offers distinct blessing types to avoid stacking conflicts.
+Rewards earned by completing challenges. The player chooses one of two offered blessings. Each challenge offers distinct blessing types. A harder countdown gives stronger blessings: their strength follows the difficulty within 0.75–1.3× the base value, their duration within 0.9–1.15× (whole minutes).
 
 #### Instant blessings (applied immediately, no ongoing effect)
 - **Gift from the Heavens** — receive a fixed amount of resources (capped at storage)
@@ -435,7 +435,7 @@ Rewards earned by completing challenges. The player chooses one of two offered b
 
 ### Punishments
 
-Penalties applied when a challenge fails. Every punishment instantly takes 50% of stored faith and a fraction of each stored regular resource. Depending on the challenge, it can also sacrifice workers, destroy building levels, and reduce productivity for a duration. Exact values per challenge are in `src/data/challenges.json`.
+Penalties applied when a challenge fails. Every punishment instantly takes 50% of stored faith and a fraction of each stored regular resource. Depending on the challenge, it can also sacrifice workers, destroy building levels, and reduce productivity for a duration. Base values per challenge are in `src/data/challenges.json`; when the countdown starts they are fitted to the colony: a struggling colony gets a milder punishment (strength and duration 0.5–1.15× by colony health), and the workers and building levels lost follow the colony's size against a typical colony at that challenge, capped at 25% of its workers and 10% of its building levels.
 
 - **Crop Failure** — reduces farm productivity. In challenge 1 it also sacrifices workers and destroys building levels
 - **Wildfires** — reduces woodcutter productivity
@@ -445,13 +445,22 @@ Penalties applied when a challenge fails. Every punishment instantly takes 50% o
 
 Building level downgrades select random buildings from the downgradable list. A building is eligible if its level is > 1, or level == 1 and currently under construction (construction is cancelled and the building is destroyed). Excess workers above new capacity are returned to idle. A destroyed academy pauses its running research until it is rebuilt.
 
+### Scaling
+
+The challenges adapt to the colony (`src/js/engine/challenge_scaling.js`), so the game feels neither too hard nor too easy:
+
+- **Requirements and timer** — fitted so the estimated time to meet them is `CHALLENGE_TARGET_TIME_SHARE` of the timer. The estimate is a straight line from the colony's stock and net rates: it counts the held amounts, the costs of the missing building levels (each building's levels one after another, buildings in parallel), the HQ tier upgrades for locked buildings, HQ expansions when territory is short, houses for extra workers and storehouse levels when an amount does not fit; faith also counts free temple slots idle workers could fill, and a resource whose producers stand idle (made at under 10% of its fully staffed rate) counts at that rate. A colony with time to spare gets every value raised, up to +30%; a struggling one first gets smaller faith and resource amounts (down to 15% of the base), then a longer timer (up to 1.75×) with building levels and workers cut by up to 20%; when even that is not enough, each value is capped at what the colony can reach. Resources the colony has not unlocked are dropped. Each failure lowers the target share and adds 10% to the timer.
+- **Delay** — longer for a struggling colony and shorter for a thriving one (0.75–1.5× the base delay), plus 60 s of recovery time per failure.
+- **Colony health** — the colony's production, HQ tier, faith rate, army, research and workers against a typical colony at that challenge (`CHALLENGE_REFERENCE_STATS`, generated by the balance simulation), as a weighted geometric mean; 1 is typical. It sets the delay and the punishment.
+- **Mood** — each countdown gets one of five moods from its difficulty (merciful, lenient, watchful, stern, demanding); it is decided and saved but not shown yet.
+
 ### Design Rules
 
 - **Sequential**: one challenge active at a time
-- **No stacking**: two blessings (or punishments) of the same type are never active simultaneously. This is not enforced by the code: it holds because every effect duration (at most 300 s for blessings, 180 s for punishments) is shorter than the time before the same type can be granted again (a retry takes at least 330 s: 30 s delay + 300 s timeout). Longer durations in `challenges.json` would break it
+- **No stacking**: two blessings (or punishments) of the same type are never active simultaneously. Granting a type that is already active replaces it, so its duration restarts
 - **Ongoing effect timeouts**: only tick while the game is running (paused/modal states excluded)
 - **Non-dismissable**: challenge countdown events cannot be dismissed by the player
-- **All definitions**: stored in `src/data/challenges.json`
+- **All definitions**: base values stored in `src/data/challenges.json`; the scaling constants in `balancing.js`
 
 ## Difficulties
 Players have to choose between:
@@ -478,7 +487,7 @@ Players have to choose between:
 Tunable numeric constants live in two places:
 
 - `src/js/engine/balancing.js` — the colony economy (buildings, production, workers, seasons, market, storage, territory, research, military). It is consumed by building classes, `constants.js`, `state.js`, `battle.js`, and UI components.
-- `src/data/challenges.json` — the challenge economy: requirements, blessing strengths and durations, punishment fractions, workers and building levels lost, and the delay/timeout of each challenge.
+- `src/data/challenges.json` — the challenge economy's base values: requirements, blessing strengths and durations, punishment fractions, workers and building levels lost, and the delay/timeout of each challenge. How they are fitted to the colony is tuned in the "Challenge Scaling" section of `balancing.js` (including the typical colony per challenge, `CHALLENGE_REFERENCE_STATS`), with the balance simulation (`docs/simulation.md`).
 
 When adjusting the game's difficulty or economy, only these two files should need to change.
 

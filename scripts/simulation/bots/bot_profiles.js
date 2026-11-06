@@ -30,7 +30,7 @@ export const WEAK_BOT = {
   skipChance: 0.2, // Chance that a decision is skipped
   challengeHold: HOLD_MET, // Which challenge amounts it keeps instead of spending them
   workerSplit: WORKER_SPLIT_FIXED, // How spare workers are split between producers
-  foodWoodMargin: 0, // Food and wood production kept above upkeep (0.1 = +10%)
+  foodWoodMargin: 0.1, // Food and wood production kept above upkeep (0.1 = +10%)
   storehouseFill: 1, // Share of the storage cap a needed resource reaches before a storehouse level
   storehouseAhead: false, // Also adds storehouse levels before the planned costs outgrow the cap
   hqUpgradeStockFactor: 2, // HQ tier upgrades wait for this multiple of the cost in stock (or full storage)

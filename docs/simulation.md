@@ -21,10 +21,19 @@ It runs through Vitest (`vitest.simulation.config.js`, which merges the Vite con
 | `SIM_STEP`      | 1       | Game seconds per simulation step                                                              |
 | `SIM_ASSERT`    | off     | `1` or `true`: fail when a done criterion is unmet (`DONE_CRITERIA` in `report.js`)           |
 | `SIM_SCALING`   | on      | `0` or `false`: the engine does not scale the challenges; they keep the fixed values of `challenges.json` (the harness drops each challenge's definition) |
+| `SIM_CALIBRATE` | off     | `1` or `true`: adds the calibration table (needs the `average` bot in `SIM_BOTS`)              |
 
 The default (3 bots × 20 seeds × 5 hours, 1-second steps) takes about 55 seconds. The same options always produce a byte-identical JSON file.
 
-`SIM_ASSERT` currently checks only the bot sanity check below (a stub); the challenge criteria come with the rebalancing.
+The report always prints the done criteria with PASS or FAIL; `SIM_ASSERT` makes the run fail on any FAIL. A criterion needs every bot it names in the run, so it fails when one is left out:
+
+1. Weak bot: finishes every seed with at most 2 attempts per challenge
+2. Average bot: median run length 105–135 minutes
+3. Average bot: at most 2 failures on 90% of the seeds
+4. Average bot: median time left on the timer 20–60% on every challenge (successful attempts)
+5. Strong bot: finishes every seed without a failure
+6. Strong bot: median time to first meet the requirements at least 50% of the timer on every challenge
+7. The sanity check below
 
 ## How It Works
 
@@ -35,6 +44,7 @@ The default (3 bots × 20 seeds × 5 hours, 1-second steps) takes about 55 secon
 | `scripts/simulation/seeded_random.js`      | `createSeededRandom(seed)` (mulberry32)                                                                |
 | `scripts/simulation/run_recorder.js`       | `RunRecorder`: watches a game and keeps what the report needs                                          |
 | `scripts/simulation/report.js`             | Aggregates the runs, sanity check, done criteria, text tables and the reference snippet               |
+| `scripts/simulation/calibration.js`        | `calibrateChallenge(definition, stats)`: what a colony could meet of a challenge in the target share of its base timer (`SIM_CALIBRATE`) |
 | `scripts/simulation/bots/bot.js`           | `Bot`: the heuristic player                                                                            |
 | `scripts/simulation/bots/bot_profiles.js`  | `WEAK_BOT`, `AVERAGE_BOT`, `STRONG_BOT`                                                                |
 | `scripts/simulation/bots/*_planner.js`     | Economy, challenge and military helpers of the bot                                                     |
@@ -43,7 +53,7 @@ The default (3 bots × 20 seeds × 5 hours, 1-second steps) takes about 55 secon
 
 **Randomness** — `Math.random` is replaced by a seeded stream during a run and restored afterwards; the bot has its own stream (seed + offset), so its skipped decisions never shift the engine's raid and punishment rolls.
 
-**Engine hooks** — `State.advanceProgress(delta)` (the progress order, also used by the game screen), `State.unlockedBuildings` (the HQ building unlocks), `State.challengeScaling` (how the engine scaled the challenge as its countdown started: scales, mood, backstop flag; not saved) and `colonyStats(state)` in `src/js/engine/colony_stats.js` (a plain snapshot: elapsed time, HQ tier and level, workers, stock and net rate per resource, storage cap, production value, faith rate, army, research count, building levels, religious levels, temple workers, house and storehouse levels, free territory, construction multiplier, unlocked resources and buildings). `productionValue` is the net production of the bounded resources weighted by `TRIBUTE_RESOURCE_VALUES`, counting only output that can still be stored: a resource at the storage cap adds no gain (a loss still counts).
+**Engine hooks** — `State.advanceProgress(delta)` (the progress order, also used by the game screen), `State.unlockedBuildings` (the HQ building unlocks), `State.challengeScaling` (how the engine scaled the challenge as its countdown started: scales, mood, backstop flag; not saved) and `colonyStats(state)` in `src/js/engine/colony_stats.js` (a plain snapshot: elapsed time, HQ tier and level, workers, stock and net rate per resource, storage cap, production value, faith rate, army, research count, building levels, religious levels, temple workers, house and storehouse levels, free territory, construction multiplier, unlocked resources and buildings, and `staffedRates`: the net rate of each resource if every worker-run producer of a bounded resource had all its slots filled). `productionValue` is the net production of the bounded resources weighted by `TRIBUTE_RESOURCE_VALUES`, counting only output that can still be stored: a resource at the storage cap adds no gain (a loss still counts).
 
 ## Bots
 
@@ -52,15 +62,15 @@ One `Bot` class, driven by a profile. It respects the HQ building unlocks and th
 Each decision it recruits into free jobs, splits the workers, dismisses idle workers while food or wood runs at a loss, answers an announced raid, then walks a wish list in priority order:
 
 1. **Food/wood** — farm or woodcutter levels when their workers cannot cover the upkeep.
-2. **Population** — a house level when beds run short, and a producer level (where it wants workers most) when beds outnumber jobs or that producer is full while its resource is missing. It saves for these only while income covers them within 4 minutes, so ever pricier levels never hold back the rest.
-3. **Challenge** (after its reaction delay) — religious levels (upgrading the HQ when the building is locked, expanding when the territory is full), temple and altar levels when faith comes too slowly (and the Settlement upgrade at Camp for the temple), producer and storehouse levels for resources, houses for workers. Up to half the workers move to the producers the countdown needs. Requirements already met, or still reachable in time, are held (not spent); the challenge's own levels may use held amounts.
+2. **Challenge** (after its reaction delay) — religious levels (upgrading the HQ when the building is locked, expanding when the territory is full), temple and altar levels when faith comes too slowly (and the Settlement upgrade at Camp for the temple), producer and storehouse levels for resources, houses for workers. Up to half the workers move to the producers the countdown needs. Faith and resource amounts are held (not spent) once met, and by the average and strong bots also while still reachable in time. The bot saves for the first challenge item it cannot pay for yet while its income covers it before the countdown ends, even against urgent wishes. The religious levels, the storehouse levels an amount needs to fit and the territory for them may use held amounts when the income earns them back within 70% of the time left; the other challenge items leave them alone.
+3. **Population** — a house level when beds run short, and a producer level (where it wants workers most) when beds outnumber jobs or that producer is full while its resource is missing. It saves for these only while income covers them within 4 minutes, so ever pricier levels never hold back the rest.
 4. **Storage** — a storehouse level when a resource nears the cap (or ahead of the next HQ costs). A cost that cannot fit in storage is always replaced by a storehouse level.
 5. **Territory** — expand when few slots are free; upgrade the HQ tier when affordable.
 6. **Economy** — build each unlocked producer once, altars up to a per-tier target, the market (strong).
 7. **Research** — the next tier of the profile's chains.
 8. **Military** — units (or military building levels) until the expected raid's forecast reaches the profile's ratio.
 
-It starts every item it can pay for, up to a budget per decision. The first unaffordable item it saves for is held back from cheaper wishes once income covers it within a minute; HQ upgrades only respect the challenge hold. The costs of the first three unaffordable items steer the worker split.
+It starts every item it can pay for, up to a budget per decision. The first unaffordable item it saves for is held back from cheaper wishes once income covers it within a minute; HQ upgrades and the challenge items only respect the challenge hold and the saved-for challenge item. The costs of the first three unaffordable items steer the worker split.
 
 When a raid is announced and the forecast is not good enough, it trains the units that raise the forecast most for their cost (adding a military building level when there is no room), pays to delay when the raid is 30 seconds away, and the strong bot calls it off when it cannot delay; otherwise it accepts the loss. The weak bot only calls a raid off when that costs at most a quarter of each resource in stock.
 
@@ -70,8 +80,8 @@ When a raid is announced and the forecast is not good enough, it trains the unit
 | Reaction after countdown starts | 90 s                                   | 15 s                                           | 0 s                                              |
 | Skipped decisions               | 20%                                    | none                                           | none                                             |
 | Actions per decision            | 1                                      | 2                                              | 3                                                |
-| Keeps requirements once met     | no                                     | yes                                            | yes                                              |
-| Worker split                    | fixed 60/40 food/wood for upkeep, the rest evenly over the other workplaces | food/wood upkeep +10%, the rest in proportion to what it saves for, 15% temple, 10% academy | food/wood upkeep +5%, the rest to the bottleneck resource first, 15% temple, 15% academy |
+| Challenge hold                  | amounts once met                       | amounts once met or reachable in time          | amounts once met or reachable in time            |
+| Worker split                    | fixed 60/40 food/wood for upkeep +10%, the rest evenly over the other workplaces | food/wood upkeep +10%, the rest in proportion to what it saves for, 15% temple, 10% academy | food/wood upkeep +5%, the rest to the bottleneck resource first, 15% temple, 15% academy |
 | Storehouse                      | at the cap                             | at 80% of the cap                              | at 60%, and before the next HQ costs pass 75%    |
 | HQ upgrade                      | needs 2× the cost in stock (or full storage) | when affordable                          | when affordable                                  |
 | Expands territory at            | 1 free slot                            | 2 free slots                                   | 3 free slots                                     |
@@ -79,22 +89,24 @@ When a raid is announced and the forecast is not good enough, it trains the unit
 | Altars per HQ tier              | 3                                      | 5                                              | 6                                                |
 | Research                        | none                                   | one at a time: construction, food production, storage, habitation, faith, mining | two at a time, quickest first, every chain except disasters |
 | Army                            | none; calls a raid off only when cheap | forecast ratio 1.05; delays when it would lose | forecast ratio 1.3; delays, then calls off        |
-| Market                          | no                                     | no                                             | buys missing resources, sells resources at the cap |
+| Market                          | no                                     | no                                             | buys missing resources (never below the gold a running challenge asks for, price included), sells resources at the cap |
 | Blessing choice                 | first option                           | productivity blessing for its weakest resource | highest estimated value                          |
 
 ## Report
 
 - **Runs per bot** — finished and did-not-finish runs, run length to the win screen (median, p10, p90), failures per run, most attempts on one challenge, challenges completed, HQ tier at the end, share of time in a food/wood shortage, the challenge where unfinished runs stopped, and raids won/lost/called off/delayed per run.
-- **Challenges per bot** — runs that reached each challenge, attempts, first-try success, runs that completed it, median time from countdown start until the requirements were first met, median spare share (`1 − time to meet / timeout`), and how the engine scaled the countdowns: median amount scale (faith and resources), level scale (building levels and workers) and timer scale against the base values (kinds the challenge does not have are left out), attempts per mood (`M`erciful, `L`enient, `W`atchful, `S`tern, `D`emanding) and attempts where the backstop kicked in (a locked resource dropped, or values capped at what the colony can reach).
+- **Challenges per bot** — runs that reached each challenge, attempts, first-try success, runs that completed it, median time from countdown start until the requirements were first met, median spare share of the successful attempts (`1 − time to meet / timeout`), and how the engine scaled the countdowns: median amount scale (faith and resources), level scale (building levels and workers) and timer scale against the base values (kinds the challenge does not have are left out), attempts per mood (`M`erciful, `L`enient, `W`atchful, `S`tern, `D`emanding) and attempts where the backstop kicked in (a locked resource or the worker requirement dropped, or values capped at what the colony can reach).
 - **Progress at 30/60/90 minutes** — median HQ tier, research count, production value, workers and building levels.
 - **Sanity check** — HQ tier, research and production value should order the bots weak < average < strong at each milestone.
-- **Reference snippet** — for the average bot, the median `colonyStats` when each challenge first activates and when its countdown starts, printed as JavaScript to paste into `balancing.js` later. Not printed when scaling is off (`SIM_SCALING=0`): the reference must come from scaled runs.
+- **Done criteria** — each criterion above with PASS or FAIL.
+- **Calibration** (`SIM_CALIBRATE`) — per challenge and requirement part, the median over the average bot's first attempts of what its colony could meet at countdown start in `CHALLENGE_TARGET_TIME_SHARE` of the base timer: each part alone, and all parts together at the same share of their alone values (building levels from the colony's current level; workers at the engine's cap). Used to set the base requirements in `challenges.json`; rerun after changing them, since earlier challenges shape the later colonies.
+- **Reference snippet** — for the average bot, the median `colonyStats` when each challenge first activates and when its countdown starts, printed as JavaScript for `CHALLENGE_REFERENCE_STATS` in `balancing.js` (pasted; regenerate when its rows drift by more than about 10%). Not printed when scaling is off (`SIM_SCALING=0`): the reference must come from scaled runs.
 
 Each attempt in the JSON also keeps its activation time, delay, countdown start, timeout, requirements, colony stats at activation and countdown start, the `scales`, `mood` and `backstop` the engine chose as the countdown started (null until then, or for a challenge without a definition), whether the requirements were met at the start, whether they still were at the end, the result and the blessing chosen.
 
-## Baseline
+## Phase 0 Baseline
 
-Current `src/data/challenges.json`, no scaling (`SIM_SCALING=0 npm run simulate`). 20 seeds per bot (seeds 1–20), 5-hour cap, 1-second steps. Re-recorded once production value stopped counting output into full storage: only the production figures changed, and raids by at most 0.1 per run.
+The challenge data of commit `4a3e812f` (every delay 30 s; timers 300 s for challenges 1–4 and 6, 600 s for the rest; the old requirements), no scaling (`SIM_SCALING=0`), and the bots as they were before Phase 3. 20 seeds per bot (seeds 1–20), 5-hour cap, 1-second steps. Re-recorded once production value stopped counting output into full storage: only the production figures changed, and raids by at most 0.1 per run.
 
 ### Runs per bot
 
@@ -148,9 +160,52 @@ HQ tier, research and production value order the bots weak < average < strong at
 - **Average, challenge 8** — altar 30 and temple 15 plus 5000 faith and stocks within 10 minutes: never met in 460 attempts.
 - **Strong, challenges 8–10** — it passes 8 after about 12 attempts on average (at about 3 hours) and 9 after about two, then fails 10 every time. Each failure of challenge 10 removes 100 workers and 30 building levels: 13 of 20 strong runs end with 0 workers. A colony with no workers and less than 50 food can never recruit again, so those games are stuck for good.
 
-### Bot Limitations
+## Phase 3: Same Data, New Bots
 
-- The weak bot spends about a third of its time in a food or wood shortage, mostly late: lost raids and wildfire punishments shrink the woodcutter, and with wood at 0 it cannot buy the level back. A player would likely dismiss workers sooner; the bot only dismisses idle ones.
+The Phase 0 data again, no scaling, with the Phase 3 bots (challenge items before population, saving for them, the hold rules, the market gold rule, the weak bot's food/wood margin). 60 seeds per bot (seeds 1–60), 5-hour cap, 1-second steps.
+
+| Bot     | Finished | Run length (median) | Failures/run | Max attempts | Stopped at                   | Raids won/lost/called off/delays per run |
+|---------|----------|---------------------|--------------|--------------|------------------------------|------------------------------------------|
+| weak    | 0 / 60   | –                   | 29.1         | 31           | #3 ×34, #5 ×22, #6 ×3, #7 ×1 | 0 / 35.6 / 0 / 0                         |
+| average | 4 / 60   | 145.5 m             | 12.3         | 12           | #10 ×56                      | 13.6 / 28.9 / 0 / 7.3                    |
+| strong  | 60 / 60  | 111.0 m             | 0.1          | 2            | –                            | 12.8 / 1.4 / 0 / 0.8                     |
+
+The fixed values still stop the weak bot at the temple and monument challenges and the average bot at challenge 10; the strong bot now clears them all, in the 80 minutes of the old schedule plus its retries.
+
+## Phase 3: Current
+
+Tuning not finished. The Phase 3 data (`challenges.json`: delays 240, 120, 120 then 60 s; timers 300 to 780 s in 60 s steps, then 900 s; requirements from two calibration passes, worker requirements kept at 20, 50 and 100), scaling on with the reference table, 60 seeds per bot, 5-hour cap, 1-second steps.
+
+| Bot     | Finished | Run length (median, p10–p90) | Failures/run | Max attempts | Stopped at                    | Raids won/lost/called off/delays per run |
+|---------|----------|------------------------------|--------------|--------------|-------------------------------|------------------------------------------|
+| weak    | 17 / 60  | 272.7 m (234.1–294.0)        | 7.8          | 9            | #10 ×28, #9 ×11, #8 ×3, #7 ×1 | 0 / 37.7 / 0.3 / 0                       |
+| average | 60 / 60  | 128.0 m (111.0–157.8)        | 0.9          | 3            | –                             | 14.6 / 2.9 / 0 / 3.3                     |
+| strong  | 60 / 60  | 110.2 m (110.2–110.5)        | 0.1          | 2            | –                             | 13.1 / 0.9 / 0 / 0.5                     |
+
+Done criteria: 2, 3, 4 and 7 pass; 1 (the weak bot), 5 (the strong bot fails in 4 of 60 runs) and 6 (challenge 10 leaves the strong bot 51% of its timer) fail.
+
+First-try success / median time left on the timer (successful attempts):
+
+| Challenge (base requirements)                         | Weak        | Average     | Strong      |
+|-------------------------------------------------------|-------------|-------------|-------------|
+| 1 — altar 9                                           | 85% / 30%   | 100% / 49%  | 100% / 38%  |
+| 2 — faith 650                                         | 100% / 24%  | 100% / 30%  | 100% / 22%  |
+| 3 — temple 10                                         | 55% / 24%   | 100% / 25%  | 95% / 32%   |
+| 4 — faith 4100                                        | 100% / 47%  | 100% / 44%  | 100% / 35%  |
+| 5 — monument 7                                        | 93% / 100%  | 98% / 24%   | 100% / 29%  |
+| 6 — faith 10500                                       | 95% / 29%   | 100% / 39%  | 100% / 42%  |
+| 7 — resources, 20 workers                             | 12% / 73%   | 97% / 55%   | 100% / 45%  |
+| 8 — faith 4900, altar 18, temple 10, resources        | 12% / 78%   | 58% / 53%   | 100% / 48%  |
+| 9 — faith 7500, monument 9, resources, 50 workers     | 8% / 77%    | 87% / 33%   | 97% / 30%   |
+| 10 — everything, 100 workers                          | 21% / 50%   | 70% / 50%   | 100% / 51%  |
+
+Changed constants (from the Phase 2 first guesses): `CHALLENGE_TARGET_TIME_SHARE` 0.65 → 0.85, `CHALLENGE_FAILURE_EASE` 0.15 → 0.4, new `CHALLENGE_MAX_WORKER_REQUIREMENT_SHARE` 0.5 and `CHALLENGE_UNSTAFFED_RATE_SHARE` 0.1, and `CHALLENGE_REFERENCE_STATS` from the average bot (its rows moved by at most 8% over the later runs).
+
+Open: the weak bot still loses about 38 raids per run without an army; the strong bot is just outside its two criteria. Timed blessings lasting through the next challenge's delay and timer made both strong criteria pass in a 60-seed test, but put the average bot's production above the strong bot's at 30 minutes (its productivity blessing was still running), so the durations are unchanged for now.
+
+## Bot Limitations
+
+- The weak bot spent about a third of its time in a food or wood shortage while its split covered the upkeep exactly: lost raids and wildfire punishments shrink the woodcutter, and with wood at 0 it cannot buy the level back. With the +10% margin it is about 6%. A player would likely dismiss workers sooner; the bot only dismisses idle ones.
 - Expected raids are sized from the engine's raid formula with an even split of the unlocked unit types (the real split is random); the forecast for an announced raid is the one the military window shows.
 - Blessing values for the strong bot are rough estimates (production share × duration, stock value for raid protection, no value for Blessed Markets).
 - Bots never downgrade buildings and never plan around upcoming challenges.
