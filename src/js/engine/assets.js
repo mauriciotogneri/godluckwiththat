@@ -71,6 +71,7 @@ export const IMG_PUNISHMENT_WILDFIRES = '/img/punishments/wildfires.webp'
 // Blessings
 export const IMG_BLESSING_BLESSED_MARKETS = '/img/blessings/blessed_markets.webp'
 export const IMG_BLESSING_BLESSING = '/img/blessings/blessing.webp'
+export const IMG_BLESSING_CELESTIAL_FORTIFICATION = '/img/blessings/celestial_fortification.webp'
 export const IMG_BLESSING_CELESTIAL_PROSPERITY = '/img/blessings/celestial_prosperity.webp'
 export const IMG_BLESSING_FAVORABLE_WEATHER = '/img/blessings/favorable_weather.webp'
 export const IMG_BLESSING_FERTILE_SOIL = '/img/blessings/fertile_soil.webp'
