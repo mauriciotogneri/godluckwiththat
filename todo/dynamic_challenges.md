@@ -194,9 +194,9 @@ Decisions made during Phase 4:
 
 - [x] `docs/architecture.md`: Challenges System (base vs adjusted values, failures, mood, refresh rule, save version 2 and migration), new modules (`challenge_scaling.js`, `save_migration.js`), Save/Load, the `createInitialColony` note; fix the line saying `colony_stats.js` is imported only by the simulation and tests (`state.js` imports it too) — done in Phase 3; Phase 4 added the mood line to the challenge window section (the `createInitialColony` note already read "delegating to `createInitialColonyBasic()`")
 - [x] `docs/specs.md`: challenge lifecycle (delay at activation; requirements, timer, blessings and punishment at countdown start; retries ease), scaling of requirements, blessings and punishments, losses relative to colony size, no-stacking now enforced by refreshing, starting colony, `challenges.json` holds base values and `balancing.js` the scaling constants and reference table — done in Phase 3; Phase 4 marked the mood as shown (the Starting State section already described the Camp start)
-- [ ] `docs/testing.md`: rows for the new test files
-- [ ] `todo/todo.md`: remove the "make blessings and punishments dynamic" item
-- [ ] Final run: `npm run lint:fix`, targeted tests, `SIM_ASSERT=1 SIM_RUNS=60 npm run simulate` (all PASS, report saved), `npm run build`, browser check with the console
+- [x] `docs/testing.md`: rows for the new test files — `challenge_scaling.test.js`, `save_migration.test.js`, plus a note on the version 1 save fixtures
+- [x] `todo/todo.md`: remove the "make blessings and punishments dynamic" item
+- [x] Final run: `npm run lint:fix`, targeted tests, `SIM_ASSERT=1 SIM_RUNS=60 npm run simulate` (all PASS, report saved), `npm run build`, browser check with the console — lint clean; full suite 1271 passed; all 7 done criteria PASS on 60 seeds (`report_weak-average-strong_seed1_runs60.json`); build passes with only Vite's chunk size warning (508 kB); the browser checks are the Phase 4 ones, run on the same app code (only docs changed since), with no console errors
 
 ## Open Issues
 
