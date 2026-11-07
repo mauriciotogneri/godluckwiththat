@@ -70,6 +70,7 @@ export const IMG_PUNISHMENT_WILDFIRES = '/img/punishments/wildfires.webp'
 
 // Blessings
 export const IMG_BLESSING_BLESSING = '/img/blessings/blessing.webp'
+export const IMG_BLESSING_CELESTIAL_PROSPERITY = '/img/blessings/celestial_prosperity.webp'
 export const IMG_BLESSING_FERTILE_SOIL = '/img/blessings/fertile_soil.webp'
 export const IMG_BLESSING_FOREST_BLOOM = '/img/blessings/forest_bloom.webp'
 export const IMG_BLESSING_GIFT_FROM_THE_HEAVENS = '/img/blessings/gift_from_the_heavens.webp'
