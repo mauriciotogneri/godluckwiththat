@@ -102,6 +102,13 @@ const hasSavedGame = computed(() => savedData.value !== null)
   .mobile-notice {
     display: block;
   }
+
+  /* Full-width dark band behind the notice, fading out above and below, instead of the oval veil */
+  .home-buttons::before {
+    width: 100vw;
+    height: 260%;
+    mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0) 0%, rgba(0, 0, 0, 1) 25%, rgba(0, 0, 0, 1) 75%, rgba(0, 0, 0, 0) 100%);
+  }
 }
 
 </style>
