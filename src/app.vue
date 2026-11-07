@@ -5,7 +5,7 @@ import GameScreen from '@/components/screens/game_screen.vue'
 import HomeScreen from '@/components/screens/home_screen.vue'
 import SettingsScreen from '@/components/screens/settings_screen.vue'
 import analytics from '@/js/engine/analytics.js'
-import {MUS_MUSIC_1, MUS_MUSIC_2, MUS_MUSIC_3, MUS_MUSIC_4} from '@/js/engine/assets.js'
+import {MUS_MUSIC_1, MUS_MUSIC_2, MUS_MUSIC_3, MUS_MUSIC_4, MUS_MUSIC_MAIN_MENU} from '@/js/engine/assets.js'
 import audio from '@/js/engine/audio.js'
 import {createInitialColony, createInitialMeta, IS_DEV} from '@/js/engine/constants.js'
 import {ANALYTICS_GAME_MODE_NEW, ANALYTICS_GAME_MODE_SAVED} from '@/js/engine/enums.js'
@@ -60,9 +60,14 @@ function restartGame(restoredState) {
   launchGame(restoredState)
 }
 
-/** Stops music and returns to the home screen. */
+/** Starts the main menu music, which keeps playing across the home, settings, and about screens. */
+function playMenuMusic() {
+  audio.playMusicPlaylist([MUS_MUSIC_MAIN_MENU])
+}
+
+/** Switches to the main menu music and returns to the home screen. */
 function quitGame() {
-  audio.stopMusicPlaylist()
+  playMenuMusic()
   gameState.value = null
   currentScreen.value = 'home'
 }
@@ -76,6 +81,8 @@ function goHome() {
 onMounted(() => {
   if (IS_DEV) {
     startGame(storage.savedGame)
+  } else {
+    playMenuMusic()
   }
 })
 

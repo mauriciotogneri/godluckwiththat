@@ -117,7 +117,38 @@ class Audio {
     }, {
       once: true,
     })
-    this._music.play().catch(error => import.meta.env.DEV && console.warn('Audio play failed:', error))
+    this._startMusic(this._music)
+  }
+
+  /**
+   * Starts a music element, retrying on the next click or key press when the browser blocks autoplay.
+   * @param {HTMLAudioElement} music - Music element to play
+   */
+  _startMusic(music) {
+    music.play().catch(error => {
+      if (error.name === 'NotAllowedError') {
+        this._retryOnInteraction(music)
+      } else if (import.meta.env.DEV) {
+        console.warn('Audio play failed:', error)
+      }
+    })
+  }
+
+  /**
+   * Retries a blocked music element on the next click or key press.
+   * Does nothing if that element was stopped, replaced, or paused by game logic in the meantime.
+   * @param {HTMLAudioElement} music - Music element whose playback was blocked
+   */
+  _retryOnInteraction(music) {
+    const retry = () => {
+      document.removeEventListener('click', retry)
+      document.removeEventListener('keydown', retry)
+      if (this._music === music && !this._gamePaused) {
+        this._startMusic(music)
+      }
+    }
+    document.addEventListener('click', retry)
+    document.addEventListener('keydown', retry)
   }
 
   /**
@@ -130,15 +161,6 @@ class Audio {
     this._music.pause()
     this._music.currentTime = 0
     this._music = null
-  }
-
-  /**
-   * Stops music and clears the playlist, so re-enabling music does not restart it.
-   */
-  stopMusicPlaylist() {
-    this.stopMusic()
-    this._playlist = []
-    this._playlistIndex = 0
   }
 
   /**
