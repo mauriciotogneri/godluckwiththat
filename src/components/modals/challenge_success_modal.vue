@@ -1,7 +1,7 @@
 <script setup>
 import {inject, ref, onMounted, onBeforeUnmount, onUnmounted} from 'vue'
 import audio, {playTap} from '@/js/engine/audio.js'
-import {SND_NOTIFICATION_BLESSING, IMG_BLESSING_BLESSING} from '@/js/engine/assets.js'
+import {SND_NOTIFICATION_BLESSING, IMG_BLESSING_MAP} from '@/js/engine/assets.js'
 import {t} from '@/js/i18n/localized.js'
 import {BLESSING_FERTILE_SOIL, BLESSING_FOREST_BLOOM, BLESSING_GIFT_FROM_THE_HEAVENS,
   BLESSING_HOLY_EXPANSION, BLESSING_RICH_MINES, BLESSING_CELESTIAL_PROSPERITY,
@@ -90,7 +90,7 @@ onUnmounted(() => {
           @keydown.enter.prevent="playTap(); actions.selectBlessing(index)"
           @keydown.space.prevent="playTap(); actions.selectBlessing(index)"
         >
-          <img class="blessing-img" :src="IMG_BLESSING_BLESSING" :alt="t('blessing.' + blessing.type)">
+          <img class="blessing-img" :src="IMG_BLESSING_MAP[blessing.type]" :alt="t('blessing.' + blessing.type)">
           <div class="blessing-name">{{ t('blessing.' + blessing.type) }}</div>
           <p class="blessing-description">{{ blessingDescription(blessing) }}</p>
         </div>

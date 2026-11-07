@@ -33,7 +33,7 @@ import audio, {playTap} from '@/js/engine/audio.js'
 import {formatNumber, formatNumberFull, formatRate, formatTime} from '@/js/engine/format.js'
 import State from '@/js/engine/state.js'
 import storage from '@/js/engine/storage.js'
-import {IMG_BLESSING_BLESSING, IMG_OTHER_IDLE, IMG_OTHER_LOCK, IMG_OTHER_PRODUCTIVITY, IMG_OTHER_TERRITORY, IMG_PUNISHMENT_MAP, IMG_RESOURCE_MAP, IMG_SEASON_COLD, IMG_SEASON_WARM, IMG_UNIT_WORKER, SND_OPEN_ACADEMY, SND_OPEN_MARKET} from '@/js/engine/assets.js'
+import {IMG_BLESSING_MAP, IMG_OTHER_IDLE, IMG_OTHER_LOCK, IMG_OTHER_PRODUCTIVITY, IMG_OTHER_TERRITORY, IMG_PUNISHMENT_MAP, IMG_RESOURCE_MAP, IMG_SEASON_COLD, IMG_SEASON_WARM, IMG_UNIT_WORKER, SND_OPEN_ACADEMY, SND_OPEN_MARKET} from '@/js/engine/assets.js'
 import TutorialBanner from '@/components/tutorial/tutorial_banner.vue'
 import TutorialModal from '@/components/tutorial/tutorial_modal.vue'
 import SettingsModal from '@/components/modals/settings_modal.vue'
@@ -1834,7 +1834,7 @@ onUnmounted(() => {
               :key="blessing.type"
               class="event-row blessing-row"
             >
-              <img class="event-icon" :src="IMG_BLESSING_BLESSING" :alt="t(`blessing.${blessing.type}`)">
+              <img class="event-icon" :src="IMG_BLESSING_MAP[blessing.type]" :alt="t(`blessing.${blessing.type}`)">
               <span class="event-text">{{ t(blessing.effectKey, ...blessing.effectParams) }}</span>
               <span class="event-countdown">{{ formatTime(blessing.timeout) }}</span>
             </div>

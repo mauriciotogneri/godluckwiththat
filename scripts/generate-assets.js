@@ -104,6 +104,7 @@ const musicFiles = existsSync(MUS_DIR) ? collectFiles(MUS_DIR) : []
 const lines = ['// Asset path constants — centralized references to all public image, sound, and music files.']
 const resourceEntries = []
 const punishmentEntries = []
+const blessingEntries = []
 
 for (const [
   dirKey,
@@ -136,6 +137,14 @@ for (const [
         name: name,
       })
     }
+
+    if (dirKey === 'blessings') {
+      const key = basename(file, extname(file)).replace(/_([a-z])/g, (_, c) => c.toUpperCase())
+      blessingEntries.push({
+        key: key,
+        name: name,
+      })
+    }
   }
 }
 
@@ -162,6 +171,20 @@ if (punishmentEntries.length > 0) {
     key,
     name,
   } of punishmentEntries) {
+    lines.push(`  ${key}: ${name},`)
+  }
+  lines.push('}')
+}
+
+// Blessing image lookup by key (for dynamic :src bindings)
+if (blessingEntries.length > 0) {
+  lines.push('')
+  lines.push('// Blessing image lookup by key (for dynamic :src bindings)')
+  lines.push('export const IMG_BLESSING_MAP = {')
+  for (const {
+    key,
+    name,
+  } of blessingEntries) {
     lines.push(`  ${key}: ${name},`)
   }
   lines.push('}')

@@ -70,7 +70,6 @@ export const IMG_PUNISHMENT_WILDFIRES = '/img/punishments/wildfires.webp'
 
 // Blessings
 export const IMG_BLESSING_BLESSED_MARKETS = '/img/blessings/blessed_markets.webp'
-export const IMG_BLESSING_BLESSING = '/img/blessings/blessing.webp'
 export const IMG_BLESSING_CELESTIAL_FORTIFICATION = '/img/blessings/celestial_fortification.webp'
 export const IMG_BLESSING_CELESTIAL_PROSPERITY = '/img/blessings/celestial_prosperity.webp'
 export const IMG_BLESSING_FAVORABLE_WEATHER = '/img/blessings/favorable_weather.webp'
@@ -106,6 +105,22 @@ export const IMG_PUNISHMENT_MAP = {
   plague: IMG_PUNISHMENT_PLAGUE,
   volcano: IMG_PUNISHMENT_VOLCANO,
   wildfires: IMG_PUNISHMENT_WILDFIRES,
+}
+
+// Blessing image lookup by key (for dynamic :src bindings)
+export const IMG_BLESSING_MAP = {
+  blessedMarkets: IMG_BLESSING_BLESSED_MARKETS,
+  celestialFortification: IMG_BLESSING_CELESTIAL_FORTIFICATION,
+  celestialProsperity: IMG_BLESSING_CELESTIAL_PROSPERITY,
+  favorableWeather: IMG_BLESSING_FAVORABLE_WEATHER,
+  fertileSoil: IMG_BLESSING_FERTILE_SOIL,
+  forestBloom: IMG_BLESSING_FOREST_BLOOM,
+  giftFromTheHeavens: IMG_BLESSING_GIFT_FROM_THE_HEAVENS,
+  holyExpansion: IMG_BLESSING_HOLY_EXPANSION,
+  rapidConstruction: IMG_BLESSING_RAPID_CONSTRUCTION,
+  richMines: IMG_BLESSING_RICH_MINES,
+  temporaryPeace: IMG_BLESSING_TEMPORARY_PEACE,
+  wisdomOfTheGods: IMG_BLESSING_WISDOM_OF_THE_GODS,
 }
 
 // Sounds
