@@ -1,6 +1,6 @@
 # Performance Overlay
 
-The game screen shows a performance overlay, visible by default in every build. Press F3 to toggle it. Values refresh once per second of real time (unaffected by game speed). The sample is discarded while the game is paused and after a real gap longer than 1s between frames (background tab, sleep).
+The game screen shows a performance overlay. It starts visible when the app runs on localhost or 127.0.0.1 (dev server or a local preview build) and hidden everywhere else. Press F3 to toggle it. Values refresh once per second of real time (unaffected by game speed). The sample is discarded while the game is paused and after a real gap longer than 1s between frames (background tab, sleep).
 
 - FPS: 60 — Frames per second. How many times the requestAnimationFrame loop ran in the last second. 60 = smooth on a 60 Hz display, drops mean the browser is struggling to keep up.
 - Frame: 16.6ms — Average real time between rAF frames in milliseconds. It follows the display refresh rate (~16.6ms at 60 Hz, ~6.9ms at 144 Hz) whatever the load, so it does not show headroom within a frame. It only rises above the refresh interval when frames are dropped.

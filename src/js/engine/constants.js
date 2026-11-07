@@ -51,8 +51,8 @@ export const FIREBASE_CONFIG = {
   measurementId: 'G-FP50VBQH4N',
 }
 
-// Hostnames where analytics stays disabled (local dev server and local preview builds)
-export const ANALYTICS_EXCLUDED_HOSTNAMES = [
+// Hostnames of a locally running app (dev server and local preview builds): analytics stays disabled and the performance overlay starts visible
+export const LOCAL_HOSTNAMES = [
   'localhost',
   '127.0.0.1',
 ]

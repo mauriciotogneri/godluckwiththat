@@ -2,7 +2,7 @@
 
 import {initializeApp} from 'firebase/app'
 import {getAnalytics, isSupported, logEvent} from 'firebase/analytics'
-import {ANALYTICS_EXCLUDED_HOSTNAMES, FIREBASE_CONFIG} from '@/js/engine/constants.js'
+import {FIREBASE_CONFIG, LOCAL_HOSTNAMES} from '@/js/engine/constants.js'
 import {ANALYTICS_EVENT_GAME_START, ANALYTICS_EVENT_TUTORIAL_COMPLETE} from '@/js/engine/enums.js'
 
 /**
@@ -15,9 +15,9 @@ class Analytics {
     this._ready = Promise.resolve(null) // Resolves to the Analytics instance, or null when disabled
   }
 
-  /** Initializes Firebase Analytics unless the hostname is excluded or the browser lacks support. */
+  /** Initializes Firebase Analytics unless the app runs on a local hostname or the browser lacks support. */
   init() {
-    if (ANALYTICS_EXCLUDED_HOSTNAMES.includes(window.location.hostname)) {
+    if (LOCAL_HOSTNAMES.includes(window.location.hostname)) {
       return
     }
     this._ready = isSupported()

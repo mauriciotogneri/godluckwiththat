@@ -37,7 +37,7 @@ import {IMG_BLESSING_BLESSING, IMG_OTHER_IDLE, IMG_OTHER_LOCK, IMG_OTHER_PRODUCT
 import TutorialBanner from '@/components/tutorial/tutorial_banner.vue'
 import TutorialModal from '@/components/tutorial/tutorial_modal.vue'
 import SettingsModal from '@/components/modals/settings_modal.vue'
-import {BUILDING_IMAGE_MAP, BUILDING_GRID, GAME_SPEED_DEFAULT, GAME_SPEED_OPTIONS, HEADER_RESOURCES, HQ_BUILDING_UNLOCKS, HQ_RESOURCE_UNLOCKS, HQ_TYPES, IMG_BUILDING_HEADQUARTERS_MAP, RESEARCH_TREE, SECONDS_PER_MINUTE, TICK_INTERVAL, TRADEABLE_RESOURCES, TUTORIAL_MODALS, TUTORIAL_STEPS, UNBOUNDED_RESOURCES, UNIT_BUILDINGS, UNIT_TYPES} from '@/js/engine/constants.js'
+import {BUILDING_IMAGE_MAP, BUILDING_GRID, GAME_SPEED_DEFAULT, GAME_SPEED_OPTIONS, HEADER_RESOURCES, HQ_BUILDING_UNLOCKS, HQ_RESOURCE_UNLOCKS, HQ_TYPES, IMG_BUILDING_HEADQUARTERS_MAP, LOCAL_HOSTNAMES, RESEARCH_TREE, SECONDS_PER_MINUTE, TICK_INTERVAL, TRADEABLE_RESOURCES, TUTORIAL_MODALS, TUTORIAL_STEPS, UNBOUNDED_RESOURCES, UNIT_BUILDINGS, UNIT_TYPES} from '@/js/engine/constants.js'
 import {BULK_WORKER_AMOUNT, SEASON_DURATION, UNIT_STATS} from '@/js/engine/balancing.js'
 import {BONUS_HABITATION, BONUS_STORAGE_CAPACITY, BUILDING_ACADEMY, BUILDING_ALTAR, CHALLENGE_MODAL_FAILURE, CHALLENGE_MODAL_REWARD, CHALLENGE_MODAL_WIN, CHALLENGE_STATUS_STARTED, BUILDING_ARCHERY, BUILDING_BARRACKS, BUILDING_COPPER_MINE, BUILDING_FARM, BUILDING_GOLD_MINE, BUILDING_HEADQUARTERS, BUILDING_HOUSE, BUILDING_IRON_MINE, BUILDING_MARKET, BUILDING_MONUMENT, BUILDING_QUARRY, BUILDING_TEMPLE, BUILDING_STABLE, BUILDING_STOREHOUSE, BUILDING_TOWER, BUILDING_WALL, BUILDING_WOODCUTTER, EMIT_QUIT, EMIT_RESTART, EVENT_TYPE_CHALLENGE_STARTED, HQ_TYPE_CAMP, RAID_PHASE_INCOMING, RESOURCE_COPPER, RESOURCE_FAITH, RESOURCE_FOOD, RESOURCE_GOLD, RESOURCE_IRON, RESOURCE_KNOWLEDGE, RESOURCE_STONE, RESOURCE_WOOD} from '@/js/engine/enums.js'
 import {t} from '@/js/i18n/localized.js'
@@ -1322,7 +1322,7 @@ let pausedAt = null // performance.now() when the current pause began, or null w
 // --- Perf overlay ---
 const perfOverlay = ref(null)
 const PERF_STALE_GAP = 1000 // ms; a longer real gap between frames (background tab, sleep) discards the perf sample
-let perfVisible = true
+let perfVisible = LOCAL_HOSTNAMES.includes(window.location.hostname) // Shown by default only when running locally; F3 toggles it
 let perfFrameCount = 0
 let perfFrameTimeSum = 0
 let perfLastFrameTime = 0 // performance.now() of the previous rAF frame, paused frames included
@@ -1618,6 +1618,7 @@ watch(() => ui.buildings[BUILDING_ACADEMY]?.level, (level) => {
 onMounted(() => {
   // Bubble phase: modals register in capture phase so they intercept Escape first
   window.addEventListener('keydown', handleKeydown)
+  perfOverlay.value.style.display = perfVisible ? 'block' : 'none'
   const now = performance.now()
   lastTickTime = now
   lastProgressTickTime = now
