@@ -12,6 +12,13 @@ export const LOCALIZED_EN = {
   'screen.home.settings': 'Settings',
   'screen.home.about': 'About',
 
+  // Intro screen
+  'screen.intro.title': 'Stranded',
+  'screen.intro.paragraph1': 'The storm took your ship, but not your people. You wash ashore on an island no map has ever shown.',
+  'screen.intro.paragraph2': 'High on the cliffs stands an ancient portal. When you touch it, the gods answer: it is the only way home, and only they can open it.',
+  'screen.intro.paragraph3': 'But the gods give nothing freely. They will send you ten challenges to test your faith. Endure them all, and the portal will open. Fail, and you will feel their wrath.',
+  'screen.intro.start': 'Start',
+
   // Settings screen
   'screen.settings.title': 'Settings',
   'screen.settings.back': 'Back',

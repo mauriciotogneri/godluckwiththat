@@ -12,6 +12,13 @@ export const LOCALIZED_FR = {
   'screen.home.settings': 'Paramètres',
   'screen.home.about': 'À propos',
 
+  // Intro screen
+  'screen.intro.title': 'Naufragés',
+  'screen.intro.paragraph1': 'La tempête a emporté votre navire, mais pas votre peuple. Vous échouez sur une île qu\'aucune carte n\'a jamais montrée.',
+  'screen.intro.paragraph2': 'Au sommet des falaises se dresse un portail ancien. Quand vous le touchez, les dieux répondent : c\'est le seul chemin du retour, et eux seuls peuvent l\'ouvrir.',
+  'screen.intro.paragraph3': 'Mais les dieux ne donnent rien gratuitement. Ils vous enverront dix défis pour mettre votre foi à l\'épreuve. Surmontez-les tous et le portail s\'ouvrira. En cas d\'échec, vous subirez leur colère.',
+  'screen.intro.start': 'Commencer',
+
   // Settings screen
   'screen.settings.title': 'Paramètres',
   'screen.settings.back': 'Retour',

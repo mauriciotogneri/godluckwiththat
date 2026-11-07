@@ -1,7 +1,7 @@
 // Thin localStorage wrapper for persisting user preferences and game state.
-// Exposes getter/setter pairs for music, sound, autosave, tutorial, and trade amount, plus saved game read/write/delete.
+// Exposes getter/setter pairs for music, sound, autosave, tutorial, story intro, and trade amount, plus saved game read/write/delete.
 
-import {STORAGE_AUTOSAVE_ENABLED, STORAGE_AUTOSAVE_INTERVAL, STORAGE_MUSIC_ENABLED, STORAGE_SAVED_GAME, STORAGE_SOUND_ENABLED, STORAGE_TRADE_AMOUNT, STORAGE_TUTORIAL_COMPLETED} from '@/js/engine/enums.js'
+import {STORAGE_AUTOSAVE_ENABLED, STORAGE_AUTOSAVE_INTERVAL, STORAGE_INTRO_SEEN, STORAGE_MUSIC_ENABLED, STORAGE_SAVED_GAME, STORAGE_SOUND_ENABLED, STORAGE_TRADE_AMOUNT, STORAGE_TUTORIAL_COMPLETED} from '@/js/engine/enums.js'
 import {AUTOSAVE_DEFAULT_INTERVAL, AUTOSAVE_MAX_INTERVAL, AUTOSAVE_MIN_INTERVAL} from '@/js/engine/constants.js'
 import {MARKET_TRADE_AMOUNT} from '@/js/engine/balancing.js'
 
@@ -117,6 +117,22 @@ class Storage {
   set tutorialCompleted(value) {
     try {
       window.localStorage.setItem(STORAGE_TUTORIAL_COMPLETED, value)
+    } catch { /* quota exceeded */ }
+  }
+
+  /** @returns {boolean} Whether the player has already seen the story intro on this device */
+  get introSeen() {
+    try {
+      return window.localStorage.getItem(STORAGE_INTRO_SEEN) === 'true'
+    } catch {
+      return false
+    }
+  }
+
+  /** @param {boolean} value - Whether the story intro has been seen */
+  set introSeen(value) {
+    try {
+      window.localStorage.setItem(STORAGE_INTRO_SEEN, value)
     } catch { /* quota exceeded */ }
   }
 

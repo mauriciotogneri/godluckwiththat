@@ -3,6 +3,7 @@ import {onMounted, ref, shallowRef} from 'vue'
 import AboutScreen from '@/components/screens/about_screen.vue'
 import GameScreen from '@/components/screens/game_screen.vue'
 import HomeScreen from '@/components/screens/home_screen.vue'
+import IntroScreen from '@/components/screens/intro_screen.vue'
 import SettingsScreen from '@/components/screens/settings_screen.vue'
 import analytics from '@/js/engine/analytics.js'
 import {MUS_MUSIC_1, MUS_MUSIC_2, MUS_MUSIC_3, MUS_MUSIC_4, MUS_MUSIC_MAIN_MENU} from '@/js/engine/assets.js'
@@ -16,10 +17,24 @@ const currentScreen = ref('home')
 const gameState = shallowRef(null) // Shallow so Vue never proxies the plain engine State
 const gameKey = ref(0)
 
-/** Preloads audio, restores State from save data (or creates a new one), switches to game screen, and starts background music. */
+/**
+ * Preloads audio, then shows the story intro before this device's first new game,
+ * or restores State from save data (or creates a new one) and switches to the game screen.
+ * @param {Object|null} savedData - Saved game to continue, or null for a new game
+ */
 function startGame(savedData) {
   audio.preload()
+  if (!savedData && !storage.introSeen) {
+    currentScreen.value = 'intro'
+    return
+  }
   launchGame(savedData ? State.fromJSON(savedData) : null)
+}
+
+/** Records that the story intro was seen and starts the new game it introduced. */
+function finishIntro() {
+  storage.introSeen = true
+  launchGame(null)
 }
 
 /**
@@ -60,7 +75,7 @@ function restartGame(restoredState) {
   launchGame(restoredState)
 }
 
-/** Starts the main menu music, which keeps playing across the home, settings, and about screens. */
+/** Starts the main menu music, which keeps playing across the home, intro, settings, and about screens. */
 function playMenuMusic() {
   audio.playMusicPlaylist([MUS_MUSIC_MAIN_MENU])
 }
@@ -90,6 +105,7 @@ onMounted(() => {
 
 <template>
   <HomeScreen v-if="currentScreen === 'home'" @start="startGame" @settings="currentScreen = 'settings'" @about="currentScreen = 'about'" />
+  <IntroScreen v-else-if="currentScreen === 'intro'" @start="finishIntro" />
   <GameScreen v-else-if="currentScreen === 'game'" :key="gameKey" :initial-state="gameState" @quit="quitGame" @restart="restartGame" />
   <SettingsScreen v-else-if="currentScreen === 'settings'" @close="goHome" />
   <AboutScreen v-else-if="currentScreen === 'about'" @close="goHome" />

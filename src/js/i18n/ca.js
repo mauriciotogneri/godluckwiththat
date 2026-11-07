@@ -12,6 +12,13 @@ export const LOCALIZED_CA = {
   'screen.home.settings': 'Configuració',
   'screen.home.about': 'Sobre',
 
+  // Intro screen
+  'screen.intro.title': 'Nàufrags',
+  'screen.intro.paragraph1': 'La tempesta es va endur el teu vaixell, però no la teva gent. Arribes a la riba d\'una illa que cap mapa no ha mostrat mai.',
+  'screen.intro.paragraph2': 'Dalt dels penya-segats s\'alça un portal antic. Quan el toques, els déus responen: és l\'únic camí cap a casa, i només ells el poden obrir.',
+  'screen.intro.paragraph3': 'Però els déus no regalen res. T\'enviaran deu desafiaments per posar a prova la teva fe. Supera\'ls tots i el portal s\'obrirà. Si falles, patiràs la seva ira.',
+  'screen.intro.start': 'Començar',
+
   // Settings screen
   'screen.settings.title': 'Configuració',
   'screen.settings.back': 'Tornar',

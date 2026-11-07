@@ -23,6 +23,7 @@ Items marked *(planned)* are designed but not implemented yet. Their design live
   - Offer tributes
     - Rituals (resources and people)
     - Recover relic (send military away) *(planned — see [military](../todo/military.md))*
+- The first new game on a device opens with a story intro screen telling this history (shipwreck, portal, gods, ten challenges), shown once
 
 ## Colony
 

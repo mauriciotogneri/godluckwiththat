@@ -1,6 +1,6 @@
 import {describe, it, expect, vi, afterEach} from 'vitest'
 import {AUTOSAVE_DEFAULT_INTERVAL, AUTOSAVE_MAX_INTERVAL, AUTOSAVE_MIN_INTERVAL} from '@/js/engine/constants.js'
-import {STORAGE_AUTOSAVE_INTERVAL} from '@/js/engine/enums.js'
+import {STORAGE_AUTOSAVE_INTERVAL, STORAGE_INTRO_SEEN} from '@/js/engine/enums.js'
 import storage from '@/js/engine/storage.js'
 
 /**
@@ -70,6 +70,31 @@ describe('storage', () => {
         },
       })
       expect(storage.autosaveInterval).toBe(AUTOSAVE_DEFAULT_INTERVAL)
+    })
+  })
+
+  describe('introSeen', () => {
+    it('should be false when nothing is stored', () => {
+      stubLocalStorage({})
+      expect(storage.introSeen).toBe(false)
+    })
+
+    it('should be true once stored as seen', () => {
+      stubLocalStorage({
+        [STORAGE_INTRO_SEEN]: 'true',
+      })
+      expect(storage.introSeen).toBe(true)
+    })
+
+    it('should be false when storage throws', () => {
+      vi.stubGlobal('window', {
+        localStorage: {
+          getItem: () => {
+            throw new Error('blocked')
+          },
+        },
+      })
+      expect(storage.introSeen).toBe(false)
     })
   })
 })
