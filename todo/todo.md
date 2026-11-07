@@ -3,4 +3,4 @@
 - Improve challenges
   - Add images on each blessing card (all blessings share `blessing.jpg`; punishments already have one image per type)
 
-- Implement story intro
+- Implement final screen after finishing the game
