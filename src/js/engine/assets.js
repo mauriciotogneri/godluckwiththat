@@ -79,6 +79,7 @@ export const IMG_BLESSING_GIFT_FROM_THE_HEAVENS = '/img/blessings/gift_from_the_
 export const IMG_BLESSING_HOLY_EXPANSION = '/img/blessings/holy_expansion.webp'
 export const IMG_BLESSING_RAPID_CONSTRUCTION = '/img/blessings/rapid_construction.webp'
 export const IMG_BLESSING_RICH_MINES = '/img/blessings/rich_mines.webp'
+export const IMG_BLESSING_TEMPORARY_PEACE = '/img/blessings/temporary_peace.webp'
 export const IMG_BLESSING_WISDOM_OF_THE_GODS = '/img/blessings/wisdom_of_the_gods.webp'
 
 // Seasons
