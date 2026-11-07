@@ -141,8 +141,11 @@ describe('simulation', () => {
     mkdirSync(REPORTS_DIRECTORY, {
       recursive: true,
     })
+    // Options left at their defaults add nothing, so the usual runs keep their file names
+    const hoursSuffix = options.maxHours === DEFAULT_MAX_HOURS ? '' : `_hours${options.maxHours}`
+    const stepSuffix = options.step === DEFAULT_STEP ? '' : `_step${options.step}`
     const scalingSuffix = options.scaling ? '' : '_noscaling'
-    const file = join(REPORTS_DIRECTORY, `report_${reportOptions.bots.join('-')}_seed${options.seed}_runs${options.runs}${scalingSuffix}.json`)
+    const file = join(REPORTS_DIRECTORY, `report_${reportOptions.bots.join('-')}_seed${options.seed}_runs${options.runs}${hoursSuffix}${stepSuffix}${scalingSuffix}.json`)
     writeFileSync(file, JSON.stringify({
       report: report,
       runs: runsByBot,

@@ -9,7 +9,7 @@ import {adjustChallenge, adjustDelay, healthScore} from '@/js/engine/challenge_s
 import {colonyStats} from '@/js/engine/colony_stats.js'
 import {migrateSave} from '@/js/engine/save_migration.js'
 import storage from '@/js/engine/storage.js'
-import {BOUNDED_RESOURCES, BUILDING_CLASS_MAP, BUILDING_IMAGE_MAP, CHALLENGE_DEFINITIONS, DOWNGRADABLE_BUILDINGS, HQ_BUILDING_UNLOCKS, HQ_RESOURCE_UNLOCKS, HQ_TYPES, IMG_BUILDING_HEADQUARTERS_MAP, RESEARCH_COSTS, RESEARCH_PREREQUISITES, RESEARCH_TREE, RESOURCE_LIMIT_EVENT_CONFIG, RESOURCE_NEGATIVE_PRODUCTION_EVENT_CONFIG, TUTORIAL_STEPS, UNIT_BUILDINGS, UNIT_TYPES} from '@/js/engine/constants.js'
+import {BLESSING_PRODUCTIVITY_RESOURCES, BOUNDED_RESOURCES, BUILDING_CLASS_MAP, BUILDING_IMAGE_MAP, CHALLENGE_DEFINITIONS, DOWNGRADABLE_BUILDINGS, HQ_BUILDING_UNLOCKS, HQ_RESOURCE_UNLOCKS, HQ_TYPES, IMG_BUILDING_HEADQUARTERS_MAP, RESEARCH_COSTS, RESEARCH_PREREQUISITES, RESEARCH_TREE, RESOURCE_LIMIT_EVENT_CONFIG, RESOURCE_NEGATIVE_PRODUCTION_EVENT_CONFIG, TUTORIAL_STEPS, UNIT_BUILDINGS, UNIT_TYPES} from '@/js/engine/constants.js'
 import Colony from '@/js/models/colony.js'
 import Consumption from '@/js/models/consumption.js'
 import Cost from '@/js/models/cost.js'
@@ -17,7 +17,7 @@ import Meta from '@/js/models/meta.js'
 import Production from '@/js/models/production.js'
 import Raid from '@/js/models/raid.js'
 import RaidReport from '@/js/models/raid_report.js'
-import {BLESSING_BLESSED_MARKETS, BLESSING_CELESTIAL_FORTIFICATION, BLESSING_CELESTIAL_PROSPERITY, BLESSING_FAVORABLE_WEATHER, BLESSING_FERTILE_SOIL, BLESSING_FOREST_BLOOM, BLESSING_GIFT_FROM_THE_HEAVENS, BLESSING_HOLY_EXPANSION, BLESSING_RAPID_CONSTRUCTION, BLESSING_RICH_MINES, BLESSING_TEMPORARY_PEACE, BLESSING_WISDOM_OF_THE_GODS, BONUS_CONSTRUCTION_TIME, BONUS_EXPANSION_COST, BONUS_FAITH_PRODUCTION, BONUS_FOOD_CONSUMPTION, BONUS_FOOD_PRODUCTION, BONUS_HABITATION, BONUS_KNOWLEDGE_PRODUCTION, BONUS_MINING_PRODUCTION, BONUS_STORAGE_CAPACITY, BONUS_UNIT_ATTACK, BONUS_UNIT_DEFENSE, BONUS_WARNING_TIME, BONUS_WOOD_CONSUMPTION, BONUS_WOOD_PRODUCTION, BONUS_WORKER_PRODUCTIVITY, BUILDING_ACADEMY, BUILDING_COPPER_MINE, BUILDING_FARM, BUILDING_GOLD_MINE, BUILDING_HEADQUARTERS, BUILDING_HOUSE, BUILDING_IRON_MINE, BUILDING_MARKET, BUILDING_MONUMENT, BUILDING_QUARRY, BUILDING_STOREHOUSE, BUILDING_TEMPLE, BUILDING_WOODCUTTER, CHALLENGE_MODAL_FAILURE, CHALLENGE_MODAL_REWARD, CHALLENGE_MODAL_WIN, CHALLENGE_MOOD_MERCIFUL, CHALLENGE_STATUS_STARTED, EVENT_TYPE_BUILDING_UPGRADE, EVENT_TYPE_CHALLENGE_STARTED, EVENT_TYPE_POPULATION_LIMIT_REACHED, EVENT_TYPE_RAID_INCOMING, EVENT_TYPE_RAID_RESULT, EVENT_TYPE_RESEARCH_COMPLETE, EVENT_TYPE_RESOURCE_LIMIT_REACHED, EVENT_TYPE_RESOURCE_NEGATIVE_PRODUCTION, EVENT_TYPE_SEASON_CHANGED, EVENT_TYPE_IDLE_WORKERS, EVENT_TYPE_TERRITORY_LIMIT_REACHED, HQ_TYPE_CAMP, PUNISHMENT_CROP_FAILURE, PUNISHMENT_LANDSLIDE, PUNISHMENT_PLAGUE, PUNISHMENT_VOLCANO, PUNISHMENT_WILDFIRES, RAID_PHASE_INCOMING, RAID_PHASE_WAITING, RESOURCE_FOOD, RESOURCE_WOOD, TRIBUTE_CANCEL, TRIBUTE_DELAY, TUTORIAL_MODAL_SEASON_CHANGED, TUTORIAL_MODAL_NEGATIVE_PRODUCTION, TUTORIAL_MODAL_HQ_UPGRADE, TUTORIAL_MODAL_CHALLENGE_STARTED, TUTORIAL_MODAL_RAID_INCOMING} from '@/js/engine/enums.js'
+import {BLESSING_BLESSED_MARKETS, BLESSING_CELESTIAL_FORTIFICATION, BLESSING_FAVORABLE_WEATHER, BLESSING_GIFT_FROM_THE_HEAVENS, BLESSING_HOLY_EXPANSION, BLESSING_RAPID_CONSTRUCTION, BLESSING_TEMPORARY_PEACE, BONUS_CONSTRUCTION_TIME, BONUS_EXPANSION_COST, BONUS_FAITH_PRODUCTION, BONUS_FOOD_CONSUMPTION, BONUS_FOOD_PRODUCTION, BONUS_HABITATION, BONUS_KNOWLEDGE_PRODUCTION, BONUS_MINING_PRODUCTION, BONUS_STORAGE_CAPACITY, BONUS_UNIT_ATTACK, BONUS_UNIT_DEFENSE, BONUS_WARNING_TIME, BONUS_WOOD_CONSUMPTION, BONUS_WOOD_PRODUCTION, BONUS_WORKER_PRODUCTIVITY, BUILDING_ACADEMY, BUILDING_COPPER_MINE, BUILDING_FARM, BUILDING_GOLD_MINE, BUILDING_HEADQUARTERS, BUILDING_HOUSE, BUILDING_IRON_MINE, BUILDING_MARKET, BUILDING_MONUMENT, BUILDING_QUARRY, BUILDING_STOREHOUSE, BUILDING_TEMPLE, BUILDING_WOODCUTTER, CHALLENGE_MODAL_FAILURE, CHALLENGE_MODAL_REWARD, CHALLENGE_MODAL_WIN, CHALLENGE_MOOD_MERCIFUL, CHALLENGE_STATUS_STARTED, EVENT_TYPE_BUILDING_UPGRADE, EVENT_TYPE_CHALLENGE_STARTED, EVENT_TYPE_POPULATION_LIMIT_REACHED, EVENT_TYPE_RAID_INCOMING, EVENT_TYPE_RAID_RESULT, EVENT_TYPE_RESEARCH_COMPLETE, EVENT_TYPE_RESOURCE_LIMIT_REACHED, EVENT_TYPE_RESOURCE_NEGATIVE_PRODUCTION, EVENT_TYPE_SEASON_CHANGED, EVENT_TYPE_IDLE_WORKERS, EVENT_TYPE_TERRITORY_LIMIT_REACHED, HQ_TYPE_CAMP, PUNISHMENT_CROP_FAILURE, PUNISHMENT_LANDSLIDE, PUNISHMENT_PLAGUE, PUNISHMENT_VOLCANO, PUNISHMENT_WILDFIRES, RAID_PHASE_INCOMING, RAID_PHASE_WAITING, RESOURCE_FOOD, RESOURCE_WOOD, TRIBUTE_CANCEL, TRIBUTE_DELAY, TUTORIAL_MODAL_SEASON_CHANGED, TUTORIAL_MODAL_NEGATIVE_PRODUCTION, TUTORIAL_MODAL_HQ_UPGRADE, TUTORIAL_MODAL_CHALLENGE_STARTED, TUTORIAL_MODAL_RAID_INCOMING} from '@/js/engine/enums.js'
 import {t} from '@/js/i18n/localized.js'
 
 /**
@@ -499,26 +499,10 @@ class State {
 
     // Blessing productivity bonuses (additive)
     for (const blessing of blessings) {
-      if (blessing.type === BLESSING_FERTILE_SOIL && blessing.productivity) {
-        multipliers.food += blessing.productivity
-      } else if (blessing.type === BLESSING_FOREST_BLOOM && blessing.productivity) {
-        multipliers.wood += blessing.productivity
-      } else if (blessing.type === BLESSING_RICH_MINES && blessing.productivity) {
-        multipliers.stone += blessing.productivity
-        multipliers.copper += blessing.productivity
-        multipliers.iron += blessing.productivity
-        multipliers.gold += blessing.productivity
-      } else if (blessing.type === BLESSING_WISDOM_OF_THE_GODS && blessing.productivity) {
-        multipliers.knowledge += blessing.productivity
-      } else if (blessing.type === BLESSING_CELESTIAL_PROSPERITY && blessing.productivity) {
-        multipliers.food += blessing.productivity
-        multipliers.wood += blessing.productivity
-        multipliers.stone += blessing.productivity
-        multipliers.copper += blessing.productivity
-        multipliers.iron += blessing.productivity
-        multipliers.gold += blessing.productivity
-        multipliers.faith += blessing.productivity
-        multipliers.knowledge += blessing.productivity
+      if (blessing.productivity) {
+        for (const resource of BLESSING_PRODUCTIVITY_RESOURCES[blessing.type] ?? []) {
+          multipliers[resource] += blessing.productivity
+        }
       }
     }
 
@@ -1292,16 +1276,12 @@ class State {
   }
 
   /**
-   * Generates the raiders: the count grows with the territory cap and the years, and is split at
-   * random among the unit types the colony can already train (the remainder goes to one random type).
+   * Generates the raiders: _raidSize of them, split at random among the unit types the colony can
+   * already train (the remainder goes to one random type).
    * @returns {Object<string, number>} Raider count per unit type
    */
   _generateRaidArmy() {
-    const {
-      resources, buildings,
-    } = this.colony
-    const territoryCap = buildings.headquarters.territoryCap + resources.territoryBonus
-    const count = Math.floor(RAID_UNITS_BASE + RAID_UNITS_PER_TERRITORY * territoryCap + RAID_UNITS_PER_YEAR * (this.colony.year - 1))
+    const count = this._raidSize
     const unlockedBuildings = this._unlockedByHeadquarters(HQ_BUILDING_UNLOCKS)
     const allowedTypes = UNIT_TYPES.filter(type => unlockedBuildings.includes(UNIT_BUILDINGS[type]))
 
@@ -1378,6 +1358,18 @@ class State {
     } = this.colony
     const territoryCap = buildings.headquarters.territoryCap + resources.territoryBonus
     return Math.max(RAID_INTERVAL_MIN, RAID_INTERVAL_BASE - RAID_INTERVAL_PER_TERRITORY * territoryCap)
+  }
+
+  /**
+   * Raiders the next raid brings; more as the territory cap and the years grow.
+   * @returns {number} Raider count
+   */
+  get _raidSize() {
+    const {
+      resources, buildings,
+    } = this.colony
+    const territoryCap = buildings.headquarters.territoryCap + resources.territoryBonus
+    return Math.floor(RAID_UNITS_BASE + RAID_UNITS_PER_TERRITORY * territoryCap + RAID_UNITS_PER_YEAR * (this.colony.year - 1))
   }
 
   /**

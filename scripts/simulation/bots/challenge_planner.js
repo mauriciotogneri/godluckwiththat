@@ -2,8 +2,8 @@
 // Bots only see a challenge once its countdown runs (as the player does); they never look ahead.
 
 import {HQ_TERRITORY_PER_LEVEL, PRODUCTION_RATES} from '@/js/engine/balancing.js'
-import {BOUNDED_RESOURCES, HEADER_RESOURCES, HQ_RESOURCE_UNLOCKS} from '@/js/engine/constants.js'
-import {BLESSING_BLESSED_MARKETS, BLESSING_CELESTIAL_FORTIFICATION, BLESSING_CELESTIAL_PROSPERITY, BLESSING_FAVORABLE_WEATHER, BLESSING_FERTILE_SOIL, BLESSING_FOREST_BLOOM, BLESSING_GIFT_FROM_THE_HEAVENS, BLESSING_HOLY_EXPANSION, BLESSING_RAPID_CONSTRUCTION, BLESSING_RICH_MINES, BLESSING_TEMPORARY_PEACE, BLESSING_WISDOM_OF_THE_GODS, BUILDING_ALTAR, BUILDING_HOUSE, BUILDING_MONUMENT, BUILDING_STOREHOUSE, BUILDING_TEMPLE, CHALLENGE_STATUS_STARTED, HQ_TYPE_CAMP, RESOURCE_COPPER, RESOURCE_FAITH, RESOURCE_FOOD, RESOURCE_GOLD, RESOURCE_IRON, RESOURCE_KNOWLEDGE, RESOURCE_STONE, RESOURCE_WOOD} from '@/js/engine/enums.js'
+import {BLESSING_PRODUCTIVITY_RESOURCES, BOUNDED_RESOURCES, HQ_RESOURCE_UNLOCKS} from '@/js/engine/constants.js'
+import {BLESSING_BLESSED_MARKETS, BLESSING_CELESTIAL_FORTIFICATION, BLESSING_FAVORABLE_WEATHER, BLESSING_GIFT_FROM_THE_HEAVENS, BLESSING_HOLY_EXPANSION, BLESSING_RAPID_CONSTRUCTION, BLESSING_TEMPORARY_PEACE, BUILDING_ALTAR, BUILDING_HOUSE, BUILDING_MONUMENT, BUILDING_STOREHOUSE, BUILDING_TEMPLE, CHALLENGE_STATUS_STARTED, HQ_TYPE_CAMP, RESOURCE_FAITH} from '@/js/engine/enums.js'
 import {BLESSING_CHOICE_FIRST, BLESSING_CHOICE_WEAKEST_RESOURCE, HOLD_REACHABLE} from './bot_profiles.js'
 import {buildingItem, emptyAmounts, expansionItem, freeTerritory, headquartersUpgradeItem, PRODUCER_KEYS, PRODUCER_RESOURCES, plannedLevel, resourceValue, storageCapOf} from './economy_planner.js'
 
@@ -24,20 +24,6 @@ const RELIGIOUS_BUILDINGS = [
   BUILDING_TEMPLE,
   BUILDING_MONUMENT,
 ]
-
-// Resources each productivity blessing raises
-const PRODUCTIVITY_BLESSING_RESOURCES = {
-  [BLESSING_FERTILE_SOIL]: [RESOURCE_FOOD],
-  [BLESSING_FOREST_BLOOM]: [RESOURCE_WOOD],
-  [BLESSING_RICH_MINES]: [
-    RESOURCE_STONE,
-    RESOURCE_COPPER,
-    RESOURCE_IRON,
-    RESOURCE_GOLD,
-  ],
-  [BLESSING_WISDOM_OF_THE_GODS]: [RESOURCE_KNOWLEDGE],
-  [BLESSING_CELESTIAL_PROSPERITY]: HEADER_RESOURCES,
-}
 
 /**
  * The challenge the bot is working on: the active one once its countdown has run for the
@@ -225,7 +211,7 @@ function weakestResourceBlessing(state, blessings) {
   let bestIndex = 0
   let bestRate = Infinity
   blessings.forEach((blessing, index) => {
-    const raised = (PRODUCTIVITY_BLESSING_RESOURCES[blessing.type] ?? []).filter(resource => unlocked.includes(resource))
+    const raised = (BLESSING_PRODUCTIVITY_RESOURCES[blessing.type] ?? []).filter(resource => unlocked.includes(resource))
     for (const resource of raised) {
       const rate = state.netProduction(resource) * resourceValue(resource)
       if (rate < bestRate) {
@@ -250,7 +236,7 @@ function blessingValue(state, blessing) {
   const productionValue = BOUNDED_RESOURCES.reduce((sum, resource) => sum + state.production[resource] * resourceValue(resource), 0)
   const stockValue = BOUNDED_RESOURCES.reduce((sum, resource) => sum + resources[resource] * resourceValue(resource), 0)
   const raidsActive = buildings.headquarters.type !== HQ_TYPE_CAMP
-  const raised = PRODUCTIVITY_BLESSING_RESOURCES[blessing.type]
+  const raised = BLESSING_PRODUCTIVITY_RESOURCES[blessing.type]
   if (raised) {
     return raised.reduce((sum, resource) => sum + state.production[resource] * resourceValue(resource), 0) * blessing.productivity * blessing.timeout
   }

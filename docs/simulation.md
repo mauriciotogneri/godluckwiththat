@@ -10,7 +10,7 @@ SIM_BOTS=strong SIM_RUNS=5 npm run simulate
 SIM_SEED=100 SIM_MAX_HOURS=3 npm run simulate
 ```
 
-It runs through Vitest (`vitest.simulation.config.js`, which merges the Vite config for the `@` alias and uses the same setup file as the tests) and is not part of `npm test`. The text report is printed to the terminal and the full data (report plus every run) is written to `scripts/simulation/reports/report_<bots>_seed<seed>_runs<runs>.json`, with `_noscaling` added when scaling is off (git-ignored, overwritten by the same options).
+It runs through Vitest (`vitest.simulation.config.js`, which merges the Vite config for the `@` alias and uses the same setup file as the tests) and is not part of `npm test`. The text report is printed to the terminal and the full data (report plus every run) is written to `scripts/simulation/reports/report_<bots>_seed<seed>_runs<runs>.json`, with `_hours<hours>` and `_step<step>` added when `SIM_MAX_HOURS` or `SIM_STEP` differ from their defaults and `_noscaling` added when scaling is off (git-ignored, overwritten by the same options).
 
 | Variable        | Default | Meaning                                                                                      |
 |-----------------|---------|----------------------------------------------------------------------------------------------|

@@ -1,7 +1,7 @@
 // Military planning for the simulation bots: an army sized to the expected raid, and the answer to an announced one.
 // The bots read the same battle forecast the military window shows the player.
 
-import {RAID_UNITS_BASE, RAID_UNITS_PER_TERRITORY, RAID_UNITS_PER_YEAR, UNIT_STATS} from '@/js/engine/balancing.js'
+import {UNIT_STATS} from '@/js/engine/balancing.js'
 import {resolveBattle} from '@/js/engine/battle.js'
 import {UNIT_BUILDINGS, UNIT_TYPES} from '@/js/engine/constants.js'
 import {HQ_TYPE_CAMP, RAID_PHASE_INCOMING, TRIBUTE_CANCEL, TRIBUTE_DELAY} from '@/js/engine/enums.js'
@@ -12,17 +12,13 @@ const DELAY_WHEN_SECONDS = 30 // Pays for a delay only once a losing raid is thi
 const MAX_UNITS_PER_RESPONSE = 50 // Units bought at most while answering one announced raid
 
 /**
- * Raiders the next raid is expected to bring: the engine's raid size for the current territory and
- * year, split evenly over the unit types the colony has unlocked (the real split is random).
+ * Raiders the next raid is expected to bring: the engine's raid size, split evenly over the unit
+ * types the colony has unlocked (the real split is random).
  * @param {State} state - Game state
  * @returns {Object<string, number>} Expected raiders by unit type
  */
 export function expectedRaid(state) {
-  const {
-    resources, buildings, year,
-  } = state.colony
-  const territoryCap = buildings.headquarters.territoryCap + resources.territoryBonus
-  const count = Math.floor(RAID_UNITS_BASE + RAID_UNITS_PER_TERRITORY * territoryCap + RAID_UNITS_PER_YEAR * (year - 1))
+  const count = state._raidSize
   const types = UNIT_TYPES.filter(type => state.unlockedBuildings.has(UNIT_BUILDINGS[type]))
   const enemy = {}
   UNIT_TYPES.forEach(type => {

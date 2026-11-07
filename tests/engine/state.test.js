@@ -7540,6 +7540,30 @@ describe('State', () => {
     })
   })
 
+  // ── _raidSize ─────────────────────────────────────────────────────
+
+  describe('_raidSize', () => {
+    it('should grow with the territory cap and the year', async () => {
+      const state = await createRaidState({
+        colonyOverrides: {
+          year: 3,
+          resources: {
+            territoryBonus: 10,
+          },
+          buildingOverrides: {
+            headquarters: {
+              level: 2,
+              type: HQ_TYPE_SETTLEMENT,
+            },
+          },
+        },
+      })
+      // Territory cap 2 × 10 + 10 = 30: floor(3 + 4.5 + 2 × 2) = 11
+      expect(state._raidSize).toBe(11)
+      expect(Math.floor(RAID_UNITS_BASE + RAID_UNITS_PER_TERRITORY * 30 + RAID_UNITS_PER_YEAR * 2)).toBe(11)
+    })
+  })
+
   // ── _generateRaidArmy ─────────────────────────────────────────────
 
   describe('_generateRaidArmy', () => {

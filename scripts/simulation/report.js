@@ -1,10 +1,9 @@
 // Report for the balance simulation: aggregates the run results per bot and formats them as text.
 
-import {CHALLENGE_DEFINITIONS, CHALLENGE_MOODS, HEADER_RESOURCES, HQ_TYPES} from '@/js/engine/constants.js'
+import {CHALLENGE_DEFINITIONS, CHALLENGE_MOODS, HEADER_RESOURCES, HQ_TYPES, SECONDS_PER_MINUTE} from '@/js/engine/constants.js'
 import {calibrateChallenge} from './calibration.js'
 import {MILESTONE_SECONDS, RESULT_SUCCESS} from './run_recorder.js'
 
-const SECONDS_PER_MINUTE = 60
 const REFERENCE_BOT = 'average' // Bot whose colony stats feed the reference table
 const REFERENCE_DECIMALS = 2 // Decimals kept in the reference table
 
