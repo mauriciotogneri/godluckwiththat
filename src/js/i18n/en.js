@@ -14,9 +14,9 @@ export const LOCALIZED_EN = {
 
   // Intro screen
   'screen.intro.title': 'Stranded',
-  'screen.intro.paragraph1': 'The storm took your ship, but not your people. You wash ashore on an island no map has ever shown.',
-  'screen.intro.paragraph2': 'High on the cliffs stands an ancient portal. When you touch it, the gods answer: it is the only way home, and only they can open it.',
-  'screen.intro.paragraph3': 'But the gods give nothing freely. They will send you ten challenges to test your faith. Endure them all, and the portal will open. Fail, and you will feel their wrath.',
+  'screen.intro.paragraph1': 'The storm took our ship, but not our people. We wash ashore on an island no map has ever shown.',
+  'screen.intro.paragraph2': 'High on the cliffs stands an ancient portal. When we touch it, the gods answer: it is the only way home, and only they can open it.',
+  'screen.intro.paragraph3': 'But the gods give nothing freely. They will send us ten challenges to test our faith. If we endure them all, the portal will open. If we fail, we will feel their wrath.',
   'screen.intro.start': 'Start',
 
   // Settings screen

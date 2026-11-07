@@ -14,9 +14,9 @@ export const LOCALIZED_ES = {
 
   // Intro screen
   'screen.intro.title': 'Náufragos',
-  'screen.intro.paragraph1': 'La tormenta se llevó tu barco, pero no a tu gente. Llegas a la orilla de una isla que ningún mapa ha mostrado jamás.',
+  'screen.intro.paragraph1': 'La tormenta se llevó nuestro barco, pero no a nuestra gente. Llegamos a la orilla de una isla que ningún mapa ha mostrado jamás.',
   'screen.intro.paragraph2': 'En lo alto de los acantilados se alza un portal antiguo. Al tocarlo, los dioses responden: es el único camino a casa, y solo ellos pueden abrirlo.',
-  'screen.intro.paragraph3': 'Pero los dioses no regalan nada. Te enviarán diez desafíos para poner a prueba tu fe. Supéralos todos y el portal se abrirá. Si fallas, sentirás su ira.',
+  'screen.intro.paragraph3': 'Pero los dioses no regalan nada. Nos enviarán diez desafíos para poner a prueba nuestra fe. Si los superamos todos, el portal se abrirá. Si fallamos, sentiremos su ira.',
   'screen.intro.start': 'Empezar',
 
   // Settings screen

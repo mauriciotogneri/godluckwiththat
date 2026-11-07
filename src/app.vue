@@ -17,24 +17,28 @@ const currentScreen = ref('home')
 const gameState = shallowRef(null) // Shallow so Vue never proxies the plain engine State
 const gameKey = ref(0)
 
-/**
- * Preloads audio, then shows the story intro before this device's first new game,
- * or restores State from save data (or creates a new one) and switches to the game screen.
- * @param {Object|null} savedData - Saved game to continue, or null for a new game
- */
+/** Preloads audio, restores State from save data (or creates a new one), switches to game screen, and starts background music. */
 function startGame(savedData) {
   audio.preload()
+  launchGame(savedData ? State.fromJSON(savedData) : null)
+}
+
+/**
+ * Handles the home menu's start button: its New game shows the story intro first on this device's first new game.
+ * @param {Object|null} savedData - Saved game to continue, or null for a new game
+ */
+function startFromMenu(savedData) {
   if (!savedData && !storage.introSeen) {
     currentScreen.value = 'intro'
     return
   }
-  launchGame(savedData ? State.fromJSON(savedData) : null)
+  startGame(savedData)
 }
 
 /** Records that the story intro was seen and starts the new game it introduced. */
 function finishIntro() {
   storage.introSeen = true
-  launchGame(null)
+  startGame(null)
 }
 
 /**
@@ -104,7 +108,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <HomeScreen v-if="currentScreen === 'home'" @start="startGame" @settings="currentScreen = 'settings'" @about="currentScreen = 'about'" />
+  <HomeScreen v-if="currentScreen === 'home'" @start="startFromMenu" @settings="currentScreen = 'settings'" @about="currentScreen = 'about'" />
   <IntroScreen v-else-if="currentScreen === 'intro'" @start="finishIntro" />
   <GameScreen v-else-if="currentScreen === 'game'" :key="gameKey" :initial-state="gameState" @quit="quitGame" @restart="restartGame" />
   <SettingsScreen v-else-if="currentScreen === 'settings'" @close="goHome" />

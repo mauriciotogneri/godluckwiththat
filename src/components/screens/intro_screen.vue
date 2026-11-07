@@ -136,12 +136,13 @@ onMounted(() => {
   background: linear-gradient(90deg, rgba(var(--color-accent-rgb), 0.8), rgba(var(--color-accent-rgb), 0));
 }
 
-/* Story text */
+/* Story text, justified */
 .intro-paragraph {
   font-family: var(--font-body);
   font-weight: 300;
   font-size: clamp(1rem, 1.05vw, 1.2rem);
   line-height: 1.75;
+  text-align: justify;
   color: rgba(var(--color-text-rgb), 0.88);
   text-shadow: 0 1px 3px rgba(var(--color-shadow-rgb), 0.6);
 }

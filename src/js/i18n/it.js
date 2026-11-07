@@ -14,9 +14,9 @@ export const LOCALIZED_IT = {
 
   // Intro screen
   'screen.intro.title': 'Naufraghi',
-  'screen.intro.paragraph1': 'La tempesta si è presa la tua nave, ma non la tua gente. Approdi su un\'isola che nessuna mappa ha mai mostrato.',
-  'screen.intro.paragraph2': 'In cima alle scogliere sorge un antico portale. Quando lo tocchi, gli dèi rispondono: è l\'unica via per tornare a casa, e solo loro possono aprirlo.',
-  'screen.intro.paragraph3': 'Ma gli dèi non concedono nulla per nulla. Ti manderanno dieci sfide per mettere alla prova la tua fede. Superale tutte e il portale si aprirà. Se fallisci, subirai la loro ira.',
+  'screen.intro.paragraph1': 'La tempesta si è presa la nostra nave, ma non la nostra gente. Approdiamo su un\'isola che nessuna mappa ha mai mostrato.',
+  'screen.intro.paragraph2': 'In cima alle scogliere sorge un antico portale. Quando lo tocchiamo, gli dèi rispondono: è l\'unica via per tornare a casa, e solo loro possono aprirlo.',
+  'screen.intro.paragraph3': 'Ma gli dèi non concedono nulla per nulla. Ci manderanno dieci sfide per mettere alla prova la nostra fede. Se le superiamo tutte, il portale si aprirà. Se falliamo, subiremo la loro ira.',
   'screen.intro.start': 'Inizia',
 
   // Settings screen
