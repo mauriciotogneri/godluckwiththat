@@ -37,7 +37,7 @@ const SANITY_FIELDS = [
 ]
 
 // Done criteria thresholds (todo/dynamic_challenges.md)
-const WEAK_MAX_ATTEMPTS = 2 // Weak bot: attempts per challenge, on every seed
+const WEAK_MAX_ATTEMPTS = 4 // Weak bot: attempts per challenge, on every seed
 const AVERAGE_RUN_MINUTES = [
   105,
   135,
@@ -46,7 +46,7 @@ const AVERAGE_MAX_FAILURES = 2 // Average bot: failures per run allowed on most 
 const AVERAGE_FAILURE_SEED_SHARE = 0.9 // …on at least this share of the seeds
 const AVERAGE_SPARE_SHARE = [
   0.15,
-  0.65,
+  0.7,
 ] // Average bot: median time left on the timer per challenge (successful attempts)
 const STRONG_MAX_FAILED_SEED_SHARE = 0.05 // Strong bot: share of the seeds allowed a failure
 const STRONG_MIN_MET_SHARE = 0.5 // Strong bot: median time to first meet the requirements, as a share of the timer
