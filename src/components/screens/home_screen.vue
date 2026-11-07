@@ -12,7 +12,6 @@ const emit = defineEmits([
   EMIT_ABOUT,
 ])
 
-const isMobile = ref(window.matchMedia('(pointer: coarse)').matches)
 const savedData = ref(storage.savedGame)
 const hasSavedGame = computed(() => savedData.value !== null)
 </script>
@@ -27,10 +26,10 @@ const hasSavedGame = computed(() => savedData.value !== null)
       </h1>
 
       <div class="home-buttons screen-veil">
-        <button v-if="!isMobile && hasSavedGame" class="btn-gold start-button" @click="playTap(); emit(EMIT_START, savedData)">
+        <button v-if="hasSavedGame" class="btn-gold start-button" @click="playTap(); emit(EMIT_START, savedData)">
           {{ t('screen.home.continue') }}
         </button>
-        <button v-else-if="!isMobile" class="btn-gold start-button" @click="playTap(); emit(EMIT_START, null)">
+        <button v-else class="btn-gold start-button" @click="playTap(); emit(EMIT_START, null)">
           {{ t('screen.home.newGame') }}
         </button>
         <button class="btn-gold start-button" @click="playTap(); emit(EMIT_SETTINGS)">
@@ -40,7 +39,7 @@ const hasSavedGame = computed(() => savedData.value !== null)
           {{ t('screen.home.about') }}
         </button>
 
-        <p v-if="isMobile" class="mobile-notice">
+        <p class="mobile-notice">
           {{ t('screen.home.mobileUnavailable') }}
         </p>
       </div>
@@ -81,13 +80,28 @@ const hasSavedGame = computed(() => savedData.value !== null)
   height: 160%;
 }
 
-/* Desktop-only notice for mobile visitors */
+/* Desktop-only notice, shown instead of the menu on narrow screens */
 .mobile-notice {
+  display: none;
+  max-width: 80vw;
   font-family: var(--font-display);
-  font-size: 0.95rem;
+  font-size: clamp(1.4rem, 6vw, 1.9rem);
+  line-height: 1.3;
   color: var(--color-text);
   text-align: center;
   letter-spacing: 0.04em;
+  text-wrap: balance;
+}
+
+/* Narrow screens (phones): no menu buttons, only the notice */
+@media (max-width: 767px) {
+  .home-buttons .start-button {
+    display: none;
+  }
+
+  .mobile-notice {
+    display: block;
+  }
 }
 
 </style>
