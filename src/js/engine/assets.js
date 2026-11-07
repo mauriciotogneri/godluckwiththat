@@ -74,6 +74,7 @@ export const IMG_BLESSING_FERTILE_SOIL = '/img/blessings/fertile_soil.webp'
 export const IMG_BLESSING_FOREST_BLOOM = '/img/blessings/forest_bloom.webp'
 export const IMG_BLESSING_GIFT_FROM_THE_HEAVENS = '/img/blessings/gift_from_the_heavens.webp'
 export const IMG_BLESSING_HOLY_EXPANSION = '/img/blessings/holy_expansion.webp'
+export const IMG_BLESSING_RICH_MINES = '/img/blessings/rich_mines.webp'
 
 // Seasons
 export const IMG_SEASON_COLD = '/img/seasons/cold.png'
