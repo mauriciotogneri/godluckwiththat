@@ -19,14 +19,14 @@ const hasSavedGame = computed(() => savedData.value !== null)
 
 <template>
   <div class="screen-layout">
-    <img class="home-background" :src="IMG_OTHER_HOME_BACKGROUND" alt="">
+    <img class="screen-background" :src="IMG_OTHER_HOME_BACKGROUND" alt="">
 
     <div class="screen-content home-content">
-      <h1 class="title">
+      <h1 class="title screen-veil">
         <img class="title-image" :src="IMG_OTHER_HOME_TITLE" width="1200" height="458" :alt="t('screen.home.title.line1') + ' ' + t('screen.home.title.line2')">
       </h1>
 
-      <div class="home-buttons">
+      <div class="home-buttons screen-veil">
         <button v-if="!isMobile && hasSavedGame" class="btn-gold start-button" @click="playTap(); emit(EMIT_START, savedData)">
           {{ t('screen.home.continue') }}
         </button>
@@ -49,17 +49,6 @@ const hasSavedGame = computed(() => savedData.value !== null)
 </template>
 
 <style scoped>
-/* Painted landscape filling the screen */
-.home-background {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-  pointer-events: none;
-}
-
 /* Title and buttons sit slightly above center */
 .home-content {
   margin-bottom: 10vh;
@@ -67,7 +56,6 @@ const hasSavedGame = computed(() => savedData.value !== null)
 
 /* Game title heading */
 .title {
-  position: relative;
   margin-bottom: 3.5rem;
   line-height: 0;
 }
@@ -81,37 +69,16 @@ const hasSavedGame = computed(() => savedData.value !== null)
 
 /* Menu button stack */
 .home-buttons {
-  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 1.5rem;
 }
 
-/* Dark blurred ovals behind the title and the buttons, fading into the painting */
-.title::before,
-.home-buttons::before {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  z-index: -1;
-  transform: translate(-50%, -50%);
-  background: rgba(0, 0, 0, 0.65);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
-  mask-image: radial-gradient(closest-side, rgba(0, 0, 0, 1) 62%, rgba(0, 0, 0, 0.45) 82%, rgba(0, 0, 0, 0) 100%);
-  pointer-events: none;
-}
-
+/* Rounder veil around the title artwork */
 .title::before {
   width: 160%;
   height: 160%;
-}
-
-.home-buttons::before {
-  width: 180%;
-  height: 150%;
 }
 
 /* Menu button — dark bronze plate in a gold frame */

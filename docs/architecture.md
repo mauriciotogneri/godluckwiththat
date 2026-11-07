@@ -372,7 +372,7 @@ Sequential divine challenges forming the game's win condition. State lives on `s
 
 **Effects**:
 - Home screen: painted landscape background with two dark, blurred oval veils (radial `mask-image` + `backdrop-filter`), one behind the title artwork and one behind the button stack; menu buttons are dark bronze plates with a gold frame
-- Settings and about screens: warm torchlight glow behind title (radial gradient accent)
+- Settings and about screens: the same painted landscape, blurred and darkened as a whole (`.screen-background--muted`) so the content reads without a veil
 - Modal: fade-in overlay + upward slide on content box, stone-like depth shadow
 - Buttons: bronze gradient background, border intensifies on hover, subtle `box-shadow` glow
 
@@ -388,7 +388,7 @@ Sequential divine challenges forming the game's win condition. State lives on `s
 - **CSS variables** on `:root`: `--color-bg`, `--color-bg-raised`, `--color-bg-surface`, `--color-text`, `--color-text-rgb`, `--color-accent`, `--color-accent-rgb`, `--color-border`, `--color-shadow-rgb`, `--color-red`, `--color-red-rgb`, `--color-green`, `--color-green-rgb`, `--color-highlight-rgb`, `--font-display`, `--font-body`, `--font-numeric` (the `-rgb` variants hold bare channels for `rgba(var(--…-rgb), alpha)`)
 - **Sizing**: card-level classes (`.action-*`, `.worker-*`, `.slot-actions`) size with container-query units (`cqh`, relative to the building card) and declare a rem fallback first; the sizes below are the rem fallbacks.
 - **Shared classes**:
-  - `.screen-layout`, `.screen-glow`, `.screen-content`, `.screen-title`, `.screen-btn-small` — full-screen layout, torchlight glow and buttons shared by the home, settings and about screens (the home screen uses its own background and veils instead of the glow).
+  - `.screen-layout`, `.screen-background` (plus `--muted`, blurred and darkened, on settings and about), `.screen-veil`, `.screen-content`, `.screen-title`, `.screen-btn-small` — full-screen layout, painted landscape background, dark blurred oval veil (`::before`, used by the home screen) and buttons shared by the home, settings and about screens.
   - `.btn-gold` — bronze-gradient button base (font, color, gradient background, border, hover glow). Includes `:disabled` state (reduced opacity, `cursor: not-allowed`, hover neutralized). Components add sizing/spacing overrides in scoped styles; the home screen menu buttons also replace its colors, frame and shadow.
   - `.tooltip` — CSS-only hover tooltip (positioned below element via `::after` pseudo-element reading `data-tooltip` attribute, 0.2s fade-in; hidden when the attribute is empty). `.tooltip--delayed` modifier adds a 1s hover delay (used on building card tooltips). `.tooltip--multiline` keeps line breaks (`\n`) in the tooltip text.
   - `.action-row` — flex row for icon-button + cost display pairs (`.action-row--disabled` dims the cost items). `.action-btn` (1.75rem square icon button), `.action-btn-icon` (1.1rem icon), `.action-cost` (cost container), `.action-cost-item` (icon + amount pair), `.action-cost-icon` (0.8rem resource icon), `.action-cost-amount` (0.7rem value text), `.action-cost-short` (red `--color-red` when unaffordable), `.action-cost-tooltip` (full-amount cost breakdown grid shown on hover after 1s; `.action-cost-tooltip--above` flips it upward).

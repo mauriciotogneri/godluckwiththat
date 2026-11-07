@@ -1,5 +1,6 @@
 <script setup>
 import {ref} from 'vue'
+import {IMG_OTHER_HOME_BACKGROUND} from '@/js/engine/assets.js'
 import audio, {playTap} from '@/js/engine/audio.js'
 import {AUTOSAVE_MAX_INTERVAL, AUTOSAVE_MIN_INTERVAL} from '@/js/engine/constants.js'
 import {EMIT_CLOSE} from '@/js/engine/enums.js'
@@ -54,7 +55,7 @@ function incrementInterval() {
 
 <template>
   <div class="screen-layout">
-    <div class="screen-glow" />
+    <img class="screen-background screen-background--muted" :src="IMG_OTHER_HOME_BACKGROUND" alt="">
 
     <div class="screen-content">
       <h1 class="screen-title">

@@ -1,5 +1,6 @@
 <script setup>
 import {ref} from 'vue'
+import {IMG_OTHER_HOME_BACKGROUND} from '@/js/engine/assets.js'
 import {playTap} from '@/js/engine/audio.js'
 import {EMIT_CLOSE} from '@/js/engine/enums.js'
 import {t} from '@/js/i18n/localized.js'
@@ -16,7 +17,7 @@ const appVersion = __APP_VERSION__
 
 <template>
   <div class="screen-layout">
-    <div class="screen-glow" />
+    <img class="screen-background screen-background--muted" :src="IMG_OTHER_HOME_BACKGROUND" alt="">
 
     <div class="screen-content">
       <h1 class="screen-title">
