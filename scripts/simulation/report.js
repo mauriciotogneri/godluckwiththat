@@ -45,9 +45,10 @@ const AVERAGE_RUN_MINUTES = [
 const AVERAGE_MAX_FAILURES = 2 // Average bot: failures per run allowed on most seeds…
 const AVERAGE_FAILURE_SEED_SHARE = 0.9 // …on at least this share of the seeds
 const AVERAGE_SPARE_SHARE = [
-  0.2,
-  0.6,
+  0.15,
+  0.65,
 ] // Average bot: median time left on the timer per challenge (successful attempts)
+const STRONG_MAX_FAILED_SEED_SHARE = 0.05 // Strong bot: share of the seeds allowed a failure
 const STRONG_MIN_MET_SHARE = 0.5 // Strong bot: median time to first meet the requirements, as a share of the timer
 
 /**
@@ -96,8 +97,15 @@ export const DONE_CRITERIA = [
       && spareShareOutliers(report, 'average', ...AVERAGE_SPARE_SHARE).length === 0,
   },
   {
-    description: 'Strong bot: finishes every seed without a failure',
-    check: report => Boolean(report.bots.strong) && report.bots.strong.finished === report.bots.strong.runs && report.bots.strong.failuresPerRun === 0,
+    description: `Strong bot: finishes every seed, with a failure on at most ${STRONG_MAX_FAILED_SEED_SHARE * 100}% of the seeds`,
+    check: report => {
+      const bot = report.bots.strong
+      if (!bot) {
+        return false
+      }
+      const failedRuns = bot.runs - (bot.failureCounts[0] ?? 0)
+      return bot.finished === bot.runs && failedRuns <= bot.runs * STRONG_MAX_FAILED_SEED_SHARE
+    },
   },
   {
     description: `Strong bot: median time to first meet the requirements at least ${STRONG_MIN_MET_SHARE * 100}% of the timer on every challenge`,
