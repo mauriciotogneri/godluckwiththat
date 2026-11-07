@@ -17,6 +17,8 @@ import {BONUS_STORAGE_CAPACITY, RESOURCE_FAITH} from '@/js/engine/enums.js'
  * - storageCap: shared cap of the bounded resources, with the Storage research bonus
  * - productionValue: net production of the bounded resources weighted by TRIBUTE_RESOURCE_VALUES;
  *   output into full storage is lost, so a resource at the cap adds no gain (a loss still counts)
+ * - productionValueWithoutBlessings: the same figure with what the active blessings add taken out, at
+ *   the current productivity (the simulation's sanity check compares it between the bots)
  * - faithRate: net faith per second
  * - armyUnits: trained units plus the archers the tower fights as
  * - researchCount: completed researches
@@ -64,13 +66,8 @@ export function colonyStats(state) {
   }
 
   const storageCap = buildings.storehouse.storageCap(bonuses[BONUS_STORAGE_CAPACITY] ?? 0)
-  let productionValue = 0
-  for (const resource of BOUNDED_RESOURCES) {
-    if (netRates[resource] > 0 && stock[resource] >= storageCap) {
-      continue
-    }
-    productionValue += netRates[resource] * TRIBUTE_RESOURCE_VALUES[resource]
-  }
+  const productionValue = storableProductionValue(netRates, stock, storageCap)
+  const productionValueWithoutBlessings = storableProductionValue(netRatesWithoutBlessings(state, bonuses, netRates), stock, storageCap)
 
   // Each year is one warm season followed by one cold season
   const seasonsPassed = (year - 1) * 2 + (season.isCold ? 1 : 0)
@@ -87,6 +84,7 @@ export function colonyStats(state) {
     staffedRates: staffedRates,
     storageCap: storageCap,
     productionValue: productionValue,
+    productionValueWithoutBlessings: productionValueWithoutBlessings,
     faithRate: netRates[RESOURCE_FAITH],
     armyUnits: military.totalUnits + buildings.tower.archers,
     researchCount: buildings.academy.completed.size,
@@ -101,5 +99,68 @@ export function colonyStats(state) {
     constructionMult: state._constructionDurationMult,
     unlockedResources: state._unlockedByHeadquarters(HQ_RESOURCE_UNLOCKS),
     unlockedBuildings: [...state.unlockedBuildings],
+  }
+}
+
+/**
+ * Net production of the bounded resources weighted by TRIBUTE_RESOURCE_VALUES. Output into full
+ * storage is lost, so a resource at the cap adds no gain (a loss still counts).
+ * @param {Object<string, number>} netRates - Net per-second rate by resource
+ * @param {Object<string, number>} stock - Amount in stock by resource
+ * @param {number} storageCap - Shared cap of the bounded resources
+ * @returns {number} Production value per second
+ */
+function storableProductionValue(netRates, stock, storageCap) {
+  let value = 0
+  for (const resource of BOUNDED_RESOURCES) {
+    if (netRates[resource] > 0 && stock[resource] >= storageCap) {
+      continue
+    }
+    value += netRates[resource] * TRIBUTE_RESOURCE_VALUES[resource]
+  }
+  return value
+}
+
+/**
+ * Net per-second rate of each bounded resource with the active blessings taken out: the engine's
+ * net rates minus what the blessings add to production and save on upkeep (at the current
+ * productivity). The blessings' share is the difference between the engine's rate formulas with
+ * and without them. It does not depend on the season as long as Favorable Weather's warm and cold
+ * values are equal (true for every challenge, and scaling keeps them equal), so it also holds on a
+ * step where the season just changed and the engine's rates still follow the previous one.
+ * @param {State} state - Game state to read
+ * @param {Object} bonuses - Completed research bonuses
+ * @param {Object<string, number>} netRates - The engine's net rate by resource
+ * @returns {Object<string, number>} Net rate by resource
+ */
+function netRatesWithoutBlessings(state, bonuses, netRates) {
+  const blessings = state.meta.challenges.activeBlessings
+  const blessed = rateFormulas(state, bonuses, blessings)
+  const unblessed = rateFormulas(state, bonuses, [])
+  const result = {}
+  for (const resource of BOUNDED_RESOURCES) {
+    const productionGain = (blessed.production[resource] - unblessed.production[resource]) * state.productivity
+    const upkeepSaved = (unblessed.consumption[resource] ?? 0) - (blessed.consumption[resource] ?? 0)
+    result[resource] = netRates[resource] - productionGain - upkeepSaved
+  }
+  return result
+}
+
+/**
+ * The engine's production and upkeep formulas for the current colony with the given blessings
+ * (production before the productivity penalty).
+ * @param {State} state - Game state to read
+ * @param {Object} bonuses - Completed research bonuses
+ * @param {Array} blessings - Blessings to count as active
+ * @returns {{production: Object<string, number>, consumption: Object<string, number>}} Per-second rates
+ */
+function rateFormulas(state, bonuses, blessings) {
+  const {
+    resources, military,
+  } = state.colony
+  const seasonMultipliers = state._computeSeasonMultipliers(blessings)
+  return {
+    production: state._computeProductionRates(bonuses, blessings, state.meta.challenges.activePunishments, seasonMultipliers).rates,
+    consumption: state._computeConsumptionRates(bonuses, seasonMultipliers, resources.workers, military.units).rates,
   }
 }

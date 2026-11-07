@@ -28,11 +28,12 @@ const REFERENCE_FIELDS = [
   'constructionMult',
 ]
 
-// Figures the sanity check compares between the bots
+// Figures the sanity check compares between the bots (production without the active blessings, which
+// measures the colony rather than a blessing that happens to be running at the milestone)
 const SANITY_FIELDS = [
   'hqTier',
   'researchCount',
-  'productionValue',
+  'productionValueWithoutBlessings',
 ]
 
 // Done criteria thresholds (todo/dynamic_challenges.md)
@@ -104,7 +105,7 @@ export const DONE_CRITERIA = [
       && spareShareOutliers(report, 'strong', 0, 1 - STRONG_MIN_MET_SHARE).length === 0,
   },
   {
-    description: 'HQ tier, research and production at 30/60/90 min order the bots weak < average < strong',
+    description: 'HQ tier, research and production without blessings at 30/60/90 min order the bots weak < average < strong',
     check: report => report.sanity.length > 0 && report.sanity.every(row => row.ordered === true),
   },
 ]
@@ -202,6 +203,7 @@ function milestoneRows(runs) {
       hqTier: median(stats.map(entry => entry.hqTier)),
       researchCount: median(stats.map(entry => entry.researchCount)),
       productionValue: median(stats.map(entry => entry.productionValue)),
+      productionValueWithoutBlessings: median(stats.map(entry => entry.productionValueWithoutBlessings)),
       workers: median(stats.map(entry => entry.workers)),
       buildingLevels: median(stats.map(entry => entry.buildingLevels)),
     }
@@ -337,7 +339,7 @@ function calibrationRows(runs) {
 }
 
 /**
- * Sanity check: median HQ tier, research count and production value per bot at each milestone, and
+ * Sanity check: median HQ tier, research count and production value without blessings per bot at each milestone, and
  * whether each orders the bots weak ≤ average ≤ strong with weak below strong (production strictly increasing).
  * @param {Object<string, Object>} bots - Bot summaries by name
  * @returns {Object[]} One row per milestone and figure
@@ -361,7 +363,7 @@ function sanityRows(bots) {
         average,
         strong,
       ].every(value => typeof value === 'number')
-      const ordered = field === 'productionValue'
+      const ordered = field === 'productionValueWithoutBlessings'
         ? weak < average && average < strong
         : weak <= average && average <= strong && weak < strong
       rows.push({
@@ -606,7 +608,7 @@ export function formatReport(report) {
   ], sanity.map(row => [
     String(row.milestone / SECONDS_PER_MINUTE),
     row.field,
-    ...names.map(name => formatValue(row.values[name], row.field === 'productionValue' ? 1 : 0)),
+    ...names.map(name => formatValue(row.values[name], row.field === 'productionValueWithoutBlessings' ? 1 : 0)),
     row.ordered === null ? 'n/a' : (row.ordered ? 'yes' : 'NO'),
   ])))
 

@@ -53,7 +53,7 @@ The report always prints the done criteria with PASS or FAIL; `SIM_ASSERT` makes
 
 **Randomness** — `Math.random` is replaced by a seeded stream during a run and restored afterwards; the bot has its own stream (seed + offset), so its skipped decisions never shift the engine's raid and punishment rolls.
 
-**Engine hooks** — `State.advanceProgress(delta)` (the progress order, also used by the game screen), `State.unlockedBuildings` (the HQ building unlocks), `State.challengeScaling` (how the engine scaled the challenge as its countdown started: scales, mood, backstop flag; not saved) and `colonyStats(state)` in `src/js/engine/colony_stats.js` (a plain snapshot: elapsed time, HQ tier and level, workers, stock and net rate per resource, storage cap, production value, faith rate, army, research count, building levels, religious levels, temple workers, house and storehouse levels, free territory, construction multiplier, unlocked resources and buildings, and `staffedRates`: the net rate of each resource if every worker-run producer of a bounded resource had all its slots filled). `productionValue` is the net production of the bounded resources weighted by `TRIBUTE_RESOURCE_VALUES`, counting only output that can still be stored: a resource at the storage cap adds no gain (a loss still counts).
+**Engine hooks** — `State.advanceProgress(delta)` (the progress order, also used by the game screen), `State.unlockedBuildings` (the HQ building unlocks), `State.challengeScaling` (how the engine scaled the challenge as its countdown started: scales, mood, backstop flag; not saved) and `colonyStats(state)` in `src/js/engine/colony_stats.js` (a plain snapshot: elapsed time, HQ tier and level, workers, stock and net rate per resource, storage cap, production value, faith rate, army, research count, building levels, religious levels, temple workers, house and storehouse levels, free territory, construction multiplier, unlocked resources and buildings, and `staffedRates`: the net rate of each resource if every worker-run producer of a bounded resource had all its slots filled). `productionValue` is the net production of the bounded resources weighted by `TRIBUTE_RESOURCE_VALUES`, counting only output that can still be stored: a resource at the storage cap adds no gain (a loss still counts); `productionValueWithoutBlessings` is the same figure with what the active blessings add taken out.
 
 ## Bots
 
@@ -97,7 +97,7 @@ When a raid is announced and the forecast is not good enough, it trains the unit
 - **Runs per bot** — finished and did-not-finish runs, run length to the win screen (median, p10, p90), failures per run, most attempts on one challenge, challenges completed, HQ tier at the end, share of time in a food/wood shortage, the challenge where unfinished runs stopped, and raids won/lost/called off/delayed per run.
 - **Challenges per bot** — runs that reached each challenge, attempts, first-try success, runs that completed it, median time from countdown start until the requirements were first met, median spare share of the successful attempts (`1 − time to meet / timeout`), and how the engine scaled the countdowns: median amount scale (faith and resources), level scale (building levels and workers) and timer scale against the base values (kinds the challenge does not have are left out), attempts per mood (`M`erciful, `L`enient, `W`atchful, `S`tern, `D`emanding) and attempts where the backstop kicked in (a locked resource or the worker requirement dropped, or values capped at what the colony can reach).
 - **Progress at 30/60/90 minutes** — median HQ tier, research count, production value, workers and building levels.
-- **Sanity check** — HQ tier, research and production value should order the bots weak < average < strong at each milestone.
+- **Sanity check** — HQ tier, research and production value without the active blessings (`productionValueWithoutBlessings`, so a blessing still running at the milestone does not count) should order the bots weak < average < strong at each milestone.
 - **Done criteria** — each criterion above with PASS or FAIL.
 - **Calibration** (`SIM_CALIBRATE`) — per challenge and requirement part, the median over the average bot's first attempts of what its colony could meet at countdown start in `CHALLENGE_TARGET_TIME_SHARE` of the base timer: each part alone, and all parts together at the same share of their alone values (building levels from the colony's current level; workers at the engine's cap). Used to set the base requirements in `challenges.json`; rerun after changing them, since earlier challenges shape the later colonies.
 - **Reference snippet** — for the average bot, the median `colonyStats` when each challenge first activates and when its countdown starts, printed as JavaScript for `CHALLENGE_REFERENCE_STATS` in `balancing.js` (pasted; regenerate when its rows drift by more than about 10%). Not printed when scaling is off (`SIM_SCALING=0`): the reference must come from scaled runs.
@@ -174,15 +174,15 @@ The fixed values still stop the weak bot at the temple and monument challenges a
 
 ## Phase 3: Current
 
-Tuning not finished. The Phase 3 data (`challenges.json`: delays 240, 120, 120 then 60 s; timers 300 to 780 s in 60 s steps, then 900 s; requirements from two calibration passes, worker requirements kept at 20, 50 and 100), scaling on with the reference table, 60 seeds per bot, 5-hour cap, 1-second steps.
+Tuning not finished. The Phase 3 data (`challenges.json`: delays 240, 120, 120 then 60 s; timers 300 to 780 s in 60 s steps, then 900 s; requirements from two calibration passes, worker requirements kept at 20, 50 and 100; each timed blessing lasts the next challenge's base delay plus timer), scaling on with the reference table, 60 seeds per bot, 5-hour cap, 1-second steps.
 
-| Bot     | Finished | Run length (median, p10–p90) | Failures/run | Max attempts | Stopped at                    | Raids won/lost/called off/delays per run |
-|---------|----------|------------------------------|--------------|--------------|-------------------------------|------------------------------------------|
-| weak    | 17 / 60  | 272.7 m (234.1–294.0)        | 7.8          | 9            | #10 ×28, #9 ×11, #8 ×3, #7 ×1 | 0 / 37.7 / 0.3 / 0                       |
-| average | 60 / 60  | 128.0 m (111.0–157.8)        | 0.9          | 3            | –                             | 14.6 / 2.9 / 0 / 3.3                     |
-| strong  | 60 / 60  | 110.2 m (110.2–110.5)        | 0.1          | 2            | –                             | 13.1 / 0.9 / 0 / 0.5                     |
+| Bot     | Finished | Run length (median, p10–p90) | Failures/run | Max attempts | Stopped at            | Raids won/lost/called off/delays per run |
+|---------|----------|------------------------------|--------------|--------------|-----------------------|------------------------------------------|
+| weak    | 29 / 60  | 261.2 m (224.3–294.6)        | 7.0          | 7            | #10 ×22, #9 ×7, #8 ×2 | 0 / 36.6 / 0.2 / 0                       |
+| average | 60 / 60  | 114.4 m (111.3–156.5)        | 0.6          | 2            | –                     | 13.6 / 2.9 / 0 / 3.9                     |
+| strong  | 60 / 60  | 110.7 m (110.3–111.8)        | 0.03         | 2            | –                     | 12.3 / 1.1 / 0 / 0.4                     |
 
-Done criteria: 2, 3, 4 and 7 pass; 1 (the weak bot), 5 (the strong bot fails in 4 of 60 runs) and 6 (challenge 10 leaves the strong bot 51% of its timer) fail.
+Done criteria: 2, 3, 6 and 7 pass; 1 (the weak bot), 4 (the average bot leaves 17% of the timer on challenge 3 and 64% on challenge 8) and 5 (the strong bot fails challenge 9 once in 2 of 60 runs) fail.
 
 First-try success / median time left on the timer (successful attempts):
 
@@ -190,18 +190,23 @@ First-try success / median time left on the timer (successful attempts):
 |-------------------------------------------------------|-------------|-------------|-------------|
 | 1 — altar 9                                           | 85% / 30%   | 100% / 49%  | 100% / 38%  |
 | 2 — faith 650                                         | 100% / 24%  | 100% / 30%  | 100% / 22%  |
-| 3 — temple 10                                         | 55% / 24%   | 100% / 25%  | 95% / 32%   |
-| 4 — faith 4100                                        | 100% / 47%  | 100% / 44%  | 100% / 35%  |
-| 5 — monument 7                                        | 93% / 100%  | 98% / 24%   | 100% / 29%  |
-| 6 — faith 10500                                       | 95% / 29%   | 100% / 39%  | 100% / 42%  |
-| 7 — resources, 20 workers                             | 12% / 73%   | 97% / 55%   | 100% / 45%  |
-| 8 — faith 4900, altar 18, temple 10, resources        | 12% / 78%   | 58% / 53%   | 100% / 48%  |
-| 9 — faith 7500, monument 9, resources, 50 workers     | 8% / 77%    | 87% / 33%   | 97% / 30%   |
-| 10 — everything, 100 workers                          | 21% / 50%   | 70% / 50%   | 100% / 51%  |
+| 3 — temple 10                                         | 63% / 23%   | 95% / 17%   | 100% / 30%  |
+| 4 — faith 4100                                        | 100% / 41%  | 100% / 42%  | 100% / 37%  |
+| 5 — monument 7                                        | 92% / 100%  | 100% / 29%  | 100% / 38%  |
+| 6 — faith 10500                                       | 98% / 28%   | 100% / 40%  | 100% / 43%  |
+| 7 — resources, 20 workers                             | 10% / 77%   | 100% / 56%  | 100% / 47%  |
+| 8 — faith 4900, altar 18, temple 10, resources        | 8% / 80%    | 80% / 64%   | 100% / 47%  |
+| 9 — faith 7500, monument 9, resources, 50 workers     | 14% / 51%   | 90% / 41%   | 97% / 29%   |
+| 10 — everything, 100 workers                          | 25% / 63%   | 75% / 55%   | 100% / 41%  |
 
-Changed constants (from the Phase 2 first guesses): `CHALLENGE_TARGET_TIME_SHARE` 0.65 → 0.85, `CHALLENGE_FAILURE_EASE` 0.15 → 0.4, new `CHALLENGE_MAX_WORKER_REQUIREMENT_SHARE` 0.5 and `CHALLENGE_UNSTAFFED_RATE_SHARE` 0.1, and `CHALLENGE_REFERENCE_STATS` from the average bot (its rows moved by at most 8% over the later runs).
+Changed constants (from the Phase 2 first guesses): `CHALLENGE_TARGET_TIME_SHARE` 0.65 → 0.85, `CHALLENGE_FAILURE_EASE` 0.15 → 0.4, new `CHALLENGE_MAX_WORKER_REQUIREMENT_SHARE` 0.5 and `CHALLENGE_UNSTAFFED_RATE_SHARE` 0.1, and `CHALLENGE_REFERENCE_STATS` from the average bot. Timed blessings now last through the next challenge (base durations 480 to 960 s, challenge 10's unchanged). The longer blessings moved 44 of the reference table's 140 compared values by more than 10%, so it was pasted twice more; after the second paste 2 of 220 values moved by more than 10% (army counts of 14–16 units).
 
-Open: the weak bot still loses about 38 raids per run without an army; the strong bot is just outside its two criteria. Timed blessings lasting through the next challenge's delay and timer made both strong criteria pass in a 60-seed test, but put the average bot's production above the strong bot's at 30 minutes (its productivity blessing was still running), so the durations are unchanged for now.
+With the shorter blessings, criteria 5 and 6 failed (4 strong failures in 60 runs; 49% of the timer used on challenge 10). With the longer blessings and the old reference table, criteria 2 to 6 passed but the 30-minute production order failed (average 27.4 against strong 25.4, without blessings); the regenerated table fixed that order (22.5 against 25.4) and moved criteria 4 and 5 to their near misses above.
+
+Open:
+
+- **Weak bot** — every failed attempt on challenges 3 to 10 (20 seeds with the earlier, shorter blessings; 141 failures) lost at least one raid during its countdown; a failed attempt loses a median 3–4 raids and 9–12 building levels, sometimes taking the altar or temple back below a level it had already reached, and the missing parts are mostly wood, altar and temple levels, never workers. Two raid defences were tried and dropped: training units only once a raid is announced (8 of 60 finished) and a standing army sized to just win the expected raid (11 of 60), both against 15 of 60 without an army at the time. Both pay for units and delays and still lose about 27 raids per run, and the colony stays at Settlement until 90 minutes.
+- **Near misses** — the average bot's time left on challenges 3 (17%) and 8 (64%), and the strong bot's 2 failures on challenge 9.
 
 ## Bot Limitations
 

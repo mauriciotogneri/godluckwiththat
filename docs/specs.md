@@ -415,7 +415,7 @@ Each challenge specifies a combination of (all optional per challenge). The valu
 
 ### Blessings
 
-Rewards earned by completing challenges. The player chooses one of two offered blessings. Each challenge offers distinct blessing types. A harder countdown gives stronger blessings: their strength follows the difficulty within 0.75–1.3× the base value, their duration within 0.9–1.15× (whole minutes).
+Rewards earned by completing challenges. The player chooses one of two offered blessings. Each challenge offers distinct blessing types. A harder countdown gives stronger blessings: their strength follows the difficulty within 0.75–1.3× the base value, their duration within 0.9–1.15× (whole minutes). An ongoing blessing's base duration is the next challenge's base delay plus its base timer (the last challenge's keep 2 minutes), so at base values it lasts through the next countdown; a struggling colony's longer delay and timer can outlast it.
 
 #### Instant blessings (applied immediately, no ongoing effect)
 - **Gift from the Heavens** — receive a fixed amount of resources (capped at storage)

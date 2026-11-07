@@ -9,12 +9,12 @@
     "blessings": [
       {
         "type": "fertileSoil",
-        "timeout": 120,
+        "timeout": 480,
         "productivity": 0.3
       },
       {
         "type": "forestBloom",
-        "timeout": 120,
+        "timeout": 480,
         "productivity": 0.3
       }
     ],
@@ -66,12 +66,12 @@
     "blessings": [
       {
         "type": "richMines",
-        "timeout": 120,
+        "timeout": 540,
         "productivity": 0.3
       },
       {
         "type": "celestialProsperity",
-        "timeout": 60,
+        "timeout": 540,
         "productivity": 0.1
       }
     ],
@@ -92,12 +92,12 @@
     "blessings": [
       {
         "type": "rapidConstruction",
-        "timeout": 180,
+        "timeout": 600,
         "construction": 0.5
       },
       {
         "type": "favorableWeather",
-        "timeout": 300,
+        "timeout": 600,
         "warm": 0.1,
         "cold": 0.1
       }
@@ -120,12 +120,12 @@
     "blessings": [
       {
         "type": "wisdomOfTheGods",
-        "timeout": 120,
+        "timeout": 660,
         "productivity": 0.3
       },
       {
         "type": "blessedMarkets",
-        "timeout": 120
+        "timeout": 660
       }
     ],
     "punishment": {
@@ -148,12 +148,12 @@
     "blessings": [
       {
         "type": "fertileSoil",
-        "timeout": 120,
+        "timeout": 720,
         "productivity": 0.3
       },
       {
         "type": "temporaryPeace",
-        "timeout": 300
+        "timeout": 720
       }
     ],
     "punishment": {
@@ -215,12 +215,12 @@
     "blessings": [
       {
         "type": "richMines",
-        "timeout": 120,
+        "timeout": 840,
         "productivity": 0.3
       },
       {
         "type": "celestialFortification",
-        "timeout": 300
+        "timeout": 840
       }
     ],
     "punishment": {
@@ -249,12 +249,12 @@
     "blessings": [
       {
         "type": "rapidConstruction",
-        "timeout": 180,
+        "timeout": 960,
         "construction": 0.5
       },
       {
         "type": "favorableWeather",
-        "timeout": 300,
+        "timeout": 960,
         "warm": 0.1,
         "cold": 0.1
       }

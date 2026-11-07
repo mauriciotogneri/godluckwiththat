@@ -2,9 +2,10 @@ import {describe, it, expect, vi} from 'vitest'
 import {PRODUCTION_RATES, RESEARCH_SUBCATEGORY_BONUSES, SEASON_DURATION, STOREHOUSE_BASE_CAPACITY, TOWER_ARCHERS_PER_LEVEL, TRIBUTE_RESOURCE_VALUES} from '@/js/engine/balancing.js'
 import {colonyStats} from '@/js/engine/colony_stats.js'
 import {BOUNDED_RESOURCES, HEADER_RESOURCES, createInitialColonyBasic, createInitialMeta} from '@/js/engine/constants.js'
-import {BUILDING_ALTAR, BUILDING_FARM, BUILDING_HEADQUARTERS, BUILDING_HOUSE, BUILDING_WOODCUTTER, HQ_TYPE_TOWN, HQ_TYPE_VILLAGE, RESEARCH_CONSTRUCTION_1, RESEARCH_STORAGE_1, RESEARCH_SUBCATEGORY_CONSTRUCTION, RESEARCH_SUBCATEGORY_STORAGE, RESOURCE_COPPER, RESOURCE_FAITH, RESOURCE_FOOD, RESOURCE_KNOWLEDGE, RESOURCE_STONE, RESOURCE_WOOD, SEASON_COLD, SEASON_WARM, UNIT_ARCHER, UNIT_INFANTRY} from '@/js/engine/enums.js'
+import {BLESSING_FAVORABLE_WEATHER, BLESSING_FERTILE_SOIL, BUILDING_ALTAR, BUILDING_FARM, BUILDING_HEADQUARTERS, BUILDING_HOUSE, BUILDING_WOODCUTTER, HQ_TYPE_TOWN, HQ_TYPE_VILLAGE, RESEARCH_CONSTRUCTION_1, RESEARCH_STORAGE_1, RESEARCH_SUBCATEGORY_CONSTRUCTION, RESEARCH_SUBCATEGORY_STORAGE, RESOURCE_COPPER, RESOURCE_FAITH, RESOURCE_FOOD, RESOURCE_KNOWLEDGE, RESOURCE_STONE, RESOURCE_WOOD, SEASON_COLD, SEASON_WARM, UNIT_ARCHER, UNIT_INFANTRY} from '@/js/engine/enums.js'
 import {storageCapacity} from '@/js/engine/utils.js'
 import Academy from '@/js/models/buildings/academy.js'
+import {createBlessing} from '../helpers/factories.js'
 
 vi.mock('@/js/engine/analytics.js', () => ({
   default: {
@@ -209,6 +210,49 @@ describe('colonyStats', () => {
       expect(state.netProduction(RESOURCE_FOOD)).toBeGreaterThan(0)
       expect(state.netProduction(RESOURCE_WOOD)).toBeLessThan(0)
       expect(colonyStats(state).productionValue).toBeCloseTo(state.netProduction(RESOURCE_WOOD) * TRIBUTE_RESOURCE_VALUES[RESOURCE_WOOD])
+    })
+
+    it('should leave the active blessings out of the production value without blessings', async () => {
+      const customize = colony => {
+        colony.buildings.farm.level = 1
+        colony.buildings.farm.workers = 5
+        colony.buildings.woodcutter.level = 1
+        colony.buildings.woodcutter.workers = 2
+        colony.resources.workers = 7
+      }
+      const plain = await createState(customize)
+      const blessed = await createState(customize)
+      blessed.meta.challenges.activeBlessings.push(createBlessing({
+        type: BLESSING_FERTILE_SOIL,
+        timeout: 300,
+        productivity: 0.3,
+      }), createBlessing({
+        type: BLESSING_FAVORABLE_WEATHER,
+        timeout: 300,
+        warm: 0.1,
+        cold: 0.1,
+      }))
+      blessed.update(0)
+      const plainStats = colonyStats(plain)
+      const blessedStats = colonyStats(blessed)
+      expect(plainStats.productionValueWithoutBlessings).toBeCloseTo(plainStats.productionValue)
+      expect(blessedStats.productionValue).toBeGreaterThan(plainStats.productionValue)
+      expect(blessedStats.productionValueWithoutBlessings).toBeCloseTo(plainStats.productionValue)
+    })
+
+    it('should match the production value without blessings on a step where the season just changed', async () => {
+      const state = await createState(colony => {
+        colony.season.currentSeason = SEASON_WARM
+        colony.buildings.farm.level = 1
+        colony.buildings.farm.workers = 5
+        colony.buildings.woodcutter.level = 1
+        colony.buildings.woodcutter.workers = 2
+        colony.resources.workers = 7
+      })
+      // The season moves on after the engine computed its rates, as in a step that ends a season
+      state.colony.season.currentSeason = SEASON_COLD
+      const stats = colonyStats(state)
+      expect(stats.productionValueWithoutBlessings).toBeCloseTo(stats.productionValue)
     })
 
     it('should add the output of free producer slots to the staffed rates of bounded resources', async () => {
