@@ -79,7 +79,8 @@ class Challenges {
   /**
    * Fails the active challenge: resets timers, counts the failure, stores a copy of the punishment.
    * A copy is stored so the timeout countdown does not drain the challenge's own punishment,
-   * which is reused if the challenge is failed again.
+   * which the next countdown replaces with one decided from the colony (a challenge built without
+   * a definition keeps it).
    * A punishment of the same type already in effect is replaced, so its duration restarts instead of stacking.
    * Instant punishments (null timeout) are not stored: their effect is applied once and never expires.
    * @param {Punishment} punishment - The punishment applied
