@@ -36,7 +36,7 @@ const SANITY_FIELDS = [
   'productionValueWithoutBlessings',
 ]
 
-// Done criteria thresholds (todo/dynamic_challenges.md)
+// Done criteria thresholds (docs/simulation.md)
 const WEAK_MAX_ATTEMPTS = 4 // Weak bot: attempts per challenge, on every seed
 const AVERAGE_RUN_MINUTES = [
   105,
