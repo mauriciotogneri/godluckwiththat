@@ -178,17 +178,22 @@ Decisions made during Phase 3 (beyond the list above):
 
 ## Phase 4 — Interface, Locales and Camp Start
 
-- [ ] `game_screen.vue` `syncChallenges`: add `mood`
-- [ ] `challenge_detail_modal.vue`: mood line under the title when set (frontend-design skill, shared styles, `rgba` colours, `rem` radii)
-- [ ] Five keys in `ca.js`, `en.js`, `es.js`, `fr.js`, `it.js`: `challenge.mood.merciful`, `.lenient`, `.watchful`, `.stern`, `.demanding`; `locale_keys.test.js` passes
-- [ ] Check the detail, success and failure windows show the adjusted values correctly (integers, percents, whole-minute durations, zero losses hidden)
-- [ ] `constants.js`: `createInitialColony()` returns `createInitialColonyBasic()`; fix its JSDoc; test the Camp start (level 1, 250 food, 100 wood)
-- [ ] Browser check: new game starts at Camp; mood line shows; a failure then a retry shows easier values; save/load mid-countdown keeps the values; a version 1 save loads; no console errors
+- [x] `game_screen.vue` `syncChallenges`: add `mood`
+- [x] `challenge_detail_modal.vue`: mood line under the title when set (frontend-design skill, shared styles, `rgba` colours, `rem` radii) — shown only once the countdown has started (a retry's wait still holds the failed attempt's mood); tinted green for merciful and lenient, neutral for watchful, red for stern and demanding
+- [x] Five keys in `ca.js`, `en.js`, `es.js`, `fr.js`, `it.js`: `challenge.mood.merciful`, `.lenient`, `.watchful`, `.stern`, `.demanding`; `locale_keys.test.js` passes
+- [x] Check the detail, success and failure windows show the adjusted values correctly (integers, percents, whole-minute durations, zero losses hidden)
+- [x] `constants.js`: `createInitialColony()` returns `createInitialColonyBasic()`; fix its JSDoc; test the Camp start (level 1, 250 food, 100 wood)
+- [x] Browser check: new game starts at Camp; mood line shows; a failure then a retry shows easier values; save/load mid-countdown keeps the values; a version 1 save loads; no console errors — all pass; two scaling oddities found (see Open Issues: retry timer after a backstop, empty requirements)
+
+Decisions made during Phase 4:
+
+- The challenge window opens only from the challenge event, which exists only while a countdown runs, so the provisional values of a challenge still waiting are never shown; no "deliberating" line is needed.
+- No raid truce hint for now.
 
 ## Phase 5 — Docs and Final Verification
 
-- [ ] `docs/architecture.md`: Challenges System (base vs adjusted values, failures, mood, refresh rule, save version 2 and migration), new modules (`challenge_scaling.js`, `save_migration.js`), Save/Load, the `createInitialColony` note; fix the line saying `colony_stats.js` is imported only by the simulation and tests (`state.js` imports it too) — done in Phase 3 except the `createInitialColony` note (Phase 4)
-- [ ] `docs/specs.md`: challenge lifecycle (delay at activation; requirements, timer, blessings and punishment at countdown start; retries ease), scaling of requirements, blessings and punishments, losses relative to colony size, no-stacking now enforced by refreshing, starting colony, `challenges.json` holds base values and `balancing.js` the scaling constants and reference table — done in Phase 3 except the starting colony (Phase 4)
+- [x] `docs/architecture.md`: Challenges System (base vs adjusted values, failures, mood, refresh rule, save version 2 and migration), new modules (`challenge_scaling.js`, `save_migration.js`), Save/Load, the `createInitialColony` note; fix the line saying `colony_stats.js` is imported only by the simulation and tests (`state.js` imports it too) — done in Phase 3; Phase 4 added the mood line to the challenge window section (the `createInitialColony` note already read "delegating to `createInitialColonyBasic()`")
+- [x] `docs/specs.md`: challenge lifecycle (delay at activation; requirements, timer, blessings and punishment at countdown start; retries ease), scaling of requirements, blessings and punishments, losses relative to colony size, no-stacking now enforced by refreshing, starting colony, `challenges.json` holds base values and `balancing.js` the scaling constants and reference table — done in Phase 3; Phase 4 marked the mood as shown (the Starting State section already described the Camp start)
 - [ ] `docs/testing.md`: rows for the new test files
 - [ ] `todo/todo.md`: remove the "make blessings and punishments dynamic" item
 - [ ] Final run: `npm run lint:fix`, targeted tests, `SIM_ASSERT=1 SIM_RUNS=60 npm run simulate` (all PASS, report saved), `npm run build`, browser check with the console
@@ -203,7 +208,9 @@ Decisions made during Phase 3 (beyond the list above):
 - **Phase 2 smoke run (3 seeds, not tuned)** — the weak bot fails challenge 1 on most first tries, and the average bot fails challenge 3's first try (temple raised to 6) though it passes the retry; check in Phase 3 whether the estimate or the bots are at fault.
 - **Report mood counts** — moods and backstops count every countdown that started, including one cut off by the time cap, so they can exceed the finished attempts.
 - **Weak bot and raids** — resolved in Phase 3 with the raid truce and a 4-attempt weak-bot criterion (all 60 seeds finish, at most 4 attempts, about 7 raids lost per run instead of 36); details in `docs/simulation.md`, Phase 3: Final.
-- **Raid truce not shown** — the player is not told that raids are held back during a retry or a merciful countdown; consider a hint with the Phase 4 mood line.
+- **Raid truce not shown** — the player is not told that raids are held back during a retry or a merciful countdown; left out of Phase 4 (no hint for now).
+- **Retry timer after a backstop** (found in the Phase 4 browser check) — when the first attempt hits the backstop (e.g. a 0-worker Camp asked for Altar 9: Altar 1 and the longest timer, 510 s), the retry is capped at that Altar 1, needs no backstop and gets a normal 300 × 1.1 = 330 s timer: shorter than the failed attempt, though still far more than needed.
+- **Empty requirements** (found in the Phase 4 browser check, from the version 1 `activated` fixture) — when the backstop drops every requirement (Temple 10 with the temple still locked at the Camp), the challenge is a free win and the challenge window showed the "Requirements" heading with nothing under it; not yet seen in real play or the simulation. The window now shows "None this time. The blessing comes when the timer ends." instead (`challenge.noRequirements`).
 - **Strong bot blessing values** (not verified) — the strong bot values productivity, construction and weather blessings by their duration but Temporary Peace, Celestial Fortification and Blessed Markets at a flat amount, so the longer durations may have shifted its choices; compare its chosen blessing per challenge before and after.
 - **Review nits not applied** — duplicated constants and formulas in the bots (raid size, blessing-to-resource mapping, producer list, `SECONDS_PER_MINUTE`), unused exports and fields, milestone snapshots taken on a cold→warm step, the report file name ignoring `SIM_MAX_HOURS` and `SIM_STEP`.
 

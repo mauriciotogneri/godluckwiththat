@@ -519,7 +519,15 @@ export const LOCALIZED_EN = {
   'challenge.title': 'Challenges',
   'challenge.timeRemaining': 'Time remaining',
   'challenge.requirements': 'Requirements',
+  'challenge.noRequirements': 'None this time. The blessing comes when the timer ends.',
   'challenge.noneActive': 'No active challenge',
+
+  // Challenge moods (shown in the challenge window during the countdown)
+  'challenge.mood.merciful': 'The gods are merciful',
+  'challenge.mood.lenient': 'The gods are lenient',
+  'challenge.mood.watchful': 'The gods are watchful',
+  'challenge.mood.stern': 'The gods are stern',
+  'challenge.mood.demanding': 'The gods are demanding',
 
   // Challenge requirement labels
   'challenge.requirement.faith': '{0} Faith',

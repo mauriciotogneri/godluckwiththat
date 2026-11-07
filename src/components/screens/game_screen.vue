@@ -964,6 +964,7 @@ function syncChallenges() {
         requirements: active.requirements,
         blessings: active.blessings,
         punishment: active.punishment,
+        mood: active.mood,
       }
       : null,
     totalCount: challenges.totalCount,

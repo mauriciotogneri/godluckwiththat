@@ -32,6 +32,22 @@ function isRequirementMet(type, value) {
   }
 }
 
+/** Whether the active challenge asks for anything; the scaling drops requirements the colony cannot reach. */
+const hasRequirements = computed(() => {
+  if (!challenge.value) {
+    return false
+  }
+  const {
+    requirements,
+  } = challenge.value
+  return requirements.faith !== null
+    || requirements.altar !== null
+    || requirements.temple !== null
+    || requirements.monument !== null
+    || requirements.workers !== null
+    || Object.keys(requirements.resources ?? {}).length > 0
+})
+
 /** Whether a resource requirement is met. */
 function isResourceMet(resource, amount) {
   return ui.resources[resource] >= amount
@@ -85,6 +101,14 @@ onUnmounted(() => {
   >
     <div class="modal-content">
       <h2 class="modal-title">{{ hasActive ? t('challenge.name.' + challenge.index) : t('challenge.title') }}</h2>
+      <!-- Mood of the gods, decided when the countdown starts -->
+      <p
+        v-if="hasActive && challenge.isStarted && challenge.mood"
+        class="challenge-mood"
+        :class="'challenge-mood--' + challenge.mood"
+      >
+        {{ t('challenge.mood.' + challenge.mood) }}
+      </p>
       <span class="modal-rule" />
 
       <!-- Active challenge section -->
@@ -104,7 +128,7 @@ onUnmounted(() => {
           <!-- Requirements checklist -->
           <div class="requirements-section">
             <div class="section-label">{{ t('challenge.requirements') }}</div>
-            <ul class="requirements-list">
+            <ul v-if="hasRequirements" class="requirements-list">
               <li
                 v-if="challenge.requirements.faith !== null"
                 class="req-item"
@@ -158,6 +182,7 @@ onUnmounted(() => {
                 {{ t('challenge.requirement.workers', challenge.requirements.workers) }}
               </li>
             </ul>
+            <p v-else class="requirements-none">{{ t('challenge.noRequirements') }}</p>
           </div>
         </div>
       </template>
@@ -189,6 +214,32 @@ onUnmounted(() => {
 
 .modal-rule {
   margin: 0.75rem 0 1rem;
+}
+
+/* Mood line under the title, tinted from green (merciful) to red (demanding) */
+.challenge-mood {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  font-weight: 300;
+  text-align: center;
+  margin-top: 0.4rem;
+  color: rgba(var(--color-text-rgb), 0.6);
+}
+
+.challenge-mood--merciful {
+  color: rgba(var(--color-green-rgb), 0.9);
+}
+
+.challenge-mood--lenient {
+  color: rgba(var(--color-green-rgb), 0.65);
+}
+
+.challenge-mood--stern {
+  color: rgba(var(--color-red-rgb), 0.7);
+}
+
+.challenge-mood--demanding {
+  color: rgba(var(--color-red-rgb), 0.95);
 }
 
 /* Active challenge block */
@@ -290,6 +341,15 @@ onUnmounted(() => {
   width: 1rem;
   height: 1rem;
   flex-shrink: 0;
+}
+
+/* Shown in place of the list when nothing is asked */
+.requirements-none {
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 300;
+  color: rgba(var(--color-text-rgb), 0.6);
+  padding: 0.3rem 0;
 }
 
 /* No active challenge */

@@ -98,6 +98,15 @@ describe('constants', () => {
       expect(colony).toBeInstanceOf(Colony)
     })
 
+    it('createInitialColony starts a new game at the Camp', () => {
+      const colony = createInitialColony()
+      const headquarters = colony.buildings[BUILDING_HEADQUARTERS]
+      expect(headquarters.type).toBe(HQ_TYPE_CAMP)
+      expect(headquarters.level).toBe(1)
+      expect(colony.resources.food).toBe(250)
+      expect(colony.resources.wood).toBe(100)
+    })
+
     it('createInitialMeta returns a Meta instance', () => {
       const meta = createInitialMeta()
       expect(meta).toBeInstanceOf(Meta)

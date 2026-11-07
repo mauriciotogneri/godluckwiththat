@@ -62,7 +62,7 @@ Blocking overlay (no close button, Escape swallowed, no backdrop dismiss) shown 
 
 ### Challenge Detail Modal (`challenge_detail_modal.vue`)
 
-Centered overlay opened when the player clicks a challenge future event. Injects `ui`. Displays the active challenge info: the challenge name as title (`challenge.name.{index}`), a countdown timer with a draining bar when the challenge is started (urgent styling under 60 s), and a requirements checklist (each requirement shown with a check/cross icon indicating whether it is currently met). Emits `close` on backdrop click, close button, or Escape key. Visibility controlled by `showChallengeModal` ref in `game_screen.vue`; opened by `handleEventAction()` when a future event with `action: 'openChallengeModal'` is clicked.
+Centered overlay opened when the player clicks a challenge future event. Injects `ui`. Displays the active challenge info: the challenge name as title (`challenge.name.{index}`), the mood line under it once the countdown has started (`challenge.mood.{mood}`, tinted green for merciful and lenient, neutral for watchful, red for stern and demanding), a countdown timer with a draining bar when the challenge is started (urgent styling under 60 s), and a requirements checklist (each requirement shown with a check/cross icon indicating whether it is currently met), or a line saying nothing is asked this time when the scaling dropped every requirement. Emits `close` on backdrop click, close button, or Escape key. Visibility controlled by `showChallengeModal` ref in `game_screen.vue`; opened by `handleEventAction()` when a future event with `action: 'openChallengeModal'` is clicked.
 
 ### Challenge Success Modal (`challenge_success_modal.vue`)
 
