@@ -70,10 +70,9 @@
     pointer-events: none;
 }
 
-/* Out-of-focus, darkened painting, enlarged so the blur never fades at the screen edges */
+/* Out-of-focus, darkened painting */
 .screen-background--muted {
     filter: blur(5px) brightness(0.3);
-    transform: scale(1.05);
 }
 
 /* Anchor for the dark veil behind a block of menu content */
