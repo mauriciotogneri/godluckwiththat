@@ -1,3 +1,20 @@
+## [0.13.0] - 2026-11-07
+
+* Feat: Challenges now adapt to your colony, easing off when it struggles
+* Feat: Retrying a failed challenge is easier and gives more time to recover
+* Feat: Challenge window shows the mood of the gods, from merciful to demanding
+* Feat: No new raids are announced during challenge retries or merciful countdowns
+* Feat: Research pauses while the academy is at level 0 and resumes when rebuilt
+* Feat: Loading a game from the pause menu now asks for confirmation
+* Feat: New main menu with a painted landscape, title artwork and music
+* Feat: New artwork for the barracks, archery, stable, tower and wall
+* Feat: Added more games to the More Games list
+* Balance: Retuned challenge requirements so the last challenges are within reach
+* Balance: Longer waits between challenges and longer challenge timers
+* Balance: Timed blessings last much longer and are stronger when the gods are more demanding
+* Balance: Punishments are milder for a struggling colony and take at most 25% of workers
+* Balance: Challenges ask for at most half of your workers
+
 ## [0.12.0] - 2026-03-29
 * Feat: Display building bonus before upgrade
 * Feat: Display workers cost

@@ -371,7 +371,7 @@ Sequential divine challenges forming the game's win condition. State lives on `s
 - Muted UI: `rgba(228, 213, 188, 0.1–0.4)` (parchment-toned)
 
 **Effects**:
-- Home screen: painted landscape background with two dark, blurred oval veils (radial `mask-image` + `backdrop-filter`), one behind the title artwork and one behind the button stack; menu buttons are dark bronze plates with a gold frame
+- Home screen: painted landscape background, slightly dimmed (`brightness(0.85)`), with two dark, blurred oval veils (radial `mask-image` + `backdrop-filter`), one behind the title artwork and one behind the button stack; menu buttons are dark bronze plates with a gold frame
 - Settings and about screens: the same painted landscape, blurred and darkened as a whole (`.screen-background--muted`) so the content reads without a veil
 - Modal: fade-in overlay + upward slide on content box, stone-like depth shadow
 - Buttons: bronze gradient background, border intensifies on hover, subtle `box-shadow` glow

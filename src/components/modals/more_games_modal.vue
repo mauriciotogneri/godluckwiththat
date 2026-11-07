@@ -64,6 +64,42 @@ onUnmounted(() => {
         >
           Tension Tunnel
         </a>
+        <a
+          class="game-link"
+          href="https://portal-2d.web.app"
+          target="_blank"
+          rel="noopener noreferrer"
+          @click="playTap()"
+        >
+          Portal 2D
+        </a>
+        <a
+          class="game-link"
+          href="https://tensiongrid.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          @click="playTap()"
+        >
+          Tension Grid
+        </a>
+        <a
+          class="game-link"
+          href="https://coliseum-game.web.app"
+          target="_blank"
+          rel="noopener noreferrer"
+          @click="playTap()"
+        >
+          Coliseum
+        </a>
+        <a
+          class="game-link"
+          href="https://meme-iq.web.app"
+          target="_blank"
+          rel="noopener noreferrer"
+          @click="playTap()"
+        >
+          Meme IQ
+        </a>
       </div>
 
       <button class="btn-gold modal-btn" @click="playTap(); emit(EMIT_CLOSE)">
