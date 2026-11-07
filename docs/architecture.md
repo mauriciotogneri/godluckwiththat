@@ -2,7 +2,7 @@
 
 Vite + Vue 3 single-page application using Composition API (`<script setup>`). No Vue Router — screens switch via `v-if` on a `currentScreen` ref in `app.vue`.
 
-**Screen flow**: Home → Game (via `start` event with optional saved data payload), Home → Settings, Home → About (each sub-screen emits `close` to return Home). The home screen shows a single start button — "Continue" when a saved game exists, otherwise "New Game" — plus Settings and About. On touch devices (`pointer: coarse`) the start button is hidden and a "not available on mobile" notice is shown. In dev builds (`IS_DEV`) the app starts the game immediately on the first page load (continuing the saved game if one exists); returning to the home screen afterwards shows the menu.
+**Screen flow**: Home → Game (via `start` event with optional saved data payload), Home → Settings, Home → About (each sub-screen emits `close` to return Home). The home screen shows a full-screen painted landscape with the title artwork and buttons on a dark, blurred oval veil in the center, and a single start button — "Continue" when a saved game exists, otherwise "New Game" — plus Settings and About. On touch devices (`pointer: coarse`) the start button is hidden and a "not available on mobile" notice is shown. In dev builds (`IS_DEV`) the app starts the game immediately on the first page load (continuing the saved game if one exists); returning to the home screen afterwards shows the menu.
 
 - **Settings screen** (`settings_screen.vue`) — full-screen version of the Settings Modal controls (music, sound effects, autosave toggle and interval), reachable before a game starts.
 - **About screen** (`about_screen.vue`) — app version (`__APP_VERSION__`), a feedback mailto link, and buttons opening the **Changelog Modal** (`changelog_modal.vue`, renders `src/assets/changelog.md` with `marked` after stripping inline HTML tags) and the **More Games Modal** (`more_games_modal.vue`, links to other games).
@@ -371,7 +371,8 @@ Sequential divine challenges forming the game's win condition. State lives on `s
 - Muted UI: `rgba(228, 213, 188, 0.1–0.4)` (parchment-toned)
 
 **Effects**:
-- Title screen: warm torchlight glow behind title (radial gradient accent)
+- Home screen: painted landscape background with a dark, blurred oval veil (radial `mask-image` + `backdrop-filter`) behind the title artwork and buttons
+- Settings and about screens: warm torchlight glow behind title (radial gradient accent)
 - Modal: fade-in overlay + upward slide on content box, stone-like depth shadow
 - Buttons: bronze gradient background, border intensifies on hover, subtle `box-shadow` glow
 
@@ -387,7 +388,7 @@ Sequential divine challenges forming the game's win condition. State lives on `s
 - **CSS variables** on `:root`: `--color-bg`, `--color-bg-raised`, `--color-bg-surface`, `--color-text`, `--color-text-rgb`, `--color-accent`, `--color-accent-rgb`, `--color-border`, `--color-shadow-rgb`, `--color-red`, `--color-red-rgb`, `--color-green`, `--color-green-rgb`, `--color-highlight-rgb`, `--font-display`, `--font-body`, `--font-numeric` (the `-rgb` variants hold bare channels for `rgba(var(--…-rgb), alpha)`)
 - **Sizing**: card-level classes (`.action-*`, `.worker-*`, `.slot-actions`) size with container-query units (`cqh`, relative to the building card) and declare a rem fallback first; the sizes below are the rem fallbacks.
 - **Shared classes**:
-  - `.screen-layout`, `.screen-glow`, `.screen-content`, `.screen-title`, `.screen-btn-small` — full-screen layout, torchlight glow and buttons shared by the home, settings and about screens.
+  - `.screen-layout`, `.screen-glow`, `.screen-content`, `.screen-title`, `.screen-btn-small` — full-screen layout, torchlight glow and buttons shared by the home, settings and about screens (the home screen uses its own background and veil instead of the glow).
   - `.btn-gold` — bronze-gradient button base (font, color, gradient background, border, hover glow). Includes `:disabled` state (reduced opacity, `cursor: not-allowed`, hover neutralized). Components add sizing/spacing overrides in scoped styles.
   - `.tooltip` — CSS-only hover tooltip (positioned below element via `::after` pseudo-element reading `data-tooltip` attribute, 0.2s fade-in; hidden when the attribute is empty). `.tooltip--delayed` modifier adds a 1s hover delay (used on building card tooltips). `.tooltip--multiline` keeps line breaks (`\n`) in the tooltip text.
   - `.action-row` — flex row for icon-button + cost display pairs (`.action-row--disabled` dims the cost items). `.action-btn` (1.75rem square icon button), `.action-btn-icon` (1.1rem icon), `.action-cost` (cost container), `.action-cost-item` (icon + amount pair), `.action-cost-icon` (0.8rem resource icon), `.action-cost-amount` (0.7rem value text), `.action-cost-short` (red `--color-red` when unaffordable), `.action-cost-tooltip` (full-amount cost breakdown grid shown on hover after 1s; `.action-cost-tooltip--above` flips it upward).

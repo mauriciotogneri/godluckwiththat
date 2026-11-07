@@ -1,5 +1,6 @@
 <script setup>
 import {computed, ref} from 'vue'
+import {IMG_OTHER_HOME_BACKGROUND, IMG_OTHER_HOME_TITLE} from '@/js/engine/assets.js'
 import {playTap} from '@/js/engine/audio.js'
 import {EMIT_ABOUT, EMIT_SETTINGS, EMIT_START} from '@/js/engine/enums.js'
 import storage from '@/js/engine/storage.js'
@@ -18,12 +19,12 @@ const hasSavedGame = computed(() => savedData.value !== null)
 
 <template>
   <div class="screen-layout">
-    <div class="screen-glow" />
+    <img class="home-background" :src="IMG_OTHER_HOME_BACKGROUND" alt="">
+    <div class="home-veil" />
 
-    <div class="screen-content">
+    <div class="screen-content home-content">
       <h1 class="title">
-        <span class="title-line">{{ t('screen.home.title.line1').toUpperCase() }}</span>
-        <span class="title-line">{{ t('screen.home.title.line2').toUpperCase() }}</span>
+        <img class="title-image" :src="IMG_OTHER_HOME_TITLE" width="1200" height="458" :alt="t('screen.home.title.line1') + ' ' + t('screen.home.title.line2')">
       </h1>
 
       <button v-if="!isMobile && hasSavedGame" class="btn-gold start-button" @click="playTap(); emit(EMIT_START, savedData)">
@@ -47,25 +48,48 @@ const hasSavedGame = computed(() => savedData.value !== null)
 </template>
 
 <style scoped>
+/* Painted landscape filling the screen */
+.home-background {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  pointer-events: none;
+}
+
+/* Dark blurred oval behind title and buttons, fading into the painting */
+.home-veil {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: clamp(36rem, 50vw, 60rem);
+  height: 130vh;
+  background: rgba(0, 0, 0, 0.65);
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+  mask-image: radial-gradient(closest-side, rgba(0, 0, 0, 1) 55%, rgba(0, 0, 0, 0.5) 80%, rgba(0, 0, 0, 0) 100%);
+  pointer-events: none;
+}
+
+/* Title and buttons sit slightly above center */
+.home-content {
+  margin-bottom: 10vh;
+}
+
 /* Game title heading */
 .title {
-  font-family: var(--font-display);
-  font-weight: 700;
-  font-size: clamp(2.8rem, 8vw, 5.5rem);
-  line-height: 1.1;
-  text-align: center;
-  color: var(--color-text);
-  letter-spacing: 0.02em;
-  margin-bottom: 5rem;
+  margin-bottom: 2.5rem;
+  line-height: 0;
 }
 
-.title-line {
-  display: block;
-}
-
-/* Second line — accent color */
-.title-line:nth-child(2) {
-  color: rgba(var(--color-accent-rgb), 0.85);
+/* Title artwork, shrinking on narrow or short windows */
+.title-image {
+  width: clamp(18rem, 30vw, 32rem);
+  max-width: min(85vw, 60vh);
+  height: auto;
 }
 
 /* Play button */
