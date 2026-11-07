@@ -97,7 +97,7 @@ Resource/colony items use `<img>` icons from `public/img/` (no text labels). Val
 
 Main content area displaying all 19 buildings in a 4-column layout. Each column represents a building category (Colony, Resources, Religion, Military) with a Josefin Sans uppercase header and building cards stacked in a 6-row grid (`grid-template-rows: repeat(6, 1fr)`, so every card gets 1/6 of the column height).
 
-**Data source**: `BUILDING_GRID` constant from `constants.js` — array of column definitions, each with `headerKey` (i18n key) and `buildings` array of `{ key, img }` objects. `BUILDING_IMAGE_MAP` (also in `constants.js`) provides a flat key→image lookup derived from `BUILDING_GRID`, used for event icons. The `img` is a full path constant from `assets.js` (e.g. `IMG_BUILDING_HOUSE` → `'/img/buildings/misc/house.jpg'`). The `key` indexes into both `ui.buildings[key]` for the building snapshot and `'building.' + key` for the localized name.
+**Data source**: `BUILDING_GRID` constant from `constants.js` — array of column definitions, each with `headerKey` (i18n key) and `buildings` array of `{ key, img }` objects. `BUILDING_IMAGE_MAP` (also in `constants.js`) provides a flat key→image lookup derived from `BUILDING_GRID`, used for event icons. The `img` is a full path constant from `assets.js` (e.g. `IMG_BUILDING_HOUSE` → `'/img/buildings/misc/house.webp'`). The `key` indexes into both `ui.buildings[key]` for the building snapshot and `'building.' + key` for the localized name.
 
 **Dynamic component resolution**: `game_screen.vue` maps all 19 building keys to dedicated card components via `CARD_COMPONENTS` (e.g. `headquarters → HeadquartersCard`). Uses Vue's `<component :is>` in the grid loop.
 
