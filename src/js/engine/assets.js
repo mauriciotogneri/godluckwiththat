@@ -70,6 +70,7 @@ export const IMG_PUNISHMENT_WILDFIRES = '/img/punishments/wildfires.jpg'
 
 // Blessings
 export const IMG_BLESSING_BLESSING = '/img/blessings/blessing.jpg'
+export const IMG_BLESSING_GIFT_FROM_THE_HEAVENS = '/img/blessings/gift_from_the_heavens.jpg'
 
 // Seasons
 export const IMG_SEASON_COLD = '/img/seasons/cold.png'
