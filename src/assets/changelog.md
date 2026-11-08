@@ -9,6 +9,13 @@
 * Feat: New main menu with a painted landscape, title artwork and music
 * Feat: New artwork for the barracks, archery, stable, tower and wall
 * Feat: Added more games to the More Games list
+* Feat: New story intro on your first new game
+* Feat: New ending screen when the portal opens
+* Feat: Every blessing now has its own artwork
+* Feat: Walls and towers lose levels in raids, shown in the raid forecast and result
+* Feat: Unit tooltips show stats and upkeep with your research bonuses applied
+* Fix: Singular wording for a single worker or building level lost
+* Balance: Raiders gain 5% attack and health for every year after the first
 * Balance: Retuned challenge requirements so the last challenges are within reach
 * Balance: Longer waits between challenges and longer challenge timers
 * Balance: Timed blessings last much longer and are stronger when the gods are more demanding
