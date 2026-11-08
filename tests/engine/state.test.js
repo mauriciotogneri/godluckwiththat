@@ -7949,6 +7949,100 @@ describe('State', () => {
       expect(state.colony.buildings.farm.level).toBe(3)
     })
 
+    it('should wear the wall on a victory and list its lost levels in the report', async () => {
+      const state = await createRaidState({
+        units: {
+          [UNIT_INFANTRY]: 10,
+        },
+        raid: createRaid({
+          enemy: {
+            [UNIT_INFANTRY]: 9,
+          },
+        }),
+        colonyOverrides: {
+          buildingOverrides: {
+            barracks: {
+              level: 2,
+            },
+            wall: {
+              level: 3,
+            },
+          },
+        },
+      })
+      state._resolveRaid()
+      // The level 3 wall absorbs the 150 health lost, losing one level
+      expect(state.raidReport.victory).toBe(true)
+      expect(state.colony.buildings.wall.level).toBe(2)
+      expect(state.raidReport.buildingsLost).toEqual([BUILDING_WALL])
+    })
+
+    it('should take part of the wall and the tower on a defeat', async () => {
+      const state = await createRaidState(defeatOptions({
+        raid: createRaid({
+          enemy: {
+            [UNIT_INFANTRY]: 20,
+          },
+        }),
+        colonyOverrides: {
+          resources: {
+            workers: 20,
+          },
+          buildingOverrides: {
+            wall: {
+              level: 3,
+            },
+            tower: {
+              level: 1,
+            },
+          },
+        },
+      }))
+      state._resolveRaid()
+      expect(state.raidReport.victory).toBe(false)
+      expect(state.colony.buildings.wall.level).toBe(1)
+      expect(state.colony.buildings.tower.level).toBe(0)
+      expect(state.raidReport.buildingsLost.filter(key => key === BUILDING_WALL)).toHaveLength(2)
+      expect(state.raidReport.buildingsLost.filter(key => key === BUILDING_TOWER)).toHaveLength(1)
+    })
+
+    it('should spare the wall and the tower on a defeat while Celestial Fortification is active', async () => {
+      const state = await createRaidState(defeatOptions({
+        metaOverrides: {
+          challenges: createChallenges({
+            activeBlessings: [
+              createBlessing({
+                type: BLESSING_CELESTIAL_FORTIFICATION,
+                timeout: 300,
+              }),
+            ],
+          }),
+        },
+        raid: createRaid({
+          enemy: {
+            [UNIT_INFANTRY]: 20,
+          },
+        }),
+        colonyOverrides: {
+          resources: {
+            workers: 20,
+          },
+          buildingOverrides: {
+            wall: {
+              level: 3,
+            },
+            tower: {
+              level: 1,
+            },
+          },
+        },
+      }))
+      state._resolveRaid()
+      expect(state.raidReport.victory).toBe(false)
+      expect(state.colony.buildings.wall.level).toBe(3)
+      expect(state.colony.buildings.tower.level).toBe(1)
+    })
+
     it('should add a "Raid repelled" past event and play the alert sound on a victory', async () => {
       const state = await createRaidState({
         units: {

@@ -536,6 +536,9 @@ export const RAID_DEFEAT_MAX_RESOURCES = 0.3
 export const RAID_DEFEAT_MAX_WORKERS = 0.1
 export const RAID_DEFEAT_MAX_LEVELS = 3
 
+// Share of the wall's and the tower's levels lost on a lost raid (rounded up)
+export const RAID_DEFEAT_DEFENSE_LEVEL_SHARE = 0.5
+
 // Tribute value demanded per raider, split across a few random resources
 export const TRIBUTE_VALUE_PER_UNIT = 25
 

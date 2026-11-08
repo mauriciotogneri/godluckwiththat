@@ -132,6 +132,20 @@ const strengthShare = computed(() => {
 /** Unit types the colony is expected to lose in a won battle. */
 const expectedLossTypes = computed(() => UNIT_TYPES.filter(type => (ui.military.forecast?.unitsLost[type] ?? 0) > 0))
 
+/** Wall and tower levels the raid is expected to destroy. */
+const expectedDefenseLosses = computed(() => [
+  [
+    BUILDING_WALL,
+    ui.military.forecast?.wallLevelsLost ?? 0,
+  ],
+  [
+    BUILDING_TOWER,
+    ui.military.forecast?.towerLevelsLost ?? 0,
+  ],
+].filter(([
+  , levels,
+]) => levels > 0))
+
 /** Whether the colony has any units before the battle. */
 const hasArmy = computed(() => ui.military.units.some(unit => unit.count > 0))
 
@@ -312,16 +326,20 @@ onUnmounted(() => {
 
               <ul class="forecast-losses">
                 <template v-if="ui.military.forecast.victory">
-                  <li v-if="expectedLossTypes.length === 0" class="forecast-loss forecast-loss--none">{{ t('military.noLosses') }}</li>
+                  <li v-if="expectedLossTypes.length === 0 && expectedDefenseLosses.length === 0" class="forecast-loss forecast-loss--none">{{ t('military.noLosses') }}</li>
                   <li v-else class="forecast-loss">
                     {{ t('military.expectedLosses') }}:
                     <span v-for="type in expectedLossTypes" :key="type" class="forecast-loss-unit">{{ t('unit.' + type) }} &minus;{{ ui.military.forecast.unitsLost[type] }}</span>
+                    <span v-for="[key, levels] in expectedDefenseLosses" :key="key" class="forecast-loss-unit">{{ t('building.' + key) }} &minus;{{ levels }}</span>
                   </li>
                 </template>
                 <template v-else>
                   <li v-if="hasArmy" class="forecast-loss">{{ t('military.armyLost') }}</li>
                   <li v-if="ui.military.forecast.resourceShare > 0" class="forecast-loss">&minus;{{ t('military.resourceLoss', Math.round(ui.military.forecast.resourceShare * 100)) }}</li>
                   <li v-if="ui.military.forecast.workersLost > 0" class="forecast-loss">&minus;{{ t(ui.military.forecast.workersLost === 1 ? 'military.workerLossSingular' : 'military.workerLoss', ui.military.forecast.workersLost) }}</li>
+                  <li v-if="expectedDefenseLosses.length > 0" class="forecast-loss">
+                    <span v-for="[key, levels] in expectedDefenseLosses" :key="key" class="forecast-loss-unit">{{ t('building.' + key) }} &minus;{{ levels }}</span>
+                  </li>
                   <li v-if="ui.military.forecast.levelsLost > 0" class="forecast-loss">&minus;{{ t(ui.military.forecast.levelsLost === 1 ? 'military.levelLossSingular' : 'military.levelLoss', ui.military.forecast.levelsLost) }}</li>
                 </template>
               </ul>

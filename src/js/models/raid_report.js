@@ -10,7 +10,7 @@ import {unitCounts} from '@/js/engine/utils.js'
  * @property {Object<string, number>} unitsLost - Colony units lost per type
  * @property {Object<string, number>} resourcesLost - Amount lost per resource (defeat only)
  * @property {number} workersLost - Workers lost (defeat only)
- * @property {string[]} buildingsLost - Building key per level lost (defeat only)
+ * @property {string[]} buildingsLost - Building key per level lost (the wall and the tower also after a victory)
  */
 class RaidReport {
   /**

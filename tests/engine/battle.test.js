@@ -1,5 +1,5 @@
 import {describe, it, expect} from 'vitest'
-import {RAID_DEFEAT_MAX_LEVELS, RAID_DEFEAT_MAX_RESOURCES, RAID_DEFEAT_MAX_WORKERS, TOWER_ARCHERS_PER_LEVEL, UNIT_COUNTER_MULTIPLIER, UNIT_STATS, WALL_HEALTH_PER_LEVEL} from '@/js/engine/balancing.js'
+import {RAID_DEFEAT_DEFENSE_LEVEL_SHARE, RAID_DEFEAT_MAX_LEVELS, RAID_DEFEAT_MAX_RESOURCES, RAID_DEFEAT_MAX_WORKERS, TOWER_ARCHERS_PER_LEVEL, UNIT_COUNTER_MULTIPLIER, UNIT_STATS, WALL_HEALTH_PER_LEVEL} from '@/js/engine/balancing.js'
 import {armyAttack, armyHealth, resolveBattle} from '@/js/engine/battle.js'
 import {UNIT_COUNTERS, UNIT_TYPES} from '@/js/engine/constants.js'
 import {UNIT_ARCHER, UNIT_CAVALRY, UNIT_INFANTRY} from '@/js/engine/enums.js'
@@ -681,6 +681,118 @@ describe('resolveBattle', () => {
         [UNIT_INFANTRY]: 9,
       })
       expect(Object.keys(result.unitsLost).sort()).toEqual([...UNIT_TYPES].sort())
+    })
+  })
+
+  describe('defense wear', () => {
+    it('should leave the wall and the tower intact against a weak raid', () => {
+      const result = fight({
+        units: {
+          [UNIT_INFANTRY]: 10,
+        },
+        wallLevel: 1,
+      }, {
+        [UNIT_INFANTRY]: 6,
+      })
+      expect(result.victory).toBe(true)
+      expect(result.wallLevelsLost).toBe(0)
+      expect(result.towerLevelsLost).toBe(0)
+    })
+
+    it('should wear the wall by a level per full level of damage it absorbed', () => {
+      // 150 health is lost; the level 1 wall absorbs 100 of it and is destroyed
+      const result = fight({
+        units: {
+          [UNIT_INFANTRY]: 10,
+        },
+        wallLevel: 1,
+      }, {
+        [UNIT_INFANTRY]: 9,
+      })
+      expect(result.victory).toBe(true)
+      expect(result.wallLevelsLost).toBe(1)
+    })
+
+    it('should wear the wall more against a bigger raid and never beyond its level', () => {
+      const defender = {
+        units: {
+          [UNIT_INFANTRY]: 10,
+        },
+        wallLevel: 5,
+      }
+      const small = fight(defender, {
+        [UNIT_INFANTRY]: 9,
+      })
+      const big = fight(defender, {
+        [UNIT_INFANTRY]: 15,
+      })
+      expect(big.victory).toBe(true)
+      expect(big.wallLevelsLost).toBeGreaterThan(small.wallLevelsLost)
+      expect(big.wallLevelsLost).toBeLessThanOrEqual(5)
+      expect(fight({
+        ...defender,
+        wallLevel: 1,
+      }, {
+        [UNIT_INFANTRY]: 15,
+      }).wallLevelsLost).toBeLessThanOrEqual(1)
+    })
+
+    it('should wear the tower by a level per full level of health its archers lost', () => {
+      const tower = {
+        towerLevel: 3,
+      }
+      const small = fight(tower, {
+        [UNIT_INFANTRY]: 6,
+      })
+      const big = fight(tower, {
+        [UNIT_INFANTRY]: 10,
+      })
+      expect(small.victory).toBe(true)
+      expect(small.towerLevelsLost).toBe(0)
+      expect(big.victory).toBe(true)
+      expect(big.towerLevelsLost).toBe(1)
+    })
+
+    it('should let the wall soak the hits before the tower is worn', () => {
+      const raiders = {
+        [UNIT_INFANTRY]: 10,
+      }
+      const bare = fight({
+        towerLevel: 3,
+      }, raiders)
+      const walled = fight({
+        towerLevel: 3,
+        wallLevel: 3,
+      }, raiders)
+      expect(bare.towerLevelsLost).toBe(1)
+      expect(walled.towerLevelsLost).toBe(0)
+    })
+
+    it('should take part of the wall and the tower on a defeat', () => {
+      const result = fight({
+        wallLevel: 3,
+        towerLevel: 1,
+        workers: 10,
+      }, {
+        [UNIT_INFANTRY]: 20,
+      })
+      expect(result.victory).toBe(false)
+      expect(result.wallLevelsLost).toBe(Math.ceil(3 * RAID_DEFEAT_DEFENSE_LEVEL_SHARE))
+      expect(result.towerLevelsLost).toBe(Math.ceil(1 * RAID_DEFEAT_DEFENSE_LEVEL_SHARE))
+    })
+
+    it('should take nothing from missing defenses', () => {
+      const result = fight({
+        units: {
+          [UNIT_INFANTRY]: 1,
+        },
+        workers: 10,
+      }, {
+        [UNIT_INFANTRY]: 20,
+      })
+      expect(result.victory).toBe(false)
+      expect(result.wallLevelsLost).toBe(0)
+      expect(result.towerLevelsLost).toBe(0)
     })
   })
 

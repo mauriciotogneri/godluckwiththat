@@ -3,7 +3,7 @@ import {BUILDING_WALL} from '@/js/engine/enums.js'
 import Building from '@/js/models/buildings/building.js'
 
 /**
- * Defensive fortification. In a raid it absorbs damage before units take losses, and is never damaged.
+ * Defensive fortification. In a raid it absorbs damage before units take losses, and loses a level per full level of damage it absorbed.
  * Workers cannot be assigned to this building.
  */
 class Wall extends Building {

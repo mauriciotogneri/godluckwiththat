@@ -100,8 +100,8 @@ onUnmounted(() => {
         </div>
       </div>
 
-      <!-- Plunder on defeat -->
-      <dl v-if="!report.victory && hasLosses" class="raid-losses">
+      <!-- Plunder on defeat; the building levels lost in either outcome -->
+      <dl v-if="hasLosses" class="raid-losses">
         <template v-if="resourcesLost.length > 0">
           <dt class="raid-loss-label">{{ t('raid.result.resourcesLost') }}</dt>
           <dd class="raid-loss-value">
@@ -272,7 +272,7 @@ onUnmounted(() => {
   color: var(--color-red);
 }
 
-/* ── Losses on defeat ────────────────────────────────────── */
+/* ── Losses ──────────────────────────────────────────────── */
 
 .raid-losses {
   display: grid;

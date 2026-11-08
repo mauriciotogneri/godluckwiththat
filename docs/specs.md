@@ -279,13 +279,13 @@ Each building has a level that can be increased by spending resources. Building 
   - The higher the level, the more cavalry the colony can have (5 per level)
   - Workers cannot be assigned to this building
 - Wall
-  - In a raid, absorbs damage before units take losses (100 per level). It is never damaged
+  - In a raid, absorbs damage before units take losses (100 per level). It loses a level per full 100 damage it absorbed in a raid (half its levels, rounded up, on a lost raid), so a weak raid leaves it intact
   - Workers cannot be assigned to this building
 - Tower
-  - In a raid, fights as a fixed number of archers (3 per level) that share the hits with the units but never die and get no research bonus. A tower alone can defend
+  - In a raid, fights as a fixed number of archers (3 per level) that share the hits with the units but never die and get no research bonus. A tower alone can defend. The tower loses a level per full 60 damage (3 archers × 20 health) its archers take (half its levels, rounded up, on a lost raid)
   - Workers cannot be assigned to this building
 
-The five military buildings are not in the downgradable list: punishments, raids and manual downgrades skip them, so the territory they take cannot be freed and unit caps never shrink.
+The five military buildings are not in the downgradable list: punishments and manual downgrades skip them, and the random levels a lost raid takes skip them too. After a raid only the wall and the tower lose levels (see Battle), which frees the territory they took; the barracks, archery and stable never shrink, so unit caps never shrink.
 
 ## Military
 
@@ -322,8 +322,8 @@ A one-step, deterministic strength comparison. The forecast in the military wind
 - A unit deals up to ×2 attack against the type it beats, scaled by that type's share of the opponent's army. The tower's archers count as archers in the colony's share, so raider cavalry gets its bonus against them
 - Attack and Defense research raise unit attack and health by 10% per tier (not the tower or the wall). Raiders get their own attack and health bonus of 5% per year after the first (+15% in year 4), so the wall and the tower do not outgrow them
 - `ratio = sqrt(colony power / raider power)`. Above 1 is a victory
-- **Victory**: the colony loses health `(1 − sqrt(1 − 1/ratio²)) × total health`. The wall absorbs it first; units and the tower's archers share the rest by health, and units lose their share in proportion to their numbers (the tower's archers never die). Nothing else is gained
-- **Defeat**: the whole army is lost. With `severity = sqrt(1 − ratio²)` (0 near a tie, 1 with no defense), the colony also loses `severity × 30%` of each stored regular resource, `severity × 10%` of its workers (idle first) and `round(severity × 3)` building levels from the downgradable list (same rules as punishments). Faith and knowledge are never taken
+- **Victory**: the colony loses health `(1 − sqrt(1 − 1/ratio²)) × total health`. The wall absorbs it first; units and the tower's archers share the rest by health, and units lose their share in proportion to their numbers (the tower's archers never die). The wall and the tower then lose levels for the damage they took (see Wall and Tower), down to level 0 and to be rebuilt at the usual cost. Nothing else is gained
+- **Defeat**: the whole army is lost. With `severity = sqrt(1 − ratio²)` (0 near a tie, 1 with no defense), the colony also loses `severity × 30%` of each stored regular resource, `severity × 10%` of its workers (idle first) and `round(severity × 3)` building levels from the downgradable list (same rules as punishments). The wall and the tower each lose half their levels, rounded up. Faith and knowledge are never taken
 
 Examples: 10 infantry beat 9 infantry and lose 6 (2 with a level 1 wall). 10 infantry beat 10 cavalry, 10 archers beat 10 infantry, 10 cavalry beat 10 archers. A level 1 tower alone beats 3 infantry. No units and no tower is a full defeat, with or without a wall.
 
@@ -433,7 +433,7 @@ Rewards earned by completing challenges. The player chooses one of two offered b
 - **Favorable Weather** — warm season becomes more productive, cold season becomes less harsh. Formula: the season bonus (`warm` in warm season, `cold` in cold season) is added to the food modifier and subtracted from the wood modifier. Examples with `warm = 0.1, cold = 0.1`: warm food modifier `0.2 + 0.1 = 0.3` (+30% instead of +20%), warm wood modifier `-0.2 - 0.1 = -0.3` (-30% instead of -20%), cold food modifier `-0.2 + 0.1 = -0.1` (-10% instead of -20%), cold wood modifier `0.2 - 0.1 = 0.1` (+10% instead of +20%)
 - **Blessed Markets** — trade fee is 0%, overriding market level reduction
 - **Temporary Peace** — raid timers freeze: no raid is announced or arrives while it lasts
-- **Celestial Fortification** — a lost raid takes no building levels (its effect on disasters is planned with disasters)
+- **Celestial Fortification** — a lost raid takes no building levels, the wall's and the tower's included (its effect on disasters is planned with disasters)
 
 ### Punishments
 

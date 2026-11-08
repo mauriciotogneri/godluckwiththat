@@ -1,6 +1,6 @@
 // Battle math — pure, deterministic functions shared by the raid forecast and the raid resolution.
 
-import {RAID_DEFEAT_MAX_LEVELS, RAID_DEFEAT_MAX_RESOURCES, RAID_DEFEAT_MAX_WORKERS, TOWER_ARCHERS_PER_LEVEL, UNIT_COUNTER_MULTIPLIER, UNIT_STATS, WALL_HEALTH_PER_LEVEL} from '@/js/engine/balancing.js'
+import {RAID_DEFEAT_DEFENSE_LEVEL_SHARE, RAID_DEFEAT_MAX_LEVELS, RAID_DEFEAT_MAX_RESOURCES, RAID_DEFEAT_MAX_WORKERS, TOWER_ARCHERS_PER_LEVEL, UNIT_COUNTER_MULTIPLIER, UNIT_STATS, WALL_HEALTH_PER_LEVEL} from '@/js/engine/balancing.js'
 import {UNIT_COUNTERS, UNIT_TYPES} from '@/js/engine/constants.js'
 import {UNIT_ARCHER} from '@/js/engine/enums.js'
 
@@ -100,9 +100,9 @@ export function armyAttack(units, attackBonus, opponentUnits, opponentDefenseBon
 
 /**
  * Resolves a raid in one step by comparing both sides' power (attack × health, Lanchester square law).
- * The defender's wall adds health that soaks losses first and is never damaged; the tower fights as a
+ * The defender's wall adds health that soaks losses first and wears down by the damage it absorbs; the tower fights as a
  * fixed number of archers per level, adding their attack and health, sharing losses with the units and
- * never dying, so a tower alone can defend. Its archers count as archers in the colony's mix, so raider
+ * never dying in the fight, so a tower alone can defend. Its archers count as archers in the colony's mix, so raider
  * cavalry gets its counter bonus against them. Research bonuses apply to defender units only; the
  * raiders have their own bonuses, which grow with the year.
  *
@@ -124,8 +124,10 @@ export function armyAttack(units, attackBonus, opponentUnits, opponentDefenseBon
  * @param {Object<string, number>} attacker.units - Unit count per type
  * @param {number} [attacker.attackBonus=0] - Fractional raider attack bonus
  * @param {number} [attacker.defenseBonus=0] - Fractional raider health bonus
- * @returns {{victory: boolean, ratio: number, playerPower: number, enemyPower: number, unitsLost: Object<string, number>, severity: number, resourceShare: number, workersLost: number, levelsLost: number}}
- *   Outcome; ratio > 1 is a victory, severity (0–1) scales the defeat losses
+ * @returns {{victory: boolean, ratio: number, playerPower: number, enemyPower: number, unitsLost: Object<string, number>, severity: number, resourceShare: number, workersLost: number, levelsLost: number, wallLevelsLost: number, towerLevelsLost: number}}
+ *   Outcome; ratio > 1 is a victory, severity (0–1) scales the defeat losses. The wall and the tower lose levels
+ *   in either outcome: a level per full WALL_HEALTH_PER_LEVEL of damage the wall absorbed and per full
+ *   tower-level health the tower's archers took, or half their levels (rounded up) on a defeat
  */
 export function resolveBattle(defender, attacker) {
   const {
@@ -162,6 +164,8 @@ export function resolveBattle(defender, attacker) {
     resourceShare: 0,
     workersLost: 0,
     levelsLost: 0,
+    wallLevelsLost: 0,
+    towerLevelsLost: 0,
   }
 
   // No raiders to fight (cannot normally happen)
@@ -184,9 +188,13 @@ export function resolveBattle(defender, attacker) {
       const count = units[type] ?? 0
       unitsLost[type] = unitHealth > 0 ? Math.min(count, Math.round(count * (healthLost - absorbed) / (unitHealth + towerHealth))) : 0
     }
+    // Each defense loses a level per full level of health it took; the tower's archers take their share of what the wall left
+    const towerDamage = unitHealth + towerHealth > 0 ? (healthLost - absorbed) * towerHealth / (unitHealth + towerHealth) : 0
     return {
       ...victoryResult,
       ratio: ratio,
+      wallLevelsLost: Math.min(wallLevel, Math.floor(absorbed / WALL_HEALTH_PER_LEVEL)),
+      towerLevelsLost: Math.min(towerLevel, Math.floor(towerDamage / (TOWER_ARCHERS_PER_LEVEL * UNIT_STATS[UNIT_ARCHER].health))),
     }
   }
 
@@ -205,5 +213,7 @@ export function resolveBattle(defender, attacker) {
     resourceShare: severity * RAID_DEFEAT_MAX_RESOURCES,
     workersLost: Math.round(severity * RAID_DEFEAT_MAX_WORKERS * workers),
     levelsLost: Math.round(severity * RAID_DEFEAT_MAX_LEVELS),
+    wallLevelsLost: Math.ceil(wallLevel * RAID_DEFEAT_DEFENSE_LEVEL_SHARE),
+    towerLevelsLost: Math.ceil(towerLevel * RAID_DEFEAT_DEFENSE_LEVEL_SHARE),
   }
 }

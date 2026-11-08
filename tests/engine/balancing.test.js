@@ -27,6 +27,7 @@ import {BUILDING_UPGRADES,
   RAID_DEFEAT_MAX_RESOURCES,
   RAID_DEFEAT_MAX_WORKERS,
   RAID_DEFEAT_MAX_LEVELS,
+  RAID_DEFEAT_DEFENSE_LEVEL_SHARE,
   TRIBUTE_VALUE_PER_UNIT,
   TRIBUTE_RESOURCE_VALUES,
   TRIBUTE_MIN_RESOURCES,
@@ -250,6 +251,11 @@ describe('balancing', () => {
       expect(RAID_UNITS_PER_TERRITORY).toBeGreaterThanOrEqual(0)
       expect(RAID_UNITS_PER_YEAR).toBeGreaterThanOrEqual(0)
       expect(RAID_BONUS_PER_YEAR).toBeGreaterThanOrEqual(0)
+    })
+
+    it('the defeat share of wall and tower levels is a fraction', () => {
+      expect(RAID_DEFEAT_DEFENSE_LEVEL_SHARE).toBeGreaterThan(0)
+      expect(RAID_DEFEAT_DEFENSE_LEVEL_SHARE).toBeLessThanOrEqual(1)
     })
 
     it('defeat maximums are fractions and a whole level count', () => {

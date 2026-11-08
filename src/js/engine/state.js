@@ -17,7 +17,7 @@ import Meta from '@/js/models/meta.js'
 import Production from '@/js/models/production.js'
 import Raid from '@/js/models/raid.js'
 import RaidReport from '@/js/models/raid_report.js'
-import {BLESSING_BLESSED_MARKETS, BLESSING_CELESTIAL_FORTIFICATION, BLESSING_FAVORABLE_WEATHER, BLESSING_GIFT_FROM_THE_HEAVENS, BLESSING_HOLY_EXPANSION, BLESSING_RAPID_CONSTRUCTION, BLESSING_TEMPORARY_PEACE, BONUS_CONSTRUCTION_TIME, BONUS_EXPANSION_COST, BONUS_FAITH_PRODUCTION, BONUS_FOOD_CONSUMPTION, BONUS_FOOD_PRODUCTION, BONUS_HABITATION, BONUS_KNOWLEDGE_PRODUCTION, BONUS_MINING_PRODUCTION, BONUS_STORAGE_CAPACITY, BONUS_UNIT_ATTACK, BONUS_UNIT_DEFENSE, BONUS_WARNING_TIME, BONUS_WOOD_CONSUMPTION, BONUS_WOOD_PRODUCTION, BONUS_WORKER_PRODUCTIVITY, BUILDING_ACADEMY, BUILDING_COPPER_MINE, BUILDING_FARM, BUILDING_GOLD_MINE, BUILDING_HEADQUARTERS, BUILDING_HOUSE, BUILDING_IRON_MINE, BUILDING_MARKET, BUILDING_MONUMENT, BUILDING_QUARRY, BUILDING_STOREHOUSE, BUILDING_TEMPLE, BUILDING_WOODCUTTER, CHALLENGE_MODAL_FAILURE, CHALLENGE_MODAL_REWARD, CHALLENGE_MODAL_WIN, CHALLENGE_MOOD_MERCIFUL, CHALLENGE_STATUS_STARTED, EVENT_TYPE_BUILDING_UPGRADE, EVENT_TYPE_CHALLENGE_STARTED, EVENT_TYPE_POPULATION_LIMIT_REACHED, EVENT_TYPE_RAID_INCOMING, EVENT_TYPE_RAID_RESULT, EVENT_TYPE_RESEARCH_COMPLETE, EVENT_TYPE_RESOURCE_LIMIT_REACHED, EVENT_TYPE_RESOURCE_NEGATIVE_PRODUCTION, EVENT_TYPE_SEASON_CHANGED, EVENT_TYPE_IDLE_WORKERS, EVENT_TYPE_TERRITORY_LIMIT_REACHED, HQ_TYPE_CAMP, PUNISHMENT_CROP_FAILURE, PUNISHMENT_LANDSLIDE, PUNISHMENT_PLAGUE, PUNISHMENT_VOLCANO, PUNISHMENT_WILDFIRES, RAID_PHASE_INCOMING, RAID_PHASE_WAITING, RESOURCE_FOOD, RESOURCE_WOOD, TRIBUTE_CANCEL, TRIBUTE_DELAY, TUTORIAL_MODAL_SEASON_CHANGED, TUTORIAL_MODAL_NEGATIVE_PRODUCTION, TUTORIAL_MODAL_HQ_UPGRADE, TUTORIAL_MODAL_CHALLENGE_STARTED, TUTORIAL_MODAL_RAID_INCOMING} from '@/js/engine/enums.js'
+import {BLESSING_BLESSED_MARKETS, BLESSING_CELESTIAL_FORTIFICATION, BLESSING_FAVORABLE_WEATHER, BLESSING_GIFT_FROM_THE_HEAVENS, BLESSING_HOLY_EXPANSION, BLESSING_RAPID_CONSTRUCTION, BLESSING_TEMPORARY_PEACE, BONUS_CONSTRUCTION_TIME, BONUS_EXPANSION_COST, BONUS_FAITH_PRODUCTION, BONUS_FOOD_CONSUMPTION, BONUS_FOOD_PRODUCTION, BONUS_HABITATION, BONUS_KNOWLEDGE_PRODUCTION, BONUS_MINING_PRODUCTION, BONUS_STORAGE_CAPACITY, BONUS_UNIT_ATTACK, BONUS_UNIT_DEFENSE, BONUS_WARNING_TIME, BONUS_WOOD_CONSUMPTION, BONUS_WOOD_PRODUCTION, BONUS_WORKER_PRODUCTIVITY, BUILDING_ACADEMY, BUILDING_COPPER_MINE, BUILDING_FARM, BUILDING_GOLD_MINE, BUILDING_HEADQUARTERS, BUILDING_HOUSE, BUILDING_IRON_MINE, BUILDING_MARKET, BUILDING_MONUMENT, BUILDING_QUARRY, BUILDING_STOREHOUSE, BUILDING_TEMPLE, BUILDING_TOWER, BUILDING_WALL, BUILDING_WOODCUTTER, CHALLENGE_MODAL_FAILURE, CHALLENGE_MODAL_REWARD, CHALLENGE_MODAL_WIN, CHALLENGE_MOOD_MERCIFUL, CHALLENGE_STATUS_STARTED, EVENT_TYPE_BUILDING_UPGRADE, EVENT_TYPE_CHALLENGE_STARTED, EVENT_TYPE_POPULATION_LIMIT_REACHED, EVENT_TYPE_RAID_INCOMING, EVENT_TYPE_RAID_RESULT, EVENT_TYPE_RESEARCH_COMPLETE, EVENT_TYPE_RESOURCE_LIMIT_REACHED, EVENT_TYPE_RESOURCE_NEGATIVE_PRODUCTION, EVENT_TYPE_SEASON_CHANGED, EVENT_TYPE_IDLE_WORKERS, EVENT_TYPE_TERRITORY_LIMIT_REACHED, HQ_TYPE_CAMP, PUNISHMENT_CROP_FAILURE, PUNISHMENT_LANDSLIDE, PUNISHMENT_PLAGUE, PUNISHMENT_VOLCANO, PUNISHMENT_WILDFIRES, RAID_PHASE_INCOMING, RAID_PHASE_WAITING, RESOURCE_FOOD, RESOURCE_WOOD, TRIBUTE_CANCEL, TRIBUTE_DELAY, TUTORIAL_MODAL_SEASON_CHANGED, TUTORIAL_MODAL_NEGATIVE_PRODUCTION, TUTORIAL_MODAL_HQ_UPGRADE, TUTORIAL_MODAL_CHALLENGE_STARTED, TUTORIAL_MODAL_RAID_INCOMING} from '@/js/engine/enums.js'
 import {t} from '@/js/i18n/localized.js'
 
 /**
@@ -1262,6 +1262,7 @@ class State {
       workersLost = this._sacrificeWorkers(result.workersLost)
       buildingsLost = this._downgradeRandomBuildings(result.levelsLost)
     }
+    buildingsLost.push(...this._downgradeDefenses(result.wallLevelsLost, result.towerLevelsLost))
 
     this.raidReport = new RaidReport({
       victory: result.victory,
@@ -1284,6 +1285,44 @@ class State {
     military.raid = null
     this.paused = true
     this.update(0)
+  }
+
+  /**
+   * Removes levels from the wall and the tower after a raid (they can drop to level 0). A level
+   * under construction keeps building.
+   * @param {number} wallLevels - Levels the wall loses (capped at its level)
+   * @param {number} towerLevels - Levels the tower loses (capped at its level)
+   * @returns {string[]} Building key of each level removed
+   */
+  _downgradeDefenses(wallLevels, towerLevels) {
+    const {
+      buildings,
+    } = this.colony
+    const downgraded = []
+    for (const [
+      key,
+      levels,
+    ] of [
+        [
+          BUILDING_WALL,
+          wallLevels,
+        ],
+        [
+          BUILDING_TOWER,
+          towerLevels,
+        ],
+      ]) {
+      const lost = Math.min(levels, buildings[key].level)
+      buildings[key].level -= lost
+      for (let i = 0; i < lost; i++) {
+        downgraded.push(key)
+      }
+    }
+    if (downgraded.length > 0) {
+      // Each lost level frees a territory slot
+      this.colony.events.dismissPastByType(EVENT_TYPE_TERRITORY_LIMIT_REACHED)
+    }
+    return downgraded
   }
 
   /**
@@ -1436,7 +1475,7 @@ class State {
   /**
    * Outcome the incoming raid would have if it arrived now. The real battle uses the same
    * result, so the forecast shown in the military window always matches it.
-   * Celestial Fortification spares building levels on a lost raid.
+   * Celestial Fortification spares building levels, the wall's and the tower's included, on a lost raid.
    * @returns {Object|null} resolveBattle result, or null when no raid is announced
    */
   get _raidForecast() {
@@ -1451,6 +1490,10 @@ class State {
     })
     if (this.meta.challenges.activeBlessings.some(blessing => blessing.type === BLESSING_CELESTIAL_FORTIFICATION)) {
       result.levelsLost = 0
+      if (!result.victory) {
+        result.wallLevelsLost = 0
+        result.towerLevelsLost = 0
+      }
     }
     return result
   }
