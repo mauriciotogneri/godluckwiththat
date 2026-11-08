@@ -311,7 +311,9 @@ export const LOCALIZED_EN = {
   'military.armyLost': 'Your whole army is lost',
   'military.resourceLoss': '{0}% of stored resources',
   'military.workerLoss': '{0} workers',
+  'military.workerLossSingular': '{0} worker',
   'military.levelLoss': '{0} building levels',
+  'military.levelLossSingular': '{0} building level',
   'military.tribute': 'Tribute',
   'military.delay': 'Delay the raid',
   'military.delayTooltip': 'Pay to delay the raid by {0}',
@@ -634,5 +636,7 @@ export const LOCALIZED_EN = {
   'punishment.productivityGeneralLoss': 'All productivity reduced by {0}% for {1}',
   'punishment.resourceLoss': 'Lose {0}% of stored resources',
   'punishment.workerLoss': 'Lose {0} workers',
+  'punishment.workerLossSingular': 'Lose {0} worker',
   'punishment.buildingLoss': 'Lose {0} building levels',
+  'punishment.buildingLossSingular': 'Lose {0} building level',
 }

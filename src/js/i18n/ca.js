@@ -311,7 +311,9 @@ export const LOCALIZED_CA = {
   'military.armyLost': 'Perds tot l\'exèrcit',
   'military.resourceLoss': '{0}% dels recursos emmagatzemats',
   'military.workerLoss': '{0} treballadors',
+  'military.workerLossSingular': '{0} treballador',
   'military.levelLoss': '{0} nivells d\'edificis',
+  'military.levelLossSingular': '{0} nivell d\'edifici',
   'military.tribute': 'Tribut',
   'military.delay': 'Endarrerir la incursió',
   'military.delayTooltip': 'Pagar per endarrerir la incursió {0}',
@@ -611,5 +613,7 @@ export const LOCALIZED_CA = {
   'punishment.productivityGeneralLoss': 'Tota la productivitat reduïda un {0}% durant {1}',
   'punishment.resourceLoss': 'Perds {0}% de recursos emmagatzemats',
   'punishment.workerLoss': 'Perds {0} treballadors',
+  'punishment.workerLossSingular': 'Perds {0} treballador',
   'punishment.buildingLoss': 'Perds {0} nivells d\'edificis',
+  'punishment.buildingLossSingular': 'Perds {0} nivell d\'edifici',
 }

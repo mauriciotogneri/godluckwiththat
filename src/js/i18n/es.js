@@ -311,7 +311,9 @@ export const LOCALIZED_ES = {
   'military.armyLost': 'Pierdes todo tu ejército',
   'military.resourceLoss': '{0}% de los recursos almacenados',
   'military.workerLoss': '{0} trabajadores',
+  'military.workerLossSingular': '{0} trabajador',
   'military.levelLoss': '{0} niveles de edificios',
+  'military.levelLossSingular': '{0} nivel de edificio',
   'military.tribute': 'Tributo',
   'military.delay': 'Retrasar la incursión',
   'military.delayTooltip': 'Pagar para retrasar la incursión {0}',
@@ -611,5 +613,7 @@ export const LOCALIZED_ES = {
   'punishment.productivityGeneralLoss': 'Toda la productividad reducida un {0}% durante {1}',
   'punishment.resourceLoss': 'Pierdes {0}% de recursos almacenados',
   'punishment.workerLoss': 'Pierdes {0} trabajadores',
+  'punishment.workerLossSingular': 'Pierdes {0} trabajador',
   'punishment.buildingLoss': 'Pierdes {0} niveles de edificios',
+  'punishment.buildingLossSingular': 'Pierdes {0} nivel de edificio',
 }

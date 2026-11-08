@@ -65,10 +65,10 @@ onUnmounted(() => {
             {{ t('punishment.resourceLoss', Math.round(ui.challenges.activePunishment.resources * 100)) }}
           </li>
           <li v-if="ui.challenges.activePunishment.workers" class="punishment-item">
-            {{ t('punishment.workerLoss', ui.challenges.activePunishment.workers) }}
+            {{ t(ui.challenges.activePunishment.workers === 1 ? 'punishment.workerLossSingular' : 'punishment.workerLoss', ui.challenges.activePunishment.workers) }}
           </li>
           <li v-if="ui.challenges.activePunishment.levels" class="punishment-item">
-            {{ t('punishment.buildingLoss', ui.challenges.activePunishment.levels) }}
+            {{ t(ui.challenges.activePunishment.levels === 1 ? 'punishment.buildingLossSingular' : 'punishment.buildingLoss', ui.challenges.activePunishment.levels) }}
           </li>
           <li v-if="ui.challenges.activePunishment.productivityFarm" class="punishment-item">
             {{ t('punishment.productivityFarmLoss', Math.round(ui.challenges.activePunishment.productivityFarm * 100), formatMinutes(ui.challenges.activePunishment.timeout ?? 0)) }}

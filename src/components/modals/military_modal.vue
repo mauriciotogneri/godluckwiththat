@@ -321,8 +321,8 @@ onUnmounted(() => {
                 <template v-else>
                   <li v-if="hasArmy" class="forecast-loss">{{ t('military.armyLost') }}</li>
                   <li v-if="ui.military.forecast.resourceShare > 0" class="forecast-loss">&minus;{{ t('military.resourceLoss', Math.round(ui.military.forecast.resourceShare * 100)) }}</li>
-                  <li v-if="ui.military.forecast.workersLost > 0" class="forecast-loss">&minus;{{ t('military.workerLoss', ui.military.forecast.workersLost) }}</li>
-                  <li v-if="ui.military.forecast.levelsLost > 0" class="forecast-loss">&minus;{{ t('military.levelLoss', ui.military.forecast.levelsLost) }}</li>
+                  <li v-if="ui.military.forecast.workersLost > 0" class="forecast-loss">&minus;{{ t(ui.military.forecast.workersLost === 1 ? 'military.workerLossSingular' : 'military.workerLoss', ui.military.forecast.workersLost) }}</li>
+                  <li v-if="ui.military.forecast.levelsLost > 0" class="forecast-loss">&minus;{{ t(ui.military.forecast.levelsLost === 1 ? 'military.levelLossSingular' : 'military.levelLoss', ui.military.forecast.levelsLost) }}</li>
                 </template>
               </ul>
             </div>
