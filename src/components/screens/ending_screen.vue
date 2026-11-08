@@ -49,7 +49,7 @@ onUnmounted(() => {
       @load="isBackgroundLoaded = true"
     >
 
-    <div class="screen-content story-content thin-scrollbar">
+    <div class="screen-content story-content ending-content thin-scrollbar">
       <h1 class="story-title">
         {{ t('screen.ending.title') }}
       </h1>
@@ -78,6 +78,11 @@ onUnmounted(() => {
   position: fixed;
   inset: 0;
   z-index: 200;
+}
+
+/* Extra space below lifts the centered column a little above the middle */
+.ending-content {
+  padding-bottom: calc(2rem + 32vh);
 }
 
 /* Buttons stacked below the story, set apart from it */
