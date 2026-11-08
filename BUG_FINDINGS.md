@@ -1,14 +1,3 @@
-### [b/contract-mismatches/military-ui/unit-tooltip-ignores-research-bonuses] Unit tooltip shows base stats and upkeep, not the researched values
-
-- **Location:** `src/components/modals/military_modal.vue:58-65` (`unitTooltip`). Related: `src/js/engine/battle.js` (`healthByType`, `attackAgainst`), `src/js/engine/state.js` (`_computeConsumptionRates`).
-- **Severity:** Low
-- **Confidence:** High
-- **Likelihood:** Medium. Any player who completes Attack, Defense or Food/Wood consumption research and then hovers a unit sees it.
-- **Defect:** The tooltip prints `UNIT_STATS[unit.type].attack` and `.health` and the unit's upkeep. Battle multiplies attack and health by `(1 + attackBonus)` and `(1 + defenseBonus)` from research, and upkeep is multiplied by the food and wood consumption multipliers. After research the tooltip understates attack and health and overstates upkeep, and it no longer matches the forecast.
-- **Trigger:** Complete a military or consumption research line, open the military modal, hover a unit.
-- **Evidence / verification:** Read `unitTooltip` (uses `stats = UNIT_STATS[unit.type]` with no bonus) and `battle.js:16` (`UNIT_STATS[type].health * (1 + defenseBonus)`). Refutation attempt: `docs/specs.md` calls the table values "starting values" and the tooltip does not claim to include research, but no label says "base", so a player reads it as the effective value.
-- **Suggested fix:** Show the effective values (apply the research bonuses and consumption multipliers through the UI snapshot), or label the numbers as base values.
-
 ### [a/boundary-and-encoding-cases/localization/no-singular-form-for-counted-losses] "Lose 1 workers" and "1 building levels"
 
 - **Location:** `src/js/i18n/en.js:313-314, 636-637` (`military.workerLoss`, `military.levelLoss`, `punishment.workerLoss`, `punishment.buildingLoss`), with the same keys in `ca.js`, `es.js`, `fr.js` and `it.js`. Callers: `src/components/modals/challenge_failure_modal.vue:67-72`, `src/components/modals/military_modal.vue:320-321`.

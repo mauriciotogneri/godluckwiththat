@@ -359,6 +359,10 @@ const ui = shallowReactive({
     [RESOURCE_FOOD]: 0,
     [RESOURCE_WOOD]: 0,
   },
+  unitBonuses: {
+    attack: 0,
+    defense: 0,
+  },
   productivity: 1,
   gameSpeed: GAME_SPEED_DEFAULT,
   buildings: {},
@@ -739,6 +743,10 @@ function syncProduction() {
   ui.armyConsumption = {
     [RESOURCE_FOOD]: state.armyConsumption[RESOURCE_FOOD],
     [RESOURCE_WOOD]: state.armyConsumption[RESOURCE_WOOD],
+  }
+  ui.unitBonuses = {
+    attack: state.unitBonuses.attack,
+    defense: state.unitBonuses.defense,
   }
   ui.productivity = state.productivity
   ui.gameSpeed = state.meta.gameSpeed

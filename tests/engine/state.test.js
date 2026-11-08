@@ -619,6 +619,38 @@ describe('State', () => {
       expect(state.consumption.wood).toBeCloseTo(state.armyConsumption.wood, 10)
     })
 
+    it('should store the Attack and Defense research bonuses in unitBonuses', async () => {
+      const state = await createState({
+        colonyOverrides: {
+          buildingOverrides: {
+            academy: {
+              level: 1,
+              completed: [
+                RESEARCH_ATTACK_1,
+                RESEARCH_DEFENSE_1,
+              ],
+            },
+          },
+        },
+      })
+      state.update(0)
+      expect(state.unitBonuses.attack).toBeCloseTo(0.1, 10)
+      expect(state.unitBonuses.defense).toBeCloseTo(0.1, 10)
+    })
+
+    it('should give zero unitBonuses without military research', async () => {
+      const state = await createState()
+      expect(state.unitBonuses).toEqual({
+        attack: 0,
+        defense: 0,
+      })
+      state.update(0)
+      expect(state.unitBonuses).toEqual({
+        attack: 0,
+        defense: 0,
+      })
+    })
+
     it('should deduct army upkeep from food and wood over time', async () => {
       const state = await createState({
         colonyOverrides: {

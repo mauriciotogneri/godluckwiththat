@@ -92,6 +92,13 @@ class State {
       wood: 1,
     }
 
+    // Attack and Defense research bonuses (fractions) applied to units in battle,
+    // recalculated each tick in update(). Used by the UI to show effective unit stats.
+    this.unitBonuses = {
+      attack: 0,
+      defense: 0,
+    }
+
     // Track which buildings are currently constructing so advanceConstruction()
     // only iterates the active subset instead of all 19 buildings every frame
     this._constructingKeys = new Set()
@@ -171,6 +178,10 @@ class State {
     } = this._computeConsumptionRates(bonuses, this.seasonMultipliers, resources.workers, this.colony.military.units)
     this.consumptionMultipliers = consumptionMultipliers
     this.armyConsumption = armyRates
+    this.unitBonuses = {
+      attack: bonuses[BONUS_UNIT_ATTACK] ?? 0,
+      defense: bonuses[BONUS_UNIT_DEFENSE] ?? 0,
+    }
 
     // Productivity ratio based on current production vs consumption. Uses raw
     // production rates (not penalized) so reassigning workers takes effect

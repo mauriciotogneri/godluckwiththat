@@ -51,7 +51,7 @@ function unitSubtitle(unit) {
   return t('military.strongAgainst', t('unit.' + UNIT_COUNTERS[unit.type]).toLowerCase())
 }
 
-/** Stats and upkeep tooltip for a unit (empty while locked).
+/** Stats and upkeep tooltip for a unit (empty while locked), with research bonuses and consumption multipliers applied.
  * @param {Object} unit - Unit snapshot from ui.military.units
  * @returns {string} Multi-line tooltip text
  */
@@ -60,8 +60,12 @@ function unitTooltip(unit) {
     return ''
   }
   const stats = UNIT_STATS[unit.type]
-  return t('military.unitStats', stats.attack, stats.health) + '\n'
-    + t('military.unitUpkeep', unit.upkeep.food, unit.upkeep.wood)
+  const attack = +(stats.attack * (1 + ui.unitBonuses.attack)).toFixed(2)
+  const health = +(stats.health * (1 + ui.unitBonuses.defense)).toFixed(2)
+  const upkeepFood = +(unit.upkeep.food * ui.consumptionMultipliers[RESOURCE_FOOD]).toFixed(2)
+  const upkeepWood = +(unit.upkeep.wood * ui.consumptionMultipliers[RESOURCE_WOOD]).toFixed(2)
+  return t('military.unitStats', attack, health) + '\n'
+    + t('military.unitUpkeep', upkeepFood, upkeepWood)
 }
 
 /** Whether one more unit of this type can be trained.
