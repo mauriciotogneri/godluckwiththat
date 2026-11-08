@@ -320,7 +320,7 @@ A one-step, deterministic strength comparison. The forecast in the military wind
 
 - Each side's power is attack × health (Lanchester square law). The colony's health adds the wall and the tower's archers; its attack adds the tower's archers
 - A unit deals up to ×2 attack against the type it beats, scaled by that type's share of the opponent's army. The tower's archers count as archers in the colony's share, so raider cavalry gets its bonus against them
-- Attack and Defense research raise unit attack and health by 10% per tier (not the tower or the wall). Raiders get no bonuses
+- Attack and Defense research raise unit attack and health by 10% per tier (not the tower or the wall). Raiders get their own attack and health bonus of 5% per year after the first (+15% in year 4), so the wall and the tower do not outgrow them
 - `ratio = sqrt(colony power / raider power)`. Above 1 is a victory
 - **Victory**: the colony loses health `(1 − sqrt(1 − 1/ratio²)) × total health`. The wall absorbs it first; units and the tower's archers share the rest by health, and units lose their share in proportion to their numbers (the tower's archers never die). Nothing else is gained
 - **Defeat**: the whole army is lost. With `severity = sqrt(1 − ratio²)` (0 near a tie, 1 with no defense), the colony also loses `severity × 30%` of each stored regular resource, `severity × 10%` of its workers (idle first) and `round(severity × 3)` building levels from the downgradable list (same rules as punishments). Faith and knowledge are never taken

@@ -23,6 +23,7 @@ import {BUILDING_UPGRADES,
   RAID_UNITS_BASE,
   RAID_UNITS_PER_TERRITORY,
   RAID_UNITS_PER_YEAR,
+  RAID_BONUS_PER_YEAR,
   RAID_DEFEAT_MAX_RESOURCES,
   RAID_DEFEAT_MAX_WORKERS,
   RAID_DEFEAT_MAX_LEVELS,
@@ -248,6 +249,7 @@ describe('balancing', () => {
       expect(Math.floor(RAID_UNITS_BASE)).toBeGreaterThanOrEqual(1)
       expect(RAID_UNITS_PER_TERRITORY).toBeGreaterThanOrEqual(0)
       expect(RAID_UNITS_PER_YEAR).toBeGreaterThanOrEqual(0)
+      expect(RAID_BONUS_PER_YEAR).toBeGreaterThanOrEqual(0)
     })
 
     it('defeat maximums are fractions and a whole level count', () => {

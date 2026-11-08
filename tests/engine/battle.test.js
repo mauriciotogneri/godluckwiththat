@@ -509,6 +509,38 @@ describe('resolveBattle', () => {
       })
       expect(result.enemyPower).toBe(10 * UNIT_STATS[UNIT_INFANTRY].attack * 10 * UNIT_STATS[UNIT_INFANTRY].health)
     })
+
+    it('should apply the raiders own attack and health bonuses', () => {
+      const result = resolveBattle(createDefender({
+        units: {
+          [UNIT_INFANTRY]: 10,
+        },
+      }), {
+        units: {
+          [UNIT_INFANTRY]: 10,
+        },
+        attackBonus: 0.1,
+        defenseBonus: 0.2,
+      })
+      expect(result.enemyPower).toBeCloseTo((10 * UNIT_STATS[UNIT_INFANTRY].attack * 1.1) * (10 * UNIT_STATS[UNIT_INFANTRY].health * 1.2), 6)
+      expect(result.victory).toBe(false)
+    })
+
+    it('should turn a tie into a defeat with a raider bonus', () => {
+      const result = resolveBattle(createDefender({
+        units: {
+          [UNIT_INFANTRY]: 10,
+        },
+      }), {
+        units: {
+          [UNIT_INFANTRY]: 10,
+        },
+        attackBonus: 0.05,
+        defenseBonus: 0.05,
+      })
+      expect(result.ratio).toBeLessThan(1)
+      expect(result.victory).toBe(false)
+    })
   })
 
   describe('defeat severity', () => {

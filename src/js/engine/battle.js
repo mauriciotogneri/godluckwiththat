@@ -7,7 +7,7 @@ import {UNIT_ARCHER} from '@/js/engine/enums.js'
 /**
  * Health of each unit type in an army.
  * @param {Object<string, number>} units - Unit count per type
- * @param {number} defenseBonus - Fractional health bonus from research (0 for raiders)
+ * @param {number} defenseBonus - Fractional health bonus (research for the colony, yearly for raiders)
  * @returns {Object<string, number>} Health per unit type
  */
 function healthByType(units, defenseBonus) {
@@ -38,7 +38,7 @@ function sharesFromHealth(health) {
 /**
  * Share of an army's unit health held by each unit type.
  * @param {Object<string, number>} units - Unit count per type
- * @param {number} defenseBonus - Fractional health bonus from research
+ * @param {number} defenseBonus - Fractional health bonus (research for the colony, yearly for raiders)
  * @returns {Object<string, number>} Share (0–1) per unit type; all 0 for an empty army
  */
 function healthShares(units, defenseBonus) {
@@ -59,7 +59,7 @@ function counterFactor(type, opponentShares) {
 /**
  * Total health of an army's units (the wall is not included).
  * @param {Object<string, number>} units - Unit count per type
- * @param {number} [defenseBonus=0] - Fractional health bonus from research
+ * @param {number} [defenseBonus=0] - Fractional health bonus (research for the colony, yearly for raiders)
  * @returns {number} Summed unit health
  */
 export function armyHealth(units, defenseBonus = 0) {
@@ -74,7 +74,7 @@ export function armyHealth(units, defenseBonus = 0) {
 /**
  * Total attack of an army's units against an opponent with the given mix, counter bonuses included.
  * @param {Object<string, number>} units - Unit count per type
- * @param {number} attackBonus - Fractional attack bonus from research (0 for raiders)
+ * @param {number} attackBonus - Fractional attack bonus (research for the colony, yearly for raiders)
  * @param {Object<string, number>} opponentShares - Opponent health share per unit type
  * @returns {number} Summed attack
  */
@@ -89,7 +89,7 @@ function attackAgainst(units, attackBonus, opponentShares) {
 /**
  * Total attack of an army's units against an opponent, counter bonuses included (the tower is not included).
  * @param {Object<string, number>} units - Unit count per type
- * @param {number} attackBonus - Fractional attack bonus from research (0 for raiders)
+ * @param {number} attackBonus - Fractional attack bonus (research for the colony, yearly for raiders)
  * @param {Object<string, number>} opponentUnits - Opponent unit count per type
  * @param {number} [opponentDefenseBonus=0] - Opponent's fractional health bonus
  * @returns {number} Summed attack
@@ -103,7 +103,8 @@ export function armyAttack(units, attackBonus, opponentUnits, opponentDefenseBon
  * The defender's wall adds health that soaks losses first and is never damaged; the tower fights as a
  * fixed number of archers per level, adding their attack and health, sharing losses with the units and
  * never dying, so a tower alone can defend. Its archers count as archers in the colony's mix, so raider
- * cavalry gets its counter bonus against them. Research bonuses apply to defender units only.
+ * cavalry gets its counter bonus against them. Research bonuses apply to defender units only; the
+ * raiders have their own bonuses, which grow with the year.
  *
  * | Fight                            | Ratio | Result                   |
  * |----------------------------------|-------|--------------------------|
@@ -121,6 +122,8 @@ export function armyAttack(units, attackBonus, opponentUnits, opponentDefenseBon
  * @param {number} defender.workers - Colony worker total (for the workers lost on defeat)
  * @param {Object} attacker - The raiders
  * @param {Object<string, number>} attacker.units - Unit count per type
+ * @param {number} [attacker.attackBonus=0] - Fractional raider attack bonus
+ * @param {number} [attacker.defenseBonus=0] - Fractional raider health bonus
  * @returns {{victory: boolean, ratio: number, playerPower: number, enemyPower: number, unitsLost: Object<string, number>, severity: number, resourceShare: number, workersLost: number, levelsLost: number}}
  *   Outcome; ratio > 1 is a victory, severity (0–1) scales the defeat losses
  */
@@ -128,7 +131,10 @@ export function resolveBattle(defender, attacker) {
   const {
     units, wallLevel, towerLevel, attackBonus, defenseBonus, workers,
   } = defender
-  const enemyShares = healthShares(attacker.units, 0)
+  const {
+    attackBonus: enemyAttackBonus = 0, defenseBonus: enemyDefenseBonus = 0,
+  } = attacker
+  const enemyShares = healthShares(attacker.units, enemyDefenseBonus)
 
   const unitHealth = armyHealth(units, defenseBonus)
   const wallHealth = wallLevel * WALL_HEALTH_PER_LEVEL
@@ -141,7 +147,7 @@ export function resolveBattle(defender, attacker) {
   // The tower's archers are part of the colony's mix that sets the raiders' counter bonus
   const defenderHealth = healthByType(units, defenseBonus)
   defenderHealth[UNIT_ARCHER] += towerHealth
-  const enemyPower = attackAgainst(attacker.units, 0, sharesFromHealth(defenderHealth)) * armyHealth(attacker.units, 0)
+  const enemyPower = attackAgainst(attacker.units, enemyAttackBonus, sharesFromHealth(defenderHealth)) * armyHealth(attacker.units, enemyDefenseBonus)
 
   const unitsLost = {}
   for (const type of UNIT_TYPES) {

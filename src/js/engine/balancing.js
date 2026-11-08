@@ -527,6 +527,9 @@ export const RAID_UNITS_BASE = 3
 export const RAID_UNITS_PER_TERRITORY = 0.15
 export const RAID_UNITS_PER_YEAR = 2
 
+// Raiders' attack and health bonus per year after the first: perYear × (year − 1)
+export const RAID_BONUS_PER_YEAR = 0.05
+
 // Losses of a lost raid at full severity (no defense): share of each stored
 // regular resource, share of workers, and building levels
 export const RAID_DEFEAT_MAX_RESOURCES = 0.3

@@ -44,6 +44,8 @@ function forecastRatio(state, enemy, extraType) {
   }
   return resolveBattle(defender, {
     units: enemy,
+    attackBonus: state._raidBonus,
+    defenseBonus: state._raidBonus,
   }).ratio
 }
 
