@@ -1,4 +1,4 @@
-## [0.13.0] - 2026-11-07
+## [1.0.0] - 2026-11-07
 
 * Feat: Challenges now adapt to your colony, easing off when it struggles
 * Feat: Retrying a failed challenge is easier and gives more time to recover
