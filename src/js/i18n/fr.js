@@ -19,6 +19,12 @@ export const LOCALIZED_FR = {
   'screen.intro.paragraph3': 'Mais les dieux ne donnent rien gratuitement. Ils nous enverront dix défis pour mettre notre foi à l\'épreuve. Si nous les surmontons tous, le portail s\'ouvrira. En cas d\'échec, nous subirons leur colère.',
   'screen.intro.start': 'Commencer',
 
+  // Ending screen
+  'screen.ending.title': 'Une Promesse Tenue',
+  'screen.ending.description': 'Vous avez prouvé votre foi et les dieux sont satisfaits. Le portail ancien s\'éveille et le chemin du retour s\'ouvre.',
+  'screen.ending.continue': 'Continuer à Jouer',
+  'screen.ending.quit': 'Retour à l\'Accueil',
+
   // Settings screen
   'screen.settings.title': 'Paramètres',
   'screen.settings.back': 'Retour',
@@ -606,8 +612,4 @@ export const LOCALIZED_FR = {
   'punishment.resourceLoss': 'Perdez {0}% de ressources stockées',
   'punishment.workerLoss': 'Perdez {0} travailleurs',
   'punishment.buildingLoss': 'Perdez {0} niveaux de bâtiments',
-  'challenge.win.title': 'Portail Activé',
-  'challenge.win.description': 'Vous avez prouvé votre foi aux dieux. Le portail ancien brille d\'énergie divine — le chemin du retour est enfin ouvert.',
-  'challenge.win.continue': 'Continuer à Jouer',
-  'challenge.win.quit': 'Retour à l\'Accueil',
 }

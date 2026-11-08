@@ -396,7 +396,7 @@ The game displays an event log as a column alongside the building columns. Event
 
 ## Challenges
 
-The core narrative driver. The gods test the colony's worthiness to pass through the portal by sending 10 sequential challenges. Completing all challenges is the win condition (portal activates, player goes home). The win modal lets the player continue playing the same colony or return to the home screen.
+The core narrative driver. The gods test the colony's worthiness to pass through the portal by sending 10 sequential challenges. Completing all challenges is the win condition (portal activates, player goes home). A full-screen ending (painting, "A Promise Kept" and a short text) lets the player continue playing the same colony or return to the home screen.
 
 ### Lifecycle
 
@@ -404,7 +404,7 @@ The core narrative driver. The gods test the colony's worthiness to pass through
 2. **Delay phase**: a hidden timer counts up (`delayElapsed`). The delay is decided when the challenge activates (see Scaling). When it reaches `delay`, the timer, requirements, blessings and punishment of the countdown are decided from the colony and stay fixed until it ends; the challenge transitions to `started`, a non-dismissable future event appears, and the player is notified. Clicking the event opens the challenge detail modal
 3. **Timeout phase**: a visible timer counts up (`timeoutElapsed`). The player must meet all requirements before `timeoutElapsed` reaches `timeout`
 4. **Resolution**: when the timeout expires, the game checks whether all requirements are met at that moment
-   - **Success**: requirements are deducted from the colony (faith, resources, workers sacrificed). A reward modal pauses the game and offers two blessings to choose from. After choosing, the blessing is applied. If more challenges remain, the next one activates. If all 10 are completed, the win modal appears
+   - **Success**: requirements are deducted from the colony (faith, resources, workers sacrificed). A reward modal pauses the game and offers two blessings to choose from. After choosing, the blessing is applied. If more challenges remain, the next one activates. If all 10 are completed, the ending screen appears
    - **Failure**: a punishment modal pauses the game showing the penalty. After acknowledging, the punishment is applied: every punishment takes 50% of stored faith and a fraction of each stored regular resource, and some also sacrifice workers and destroy building levels (see Punishments). The challenge resets (timers back to 0) and the player can retry: the failure is counted, the retry gets a new delay with extra recovery time, and its countdown values are recalculated, easier with each failure and never asking for more of any requirement than the failed attempt
 
 ### Requirements

@@ -19,6 +19,12 @@ export const LOCALIZED_IT = {
   'screen.intro.paragraph3': 'Ma gli dèi non concedono nulla per nulla. Ci manderanno dieci sfide per mettere alla prova la nostra fede. Se le superiamo tutte, il portale si aprirà. Se falliamo, subiremo la loro ira.',
   'screen.intro.start': 'Inizia',
 
+  // Ending screen
+  'screen.ending.title': 'Una Promessa Mantenuta',
+  'screen.ending.description': 'Hai dimostrato la tua fede e gli dèi sono compiaciuti. L\'antico portale si risveglia e la via di casa si apre.',
+  'screen.ending.continue': 'Continua a Giocare',
+  'screen.ending.quit': 'Torna all\'Inizio',
+
   // Settings screen
   'screen.settings.title': 'Impostazioni',
   'screen.settings.back': 'Indietro',
@@ -606,8 +612,4 @@ export const LOCALIZED_IT = {
   'punishment.resourceLoss': 'Perdi il {0}% di risorse immagazzinate',
   'punishment.workerLoss': 'Perdi {0} lavoratori',
   'punishment.buildingLoss': 'Perdi {0} livelli di edifici',
-  'challenge.win.title': 'Portale Attivato',
-  'challenge.win.description': 'Hai dimostrato la tua fede agli dèi. L\'antico portale risplende di energia divina — la via di casa è finalmente aperta.',
-  'challenge.win.continue': 'Continua a Giocare',
-  'challenge.win.quit': 'Torna all\'Inizio',
 }

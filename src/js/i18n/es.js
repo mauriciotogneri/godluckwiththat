@@ -19,6 +19,12 @@ export const LOCALIZED_ES = {
   'screen.intro.paragraph3': 'Pero los dioses no regalan nada. Nos enviarán diez desafíos para poner a prueba nuestra fe. Si los superamos todos, el portal se abrirá. Si fallamos, sentiremos su ira.',
   'screen.intro.start': 'Empezar',
 
+  // Ending screen
+  'screen.ending.title': 'Una Promesa Cumplida',
+  'screen.ending.description': 'Demostraste tu fe y los dioses están complacidos. El antiguo portal despierta y el camino a casa queda abierto.',
+  'screen.ending.continue': 'Seguir Jugando',
+  'screen.ending.quit': 'Volver al Inicio',
+
   // Settings screen
   'screen.settings.title': 'Ajustes',
   'screen.settings.back': 'Volver',
@@ -606,8 +612,4 @@ export const LOCALIZED_ES = {
   'punishment.resourceLoss': 'Pierdes {0}% de recursos almacenados',
   'punishment.workerLoss': 'Pierdes {0} trabajadores',
   'punishment.buildingLoss': 'Pierdes {0} niveles de edificios',
-  'challenge.win.title': 'Portal Activado',
-  'challenge.win.description': 'Has demostrado tu fe a los dioses. El portal antiguo brilla con energía divina — el camino a casa está abierto al fin.',
-  'challenge.win.continue': 'Seguir Jugando',
-  'challenge.win.quit': 'Volver al Inicio',
 }

@@ -19,6 +19,12 @@ export const LOCALIZED_EN = {
   'screen.intro.paragraph3': 'But the gods give nothing freely. They will send us ten challenges to test our faith. If we endure them all, the portal will open. If we fail, we will feel their wrath.',
   'screen.intro.start': 'Start',
 
+  // Ending screen
+  'screen.ending.title': 'A Promise Kept',
+  'screen.ending.description': 'You proved your faith, and the gods are pleased. The ancient portal wakes and the way home lies open.',
+  'screen.ending.continue': 'Continue Playing',
+  'screen.ending.quit': 'Return Home',
+
   // Settings screen
   'screen.settings.title': 'Settings',
   'screen.settings.back': 'Back',
@@ -629,10 +635,4 @@ export const LOCALIZED_EN = {
   'punishment.resourceLoss': 'Lose {0}% of stored resources',
   'punishment.workerLoss': 'Lose {0} workers',
   'punishment.buildingLoss': 'Lose {0} building levels',
-
-  // Win modal
-  'challenge.win.title': 'Portal Activated',
-  'challenge.win.description': 'You have proven your faith to the gods. The ancient portal glows with divine energy — the way home is open at last.',
-  'challenge.win.continue': 'Continue Playing',
-  'challenge.win.quit': 'Return Home',
 }

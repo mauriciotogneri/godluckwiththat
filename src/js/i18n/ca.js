@@ -19,6 +19,12 @@ export const LOCALIZED_CA = {
   'screen.intro.paragraph3': 'Però els déus no regalen res. Ens enviaran deu desafiaments per posar a prova la nostra fe. Si els superem tots, el portal s\'obrirà. Si fallem, patirem la seva ira.',
   'screen.intro.start': 'Començar',
 
+  // Ending screen
+  'screen.ending.title': 'Una Promesa Complerta',
+  'screen.ending.description': 'Has demostrat la teva fe i els déus estan complaguts. L\'antic portal es desperta i el camí cap a casa queda obert.',
+  'screen.ending.continue': 'Seguir Jugant',
+  'screen.ending.quit': 'Tornar a l\'Inici',
+
   // Settings screen
   'screen.settings.title': 'Configuració',
   'screen.settings.back': 'Tornar',
@@ -606,8 +612,4 @@ export const LOCALIZED_CA = {
   'punishment.resourceLoss': 'Perds {0}% de recursos emmagatzemats',
   'punishment.workerLoss': 'Perds {0} treballadors',
   'punishment.buildingLoss': 'Perds {0} nivells d\'edificis',
-  'challenge.win.title': 'Portal Activat',
-  'challenge.win.description': 'Has demostrat la teva fe als déus. El portal antic brilla amb energia divina — el camí a casa és obert per fi.',
-  'challenge.win.continue': 'Seguir Jugant',
-  'challenge.win.quit': 'Tornar a l\'Inici',
 }

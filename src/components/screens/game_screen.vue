@@ -3,13 +3,13 @@ import {computed, ref, shallowReactive, watch, provide, onMounted, onUnmounted} 
 import ChallengeFailureModal from '@/components/modals/challenge_failure_modal.vue'
 import ChallengeDetailModal from '@/components/modals/challenge_detail_modal.vue'
 import ChallengeSuccessModal from '@/components/modals/challenge_success_modal.vue'
-import ChallengeWinModal from '@/components/modals/challenge_win_modal.vue'
 import ConfirmModal from '@/components/modals/confirm_modal.vue'
 import PauseModal from '@/components/modals/pause_modal.vue'
 import MarketModal from '@/components/modals/market_modal.vue'
 import MilitaryModal from '@/components/modals/military_modal.vue'
 import RaidResultModal from '@/components/modals/raid_result_modal.vue'
 import ResearchModal from '@/components/modals/research_modal.vue'
+import EndingScreen from '@/components/screens/ending_screen.vue'
 import HeadquartersCard from '@/components/buildings/headquarters_card.vue'
 import HouseCard from '@/components/buildings/house_card.vue'
 import AcademyCard from '@/components/buildings/academy_card.vue'
@@ -1265,7 +1265,7 @@ function handleEventAction(action) {
   }
 }
 
-/** Handles "Continue Playing" from win modal. Unpauses without creating duplicate loops
+/** Handles "Continue Playing" from the ending screen. Unpauses without creating duplicate loops
  * since the existing setInterval/rAF loops are still alive (they just skip when paused).
  */
 function handleWinContinue() {
@@ -1274,7 +1274,7 @@ function handleWinContinue() {
   syncUI()
 }
 
-/** Handles "Return Home" from win modal. */
+/** Handles "Return Home" from the ending screen. */
 function handleWinQuit() {
   emit(EMIT_QUIT)
 }
@@ -1980,7 +1980,7 @@ onUnmounted(() => {
       v-if="ui.challengeModal === CHALLENGE_MODAL_FAILURE"
     />
 
-    <ChallengeWinModal
+    <EndingScreen
       v-if="ui.challengeModal === CHALLENGE_MODAL_WIN"
       @continue="handleWinContinue"
       @quit="handleWinQuit"
