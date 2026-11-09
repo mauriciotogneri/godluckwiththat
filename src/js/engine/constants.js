@@ -963,7 +963,7 @@ export function createInitialMeta() {
  * @returns {Colony} Fully initialized colony
  */
 export function createInitialColony() {
-  return createInitialColonyAdvanced()
+  return createInitialColonyBasic()
 }
 
 /**
