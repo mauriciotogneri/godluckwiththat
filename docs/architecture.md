@@ -120,7 +120,7 @@ Per-building card components. Each receives `buildingKey`, `img`, and `building`
 
 **`house_card.vue`** — Thin wrapper around `BaseCard` with no custom content. Worker recruitment is handled by `worker_assignment_row.vue`.
 
-**Military cards** — `barracks_card.vue`, `archery_card.vue` and `stable_card.vue` put `military_card_button.vue` in the default slot and `unit_count_row.vue` (unit name and `count/cap` from `ui.military.units`, red at 0) in the `below-action` slot. `wall_card.vue` and `tower_card.vue` only add the button. `military_card_button.vue` is a `.card-modal-btn` with an inline crossed-swords SVG that calls `inject('openMilitaryModal')`.
+**Military cards** — `barracks_card.vue`, `archery_card.vue` and `stable_card.vue` put `military_card_button.vue` in the default slot and `unit_count_row.vue` (unit name and `count/cap` from `ui.military.units`, red at 0) in the `below-action` slot. `wall_card.vue` and `tower_card.vue` only add the button. `military_card_button.vue` is a `.card-modal-btn` with the crossed-swords-on-shield image (`military.png` from `public/img/other/`) that calls `inject('openMilitaryModal')`.
 
 Each action is a horizontal row: a square icon-only button (28cqh, 1.75rem fallback) with the action image (`build.png`, `upgrade.png`, `territory.png` from `public/img/other/`; downgrade reuses `upgrade.png` rotated 180°) + cost items displayed outside the button to its right. Buttons use the `.tooltip` class with localized `data-tooltip` for hover labels. Cost rendering iterates the `Cost.entries` getter (a `Map<string, number>` of non-zero resources).
 

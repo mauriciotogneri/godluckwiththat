@@ -1,5 +1,6 @@
 <script setup>
 import {inject} from 'vue'
+import {IMG_OTHER_MILITARY} from '@/js/engine/assets.js'
 import {playTap} from '@/js/engine/audio.js'
 import {t} from '@/js/i18n/localized.js'
 
@@ -8,23 +9,6 @@ const openMilitaryModal = inject('openMilitaryModal')
 
 <template>
   <button class="btn-gold card-modal-btn tooltip" :data-tooltip="t('military.title')" @click="playTap(); openMilitaryModal()">
-    <!-- Crossed swords -->
-    <svg class="card-modal-btn-icon military-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <path d="M14.5 17.5 3 6V3h3l11.5 11.5" />
-      <path d="m13 19 6-6" />
-      <path d="m16 16 4 4" />
-      <path d="m19 21 2-2" />
-      <path d="M14.5 6.5 18 3h3v3l-3.5 3.5" />
-      <path d="m5 14 4 4" />
-      <path d="m7 17-3 3" />
-      <path d="m3 19 2 2" />
-    </svg>
+    <img class="card-modal-btn-icon" :src="IMG_OTHER_MILITARY" :alt="t('military.title')">
   </button>
 </template>
-
-<style scoped>
-/* Bronze line icon, matching the image icons of the other card buttons */
-.military-icon {
-  color: var(--color-accent);
-}
-</style>
